@@ -27,13 +27,13 @@ app.use(morgan("dev"));
 // Connect to Database
 connectDB();
 
-// connect to database for chatAI ---> this is for testing only
-ragEngine.connectToDatabase();
-// important initialize for chatbot_AI
-ragEngine.initializeEmbeddingModel();
+// // connect to database for chatAI ---> this is for testing only
+// ragEngine.connectToDatabase();
+// // important initialize for chatbot_AI
+// ragEngine.initializeEmbeddingModel();
 
-// chatBot_AI Route
-app.use('/api/chatBot', chatRoutes);
+// // chatBot_AI Route
+// app.use('/api/chatBot', chatRoutes);
 
 // Routes
 app.use("/api/reviews", reviewRoutes);
