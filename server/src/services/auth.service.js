@@ -1,10 +1,17 @@
-import { addUser, findUserByEmail, saveRefreshToken } from "../repositories/user.repository.js";
+import crypto from "crypto";
+import {
+  addUser,
+  findUserByEmail,
+  findUserByResetToken,
+  saveRefreshToken,
+} from "../repositories/user.repository.js";
 import bcrypt from "bcryptjs";
 import { createAccessToken } from "../utils/createAccessToken.js";
 import User from "../models/User.js";
 import { generateOTP } from "../utils/otpGen.js";
 import { sendEmail } from "../utils/Mailer.js";
 import { createRefreshToken } from "../utils/createRefreshToken.js";
+import { env } from "../config/env.js";
 
 export const registerUserService = async (user) => {
   const { name, email, password, phoneNumber } = user;
@@ -47,8 +54,45 @@ export const loginUserService = async (email, password) => {
 
   const accessToken = createAccessToken(user);
   const refreshToken = createRefreshToken(user);
-  saveRefreshToken(user._id,refreshToken)
+  saveRefreshToken(user._id, refreshToken);
   return { user, accessToken, refreshToken };
+};
+
+export const forgetPasswordService = async (email) => {
+  const user = await findUserByEmail(email);
+  if (!user) {
+    throw new Error("Invalid email");
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  user.resetPasswordToken = hashedToken;
+  user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+  await user.save();
+  const resetURL = `${env.frontendUrl}/reset-password?token=${resetToken}`;
+
+  await sendEmail(
+    user.email,
+    "Password reset request",
+    `Reset your password using this link: ${resetURL}`
+  );
+  return { message: "Password reset link sent to email" };
+};
+
+export const resetPasswordService = async (token, newPassword) => {
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await findUserByResetToken(hashedToken);
+  if (!user) {
+    throw new Error("Invalid or expired token");
+  }
+  user.password = await hashPassword(newPassword);
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+  return { message: "Password reset successful" };
 };
 
 const hashPassword = async (password) => {

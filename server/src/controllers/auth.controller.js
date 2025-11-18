@@ -1,6 +1,8 @@
 import {
+  forgetPasswordService,
   loginUserService,
   registerUserService,
+  resetPasswordService,
 } from "../services/auth.service.js";
 import { refreshTokenService } from "../services/refreshToken.service.js";
 import { verifyOtpService } from "../services/verifyOtp.service.js";
@@ -41,9 +43,11 @@ export const loginUserController = async (req, res) => {
       email,
       password
     );
-    console.log(user);
     res.cookie("accessToken", accessToken, cookieOptions);
-    res.cookie("refreshToken", refreshToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
 
     res.status(200).json({
       message: "Logged in successfully",
@@ -81,8 +85,10 @@ export const verifyOTP = async (req, res) => {
       code
     );
     res.cookie("accessToken", accessToken, cookieOptions);
-    res.cookie("refreshToken", refreshToken, cookieOptions);
-
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
     res.status(201).json({
       message: "Registered successfully",
       user: {
@@ -102,10 +108,31 @@ export const refreshTokenController = async (req, res) => {
       req.cookies.refreshToken
     );
     res.cookie("accessToken", newAccessToken, cookieOptions);
-    res.cookie("refreshToken", newRefreshToken, cookieOptions);
+    res.cookie("refreshToken", newRefreshToken, {
+      ...cookieOptions,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
 
     res.status(200).json({ message: "Token refreshed" });
   } catch (err) {
     res.status(401).json({ message: err.message });
+  }
+};
+export const forgetPasswordController = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const { message } = await forgetPasswordService(email);
+    res.status(200).json({ message });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+export const resetPasswordController = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    const { message } = await resetPasswordService(token, newPassword);
+    res.status(200).json({ message });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

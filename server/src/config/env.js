@@ -12,6 +12,7 @@ export const env = {
   refreshExpiry: process.env.REFRESH_JWT_EXPIRES_IN,
   emailUser: process.env.EMAIL_USER,
   emailPass: process.env.EMAIL_PASS,
+  frontendUrl: process.env.FRONTEND_URL,
 };
 
 // Optional sanity check for missing vars
