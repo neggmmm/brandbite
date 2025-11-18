@@ -8,6 +8,7 @@ import connectDB from "./src/config/db.js";
 
 // Route imports
 import authRoutes from "./src/routes/auth.routes.js";
+import usersRoutes from "./src/routes/user.routes.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ connectDB();
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/users", usersRoutes);
 
 // Default Route
 app.get("/", (req, res) => {

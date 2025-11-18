@@ -1,4 +1,14 @@
+import mongoose from "mongoose";
 import User from "../models/User.js";
+
+export const findAllUsers = async () => {
+  return await User.find().select("-password");
+};
+
+export const findUserById = async (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) return null;
+  return await User.findById(id).select("-password");
+};
 
 export const findUserByEmail = async (email) => {
   return await User.findOne({ email });
