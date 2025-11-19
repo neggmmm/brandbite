@@ -3,8 +3,10 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
+import orderModel from "./src/modules/order.module/orderModel.js";
+
 import connectDB from "./src/config/db.js";
-import orderRoutes from "./src/modules/order.module/order.routes.js";
+
 // Route imports
 
 
@@ -22,7 +24,7 @@ connectDB();
 
 // Routes
 
-app.use("/api/orders", orderRoutes);
+
 
 // Default Route
 app.get("/", (req, res) => {

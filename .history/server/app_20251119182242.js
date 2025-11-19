@@ -3,8 +3,9 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
+
 import connectDB from "./src/config/db.js";
-import orderRoutes from "./src/modules/order.module/order.routes.js";
+
 // Route imports
 
 
@@ -21,8 +22,11 @@ app.use(morgan("dev"));
 connectDB();
 
 // Routes
+app.get("/", (req, res) => {
+    res.json({ message: "Server is running!" });
+});
 
-app.use("/api/orders", orderRoutes);
+
 
 // Default Route
 app.get("/", (req, res) => {
