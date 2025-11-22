@@ -23,6 +23,7 @@ app.use(cors());
 app.use(express.json()); // for normal routes
 app.use(morgan("dev"));
 app.use(cookieParser());
+app.use("/api/checkout", paymentRoutes);
 
 // Connect to Database
 await connectDB();
@@ -35,8 +36,7 @@ app.use("/auth", authRoutes);
 app.use('/api/categories', categoryRoutes);
 
 app.use("/api/orders", orderRoutes);
-app.use("/api/checkout", paymentRoutes); 
-// payment module routes
+app.use("/api/checkout", paymentRoutes); // payment module routes
 
 // Default Route
 app.get("/", (req, res) => {

@@ -6,8 +6,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
 
 import orderRoutes from "./src/modules/order.module/order.routes.js";
-// import paymentRoutes from "./src/modules/payment.module/payment.routes.js";
-import paymentRoutes from "./src/modules/payment/paymentRoutes.js";
+import paymentRoutes from "./src/modules/payment.module/payment.routes.js";
 import reviewRoutes from "./src/routes/review.routes.js";
 import productRoutes from "./src/routes/product.routes.js";
 import rewardRouter from "./src/modules/rewards/reward.routes.js";
@@ -35,8 +34,7 @@ app.use("/auth", authRoutes);
 app.use('/api/categories', categoryRoutes);
 
 app.use("/api/orders", orderRoutes);
-app.use("/api/checkout", paymentRoutes); 
-// payment module routes
+app.use("/api/checkout", paymentRoutes); // payment module routes
 
 // Default Route
 app.get("/", (req, res) => {
