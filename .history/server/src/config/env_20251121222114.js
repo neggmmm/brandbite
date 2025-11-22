@@ -13,8 +13,6 @@ export const env = {
     cloudApiKey: process.env.CLOUDINARY_API_KEY,
     cloudApiSecret: process.env.CLOUDINARY_API_SECRET,
     STRIPE_SECRET_KEY : process.env.STRIPE_SECRET_KEY,
-    STRIPE_WEBHOOK_SECRET : process.env.STRIPE_WEBHOOK_SECRET,
-
 
 };
 
