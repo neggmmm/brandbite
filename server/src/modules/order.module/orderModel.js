@@ -5,7 +5,7 @@ const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
+      ref: "Cart",
       required: true,
     },
 
@@ -50,7 +50,7 @@ const OrderSchema = new mongoose.Schema(
 
     serviceType: {
       type: String,
-      enum: ["table", "pickup"],
+      enum: ["table", "pickup","online"],
       default: "pickup",
     },
 

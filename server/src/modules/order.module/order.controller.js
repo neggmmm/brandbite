@@ -20,7 +20,7 @@ export const getOrderById = async (req, res) => {
 // 3) Update Order Status
 export const updateOrderStatus = async (req, res) => {
   try {
-    const updated = await orderService.updateStatus(req.params.id, req.body.status);
+    const updated = await orderService.updateStatus(req.params.id, req.body.orderStatus);
     res.json({ success: true, data: updated });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
