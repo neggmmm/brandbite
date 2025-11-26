@@ -3,59 +3,93 @@ import orderRepo from "./order.repository.js";
 import { calculateTotal } from "./orderUtils.js";
 import { getProductById } from "../product/product.repository.js";
 import * as rewardService from "../rewards/reward.service.js";
-
+import * as couponService from "../coupon/coupon.service.js";
 class OrderService {
   // 1) Create Order
-  async createOrder(orderData) {
+   async createOrder(orderData) {
     if (!orderData.items || orderData.items.length === 0) {
       throw new Error("Order must contain at least one item.");
-    }
-
-    if (!orderData.isRewardOrder) {
-      orderData.totalAmount = calculateTotal(orderData.items);
-    } else {
-      orderData.totalAmount = 0;
     }
 
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      // Snapshot item prices and itemPoints from product data to prevent tampering
+      // 1. Snapshot item prices
       for (const item of orderData.items) {
-        // For each incoming order item, read canonical product data
         const prod = await getProductById(item.productId);
-        // If product cannot be found, stop and raise a business-level error
-        if (!prod) {
-          throw new Error(`Product not found: ${item.productId}`);
-        }
-        // Copy product's stable fields into the order item so they remain
-        // consistent even if the product record changes later.
-        item.name = prod.name; // product name snapshot
-        item.img = prod.imgURL || prod.img || ""; // product image snapshot
-
-        // Build the final price based on basePrice and selected option deltas
-        let price = prod.basePrice || 0; // start with the product base price
+        if (!prod) throw new Error(`Product not found: ${item.productId}`);
+        
+        item.name = prod.name;
+        item.img = prod.imgURL || prod.img || "";
+        
+        let price = prod.basePrice || 0;
         if (item.selectedOptions && prod.options) {
-          // If the order contains selected options (like Size: Large), apply
-          // the configured price deltas from the product options array.
           for (const opt of prod.options) {
             const selected = item.selectedOptions?.[opt.name];
             if (!selected) continue;
             const choice = opt.choices?.find(c => c.label === selected);
-            if (choice && choice.priceDelta) price += choice.priceDelta; // add option delta
+            if (choice && choice.priceDelta) price += choice.priceDelta;
           }
         }
-        item.price = price; // snapshot final computed price for the item
-
-        // snapshot item points (reward points per unit) from the product
+        item.price = price;
         item.itemPoints = prod.productPoints || 0;
       }
 
+      // 2. Calculate subtotal (before discount)
+      const subtotal = calculateTotal(orderData.items);
+      orderData.subtotal = subtotal;
+      
+      // 3. Apply coupon if provided
+      let discountAmount = 0;
+      
+      if (orderData.couponCode && !orderData.isRewardOrder) {
+        const validation = await couponService.validateCouponService(
+          orderData.couponCode,
+          orderData.customerId,
+          subtotal,
+          orderData.restaurantId
+        );
+        
+        if (!validation.valid) {
+          throw new Error(validation.message);
+        }
+        
+        discountAmount = validation.discountAmount;
+        
+        // Store coupon info in order
+        orderData.appliedCoupon = {
+          couponId: validation.coupon._id,
+          code: orderData.couponCode,
+          discountAmount: discountAmount,
+        };
+      }
+      
+      // 4. Calculate final total
+      if (!orderData.isRewardOrder) {
+        orderData.totalAmount = subtotal - discountAmount;
+      } else {
+        orderData.totalAmount = 0;
+      }
+
+      // 5. Create order
       const newOrder = await orderRepo.create(orderData, session);
+      
+      // 6. Record coupon usage
+      if (orderData.appliedCoupon && orderData.appliedCoupon.couponId) {
+        await couponService.applyCouponService(
+          orderData.appliedCoupon.couponId,
+          orderData.customerId,
+          newOrder._id,
+          discountAmount,
+          session
+        );
+      }
+
       await session.commitTransaction();
       session.endSession();
       return newOrder;
+      
     } catch (err) {
       await session.abortTransaction();
       session.endSession();
