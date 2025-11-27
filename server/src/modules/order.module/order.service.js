@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import orderRepo from "./order.repository.js";
 import { calculateOrderTotals, formatCartItemsForOrder } from "./orderUtils.js";
+import { getProductById } from "../product/product.repository.js";
+import { awardPointsToUser } from "../rewards/reward.service.js";
 
 class OrderService {
   // CREATE ORDER FROM CART
@@ -47,6 +49,18 @@ class OrderService {
       orderData.deliveryFee || 0,
       orderData.discount || 0
     );
+
+    // For direct orders (not from cart) ensure each item snapshots product points
+    for (const item of orderData.items) {
+      const prod = await getProductById(item.productId);
+      if (!prod) throw new Error(`Product not found: ${item.productId}`);
+      // Snapshot item details
+      item.name = prod.name;
+      item.img = prod.imgURL || prod.img || "";
+      item.price = item.price || prod.basePrice || 0;
+      item.itemPoints = prod.productPoints || 0; // snapshot points
+      item.productPoints = prod.productPoints || 0; // backward compatibility
+    }
 
     const orderWithTotals = {
       ...orderData,
@@ -96,14 +110,24 @@ class OrderService {
       if (newStatus === "completed" && prevStatus !== "completed" && (!order.rewardPointsEarned || order.rewardPointsEarned === 0)) {
         // compute points from the snapshot itemPoints
         let awardedPoints = 0;
-        for (const it of order.items) {
-          const qty = it.quantity || 1;
-          const pts = it.itemPoints || 0;
-          awardedPoints += pts * qty;
-        }
+          for (const it of order.items) {
+            const qty = it.quantity || 1;
+            let pts = 0;
+            // Prefer itemPoints (snapshot), fallback to productPoints (legacy)
+            if (typeof it.itemPoints !== 'undefined') {
+              pts = it.itemPoints;
+            } else if (typeof it.productPoints !== 'undefined') {
+              pts = it.productPoints;
+            } else if (it.productId) {
+              // As a last resort, read product's productPoints
+              const prod = await getProductById(it.productId);
+              pts = prod ? (prod.productPoints || 0) : 0;
+            }
+            awardedPoints += pts * qty;
+          }
 
-        if (awardedPoints > 0 && order.customerId) {
-          await rewardService.awardPointsToUser(order.customerId, awardedPoints, session);
+        if (awardedPoints > 0 && order.userId) {
+          await awardPointsToUser(order.userId, awardedPoints, session);
           order.rewardPointsEarned = awardedPoints;
         }
       }
