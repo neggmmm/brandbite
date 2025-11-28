@@ -22,6 +22,11 @@ const OrderItemSchema = new mongoose.Schema(
       type: Number,
       required: true
     }
+    ,
+    // Points snapshot: reward points per unit at the time of ordering
+    itemPoints: { type: Number, default: 0 },
+    // Backward compatible field name in case some code expects `productPoints` on order items
+    productPoints: { type: Number, default: 0 }
   },
   { _id: true }
 );
@@ -80,19 +85,33 @@ const OrderSchema = new mongoose.Schema(
       phone: { type: String, default: "" },
       email: { type: String, default: "" }
     },
+     appliedCoupon: {
+      couponId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Coupon',
+        default: null,
+      },
+      code: { type: String, default: null },
+      discountAmount: { type: Number, default: 0 },
+    },
+    
+    subtotal: { type: Number, required: true }, // before discount
+    totalAmount: { type: Number, required: true },
+    notes: { type: String, default: "" },
 
-    // ORDER STATUS
     orderStatus: {
       type: String,
       enum: ["pending", "preparing", "ready", "completed", "cancelled"],
       default: "pending",
-      index: true,
     },
 
     notes: { 
       type: String, 
       default: "" 
     }
+    ,
+    // Total points awarded for this order (computed on completed)
+    rewardPointsEarned: { type: Number, default: 0 }
   },
   { 
     timestamps: true 
