@@ -39,10 +39,5 @@
     "stripe": "^20.0.0",
     "uuid": "^9.0.0",
     "winston": "^3.9.0"
-  },
-  "overrides": {
-    "multer-storage-cloudinary": {
-      "cloudinary": "2.7.0"
-    }
   }
 }
