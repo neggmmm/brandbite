@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ReviewsPage from "./pages/ReviewsPage";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
+// import RewardPage from "./pages/RewardPage";
 import RewardPage from "./pages/RewardPage";
 import Admin from "./pages/admin/Admin";
 import AppLayout from "./layout/admin-layout/AppLayout";
