@@ -13,232 +13,189 @@ import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 
-export default function DesktopNav() {
+export default function CombinedNavbar() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   const isActive = (path) => location.pathname === path;
 
   return (
     <>
-      {/* Desktop Horizontal Navbar */}
-<nav className="hidden md:block fixed top-0 left-0 right-0 z-50">
-        <div className="max-w-6xl mx-auto px-8">
-          <div className="bg-white shadow-xl rounded-full border border-gray-100 px-8 py-4 flex items-center justify-center gap-8">
-            <Link
-              to="/"
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 font-medium ${
-                isActive('/')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Home size={20} />
-              <span className="text-sm">{t("home")}</span>
-            </Link>
+      {/* ================= DESKTOP NAV (≥ md) ================= */}
+      <aside
+        className={`
+          hidden md:block
+          fixed left-0 top-0 h-full bg-surface shadow-sm transition-all duration-300
+          ${isOpen ? "w-52" : "w-16"}
+        `}
+      >
+        <div className="flex flex-col h-full py-4 gap-2">
 
-            <Link
-              to="/menu"
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 font-medium ${
-                isActive('/menu')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Utensils size={20} />
-              <span className="text-sm">{t("menu")}</span>
-            </Link>
+          {/* Toggle Button */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="px-4 py-2 hover:bg-gray-100 flex items-center"
+          >
+            {isOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
 
-            <Link
-              to="/orders"
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 font-medium ${
-                isActive('/orders')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Clock4 size={20} />
-              <span className="text-sm">{t("orders")}</span>
-            </Link>
+          {/* Language + Dark Mode */}
+          <div className="flex justify-between items-center px-2">
+            {isOpen && (
+              <>
+                {i18n.language === "en" && (
+                  <button
+                    onClick={() => i18n.changeLanguage("ar")}
+                    className="px-2 py-2 hover:bg-gray-100 rounded-md"
+                  >
+                    AR
+                  </button>
+                )}
 
-            <Link
-              to="/reviews"
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 font-medium ${
-                isActive('/reviews')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Star size={20} />
-              <span className="text-sm">{t("reviews")}</span>
-            </Link>
+                {i18n.language === "ar" && (
+                  <button
+                    onClick={() => i18n.changeLanguage("en")}
+                    className="px-2 py-2 hover:bg-gray-100 rounded-md"
+                  >
+                    EN
+                  </button>
+                )}
+              </>
+            )}
 
-            <Link
-              to="/rewards"
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 font-medium ${
-                isActive('/rewards')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Gift size={20} />
-              <span className="text-sm">{t("rewards")}</span>
-            </Link>
-
-            <Link
-              to="/login"
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 font-medium ${
-                isActive('/login')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <LogInIcon size={20} />
-              <span className="text-sm">{t("Login")}</span>
-            </Link>
-
-            <div className="flex items-center gap-3 ml-4 pl-4 border-l border-gray-200">
-              {i18n.language === "en" && (
-                <button
-                  onClick={() => i18n.changeLanguage("ar")}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-sm"
-                >
-                  AR
-                </button>
-              )}
-              {i18n.language === "ar" && (
-                <button
-                  onClick={() => i18n.changeLanguage("en")}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 font-semibold shadow-md hover:shadow-lg text-sm"
-                >
-                  EN
-                </button>
-              )}
-
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-all duration-300 text-gray-700 hover:text-blue-600">
-                <Moon size={20} />
-              </button>
-            </div>
+            <button className="px-2 py-2 hover:bg-gray-100 rounded-md">
+              <Moon size={20} />
+            </button>
           </div>
+
+          {/* Navigation Items */}
+          <DesktopNavItem
+            to="/"
+            icon={<Home size={20} />}
+            label={t("home")}
+            active={isActive("/")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/menu"
+            icon={<Utensils size={20} />}
+            label={t("menu")}
+            active={isActive("/menu")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/orders"
+            icon={<Clock4 size={20} />}
+            label={t("orders")}
+            active={isActive("/orders")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/reviews"
+            icon={<Star size={20} />}
+            label={t("reviews")}
+            active={isActive("/reviews")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/rewards"
+            icon={<Gift size={20} />}
+            label={t("rewards")}
+            active={isActive("/rewards")}
+            isOpen={isOpen}
+          />
+
+          <DesktopNavItem
+            to="/login"
+            icon={<LogInIcon size={20} />}
+            label={t("Login")}
+            active={isActive("/login")}
+            isOpen={isOpen}
+          />
         </div>
-      </nav>
+      </aside>
 
-      {/* Mobile Burger Menu */}
-      <nav className="md:hidden fixed top-4 right-4 z-50">
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="p-3 bg-white rounded-full shadow-lg text-gray-700 hover:text-blue-600 transition-all duration-300"
-        >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+      {/* ================= MOBILE NAV (sm only) ================= */}
+      <div className="block md:hidden w-full bg-surface shadow-sm fixed bottom-0 left-0 z-50">
+        <div className="w-full max-w-xl mx-auto h-14 flex justify-around items-center px-4">
+          {/* Language */}
+          {i18n.language == "en" && (
+            <button onClick={() => i18n.changeLanguage("ar")}>AR</button>
+          )}
+          {i18n.language == "ar" && (
+            <button onClick={() => i18n.changeLanguage("en")}>EN</button>
+          )}
 
-        {/* Mobile Menu Dropdown */}
-        {isMenuOpen && (
-          <div className="absolute top-16 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 py-4 w-56">
-            <div className="flex justify-center gap-2 px-4 mb-4 pb-4 border-b border-gray-100">
-              {i18n.language === "en" && (
-                <button
-                  onClick={() => i18n.changeLanguage("ar")}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 font-semibold shadow-md text-sm"
-                >
-                  AR
-                </button>
-              )}
-              {i18n.language === "ar" && (
-                <button
-                  onClick={() => i18n.changeLanguage("en")}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 font-semibold shadow-md text-sm"
-                >
-                  EN
-                </button>
-              )}
+          <MobileNavItem
+            to="/"
+            icon={<Home size={20} />}
+            label={t("home")}
+            active={isActive("/")}
+          />
 
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 text-gray-700 hover:text-blue-600">
-                <Moon size={20} />
-              </button>
-            </div>
+          <MobileNavItem
+            to="/menu"
+            icon={<Utensils size={20} />}
+            label={t("menu")}
+            active={isActive("/menu")}
+          />
 
-            <Link
-              to="/"
-              onClick={() => setIsMenuOpen(false)}
-              className={`mx-3 px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 font-medium ${
-                isActive('/')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Home size={20} />
-              <span className="text-sm">{t("home")}</span>
-            </Link>
+          <MobileNavItem
+            to="/orders"
+            icon={<Clock4 size={20} />}
+            label={t("orders")}
+            active={isActive("/orders")}
+          />
 
-            <Link
-              to="/menu"
-              onClick={() => setIsMenuOpen(false)}
-              className={`mx-3 px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 font-medium ${
-                isActive('/menu')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Utensils size={20} />
-              <span className="text-sm">{t("menu")}</span>
-            </Link>
+          <MobileNavItem
+            to="/reviews"
+            icon={<Star size={20} />}
+            label={t("reviews")}
+            active={isActive("/reviews")}
+          />
 
-            <Link
-              to="/orders"
-              onClick={() => setIsMenuOpen(false)}
-              className={`mx-3 px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 font-medium ${
-                isActive('/orders')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Clock4 size={20} />
-              <span className="text-sm">{t("orders")}</span>
-            </Link>
-
-            <Link
-              to="/reviews"
-              onClick={() => setIsMenuOpen(false)}
-              className={`mx-3 px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 font-medium ${
-                isActive('/reviews')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Star size={20} />
-              <span className="text-sm">{t("reviews")}</span>
-            </Link>
-
-            <Link
-              to="/rewards"
-              onClick={() => setIsMenuOpen(false)}
-              className={`mx-3 px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 font-medium ${
-                isActive('/rewards')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <Gift size={20} />
-              <span className="text-sm">{t("rewards")}</span>
-            </Link>
-
-            <Link
-              to="/login"
-              onClick={() => setIsMenuOpen(false)}
-              className={`mx-3 px-4 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 font-medium ${
-                isActive('/login')
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-              }`}
-            >
-              <LogInIcon size={20} />
-              <span className="text-sm">{t("Login")}</span>
-            </Link>
-          </div>
-        )}
-      </nav>
+          <MobileNavItem
+            to="/rewards"
+            icon={<Gift size={20} />}
+            label={t("rewards")}
+            active={isActive("/rewards")}
+          />
+        </div>
+      </div>
     </>
+  );
+}
+
+/* ------------ Desktop Nav Item ------------ */
+function DesktopNavItem({ to, icon, label, active, isOpen }) {
+  return (
+    <Link
+      to={to}
+      className={`
+        px-4 py-3 w-full flex items-center gap-3 hover:bg-gray-100 
+        ${active ? "text-primary" : "text-muted"}
+      `}
+    >
+      {icon}
+      {isOpen && <span className="text-sm">{label}</span>}
+    </Link>
+  );
+}
+
+/* ------------ Mobile Nav Item ------------ */
+function MobileNavItem({ to, icon, label, active }) {
+  return (
+    <Link
+      to={to}
+      className={`flex flex-col items-center ${active ? "text-primary" : "text-muted"}`}
+    >
+      {icon}
+      <span className="text-xs">{label}</span>
+    </Link>
   );
 }
