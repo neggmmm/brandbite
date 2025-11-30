@@ -1,9 +1,15 @@
 import { configureStore } from "@reduxjs/toolkit";
 import rewardReducer from "./slices/rewardSlice";
-import rewardOrdersReducer from "./slices/rewardOrderSlice";
+import productReducer from "./slices/ProductSlice"
+import categoryReducer from"./slices/CategorySlice";
+import cartReducer from"./slices/cartSlice";
+
+
 export const store = configureStore({
   reducer: {
     reward: rewardReducer,
-    rewardOrders: rewardOrdersReducer,
+    product:productReducer,
+    category:categoryReducer,
+    cart:cartReducer,
   },
 });
