@@ -1,4 +1,4 @@
-import DesktopNav from "./desktopNav";
+import DesktopNav from "./DesktopNav";
 import Navbar from "./Navbar";
 import { useLocation } from "react-router-dom";
 
