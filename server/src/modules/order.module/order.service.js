@@ -2,6 +2,7 @@ import orderRepo from "./order.repository.js";
 import Cart from "../cart/Cart.js";
 import mongoose from "mongoose";
 import { calculateOrderTotals, formatCartItemsForOrder, generateOrderNumber } from "./orderUtils.js";
+import { calculateRewardPoints, earningPoints } from "../rewards/reward.service.js";
 
 class OrderService {
 
@@ -28,75 +29,75 @@ class OrderService {
 
     // 5. Build order object
     const order = {
-  cartId: cart._id,
-  userId: orderUserIdString,
-  customerId: customerId ? new mongoose.Types.ObjectId(customerId) : null,
-  serviceType,
-  tableNumber: serviceType === "dine-in" ? String(tableNumber ?? "") : null,
-  items,
-  subtotal: totals.subtotal,
-  vat: totals.tax,
-  deliveryFee: totals.deliveryFee,
-  discount: totals.discount,
-  totalAmount: totals.totalAmount,
-  paymentMethod: paymentMethod || "cash",
-  paymentStatus: "pending",
-  status: "pending",
-  orderNumber: generateOrderNumber(),
-  notes: notes || "",
-  estimatedTime: 25,
-  customerInfo: {
-    name: (customerInfo && customerInfo.name) || (reqUser?.name) || "",
-    phone: (customerInfo && customerInfo.phone) || (reqUser?.phoneNumber?.toString()) || "",
-    email: (customerInfo && customerInfo.email) || (reqUser?.email) || "",
-  }
-}
+      cartId: cart._id,
+      userId: orderUserIdString,
+      customerId: customerId ? new mongoose.Types.ObjectId(customerId) : null,
+      serviceType,
+      tableNumber: serviceType === "dine-in" ? String(tableNumber ?? "") : null,
+      items,
+      subtotal: totals.subtotal,
+      vat: totals.tax,
+      deliveryFee: totals.deliveryFee,
+      discount: totals.discount,
+      totalAmount: totals.totalAmount,
+      paymentMethod: paymentMethod || "cash",
+      paymentStatus: "pending",
+      status: "pending",
+      orderNumber: generateOrderNumber(),
+      notes: notes || "",
+      estimatedTime: 25,
+      customerInfo: {
+        name: (customerInfo && customerInfo.name) || (reqUser?.name) || "",
+        phone: (customerInfo && customerInfo.phone) || (reqUser?.phoneNumber?.toString()) || "",
+        email: (customerInfo && customerInfo.email) || (reqUser?.email) || "",
+      }
+    }
     const created = await orderRepo.create(order);
     return created;
   }
-//////////////////////////////////////////////////////////////////////////diresct order
+  //////////////////////////////////////////////////////////////////////////diresct order
   async createDirectOrder(orderData, identity = {}) {
-  if (!orderData.items || orderData.items.length === 0) {
-    throw new Error("Order must contain at least one item.");
+    if (!orderData.items || orderData.items.length === 0) {
+      throw new Error("Order must contain at least one item.");
+    }
+
+    const { user: reqUser = null } = identity;
+
+    // Calculate totals
+    const totals = calculateOrderTotals(
+      orderData.items,
+      orderData.taxRate ?? 0.14,
+      orderData.deliveryFee ?? 0,
+      orderData.discount ?? 0
+    );
+
+    const customerId = reqUser ? new mongoose.Types.ObjectId(reqUser._id) : null;
+
+    const order = {
+      ...orderData,
+      isDirectOrder: true, // important to skip cartId requirement
+      userId: orderData.userId ?? (reqUser ? reqUser._id.toString() : null),
+      customerId,
+      subtotal: totals.subtotal,
+      vat: totals.tax,
+      deliveryFee: totals.deliveryFee,
+      discount: totals.discount,
+      totalAmount: totals.totalAmount,
+      paymentStatus: "pending",
+      status: "pending",
+      orderNumber: generateOrderNumber(),
+    };
+
+    // Ensure each item has unit price and totalPrice
+    order.items = order.items.map(item => ({
+      ...item,
+      price: item.price ?? item.totalPrice / item.quantity,
+      totalPrice: item.totalPrice
+    }));
+
+    const created = await orderRepo.create(order);
+    return created;
   }
-
-  const { user: reqUser = null } = identity;
-
-  // Calculate totals
-  const totals = calculateOrderTotals(
-    orderData.items,
-    orderData.taxRate ?? 0.14,
-    orderData.deliveryFee ?? 0,
-    orderData.discount ?? 0
-  );
-
-  const customerId = reqUser ? new mongoose.Types.ObjectId(reqUser._id) : null;
-
-  const order = {
-    ...orderData,
-    isDirectOrder: true, // important to skip cartId requirement
-    userId: orderData.userId ?? (reqUser ? reqUser._id.toString() : null),
-    customerId,
-    subtotal: totals.subtotal,
-    vat: totals.tax,
-    deliveryFee: totals.deliveryFee,
-    discount: totals.discount,
-    totalAmount: totals.totalAmount,
-    paymentStatus: "pending",
-    status: "pending",
-    orderNumber: generateOrderNumber()
-  };
-
-  // Ensure each item has unit price and totalPrice
-  order.items = order.items.map(item => ({
-    ...item,
-    price: item.price ?? item.totalPrice / item.quantity,
-    totalPrice: item.totalPrice
-  }));
-
-  const created = await orderRepo.create(order);
-  return created;
-}
 
 
   // ===== Other service methods =====
@@ -108,7 +109,8 @@ class OrderService {
 
   async updateStatus(orderId, newStatus) {
     const validStatuses = ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"];
-    if (!validStatuses.includes(newStatus)) throw new Error("Invalid order status");
+    if (!validStatuses.includes(newStatus)) {throw new Error("Invalid order status");}
+    if (newStatus === "completed") { await earningPoints(orderId); }
     return orderRepo.updateStatus(orderId, newStatus);
   }
 
@@ -151,31 +153,31 @@ class OrderService {
   }
 
   async updateOwnOrder(userId, orderId, updates) {
-  const order = await orderRepo.findById(orderId);
-  if (!order) throw new Error("Order not found");
+    const order = await orderRepo.findById(orderId);
+    if (!order) throw new Error("Order not found");
 
-  // Check ownership
-  if (order.userId.toString() !== userId.toString()) {
-    throw new Error("You can only update your own order");
-  }
-
-  // Only allow editing while order is still draft / pending
-  if (order.status !== "pending") {
-    throw new Error("Cannot modify an order after submission");
-  }
-
-  // Only allow certain fields to be updated
-  const allowedFields = ["notes", "tableNumber", "customerInfo", "items"];
-
-  const filteredUpdates = {};
-  Object.keys(updates || {}).forEach((key) => {
-    if (allowedFields.includes(key)) {
-      filteredUpdates[key] = updates[key];
+    // Check ownership
+    if (order.userId.toString() !== userId.toString()) {
+      throw new Error("You can only update your own order");
     }
-  });
 
-  return orderRepo.update(orderId, filteredUpdates);
-}
+    // Only allow editing while order is still draft / pending
+    if (order.status !== "pending") {
+      throw new Error("Cannot modify an order after submission");
+    }
+
+    // Only allow certain fields to be updated
+    const allowedFields = ["notes", "tableNumber", "customerInfo", "items"];
+
+    const filteredUpdates = {};
+    Object.keys(updates || {}).forEach((key) => {
+      if (allowedFields.includes(key)) {
+        filteredUpdates[key] = updates[key];
+      }
+    });
+
+    return orderRepo.update(orderId, filteredUpdates);
+  }
 }
 
 export default new OrderService();

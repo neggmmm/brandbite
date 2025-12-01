@@ -13,7 +13,7 @@ const OrderItemSchema = new mongoose.Schema(
     selectedOptions: { type: Object, default: {} },
     price: { type: Number, required: true },
     totalPrice: { type: Number, required: true }, // ADDED: price * quantity
-    itemPoints: { type: Number, default: 0 }, // Snapshot of reward points
+    totalPoints: { type: Number, default: 0 }, // Snapshot of reward points
   },
   { _id: true }
 );
@@ -111,9 +111,6 @@ isDirectOrder: { type: Boolean, default: false },
     estimatedTime: { type: Number, default: 25 }, // ADDED: Estimated preparation time in minutes
     notes: { type: String, default: "" },
 
-    // Rewards & Points
-    pointsUsed: { type: Number, default: 0 },
-    rewardPointsEarned: { type: Number, default: 0 },
   },
   { 
     timestamps: true,
