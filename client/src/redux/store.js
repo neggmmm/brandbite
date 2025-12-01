@@ -1,12 +1,24 @@
 import { configureStore } from "@reduxjs/toolkit";
 import rewardReducer from "./slices/rewardSlice";
-import orderUserSlice from "./slices/orderUser.slice";
-import cartSlice from "./slices/cartSlice"; // Import the cart slice 
+import authReducer from "./slices/authSlice";
+import productReducer from "./slices/ProductSlice";
+import categoryReducer from "./slices/CategorySlice";
+import cartReducer from "./slices/cartSlice";
+import reviewReducer from "./slices/reviewSlice";
+import chatbotReducer from "./slices/chatbotSlice";
+import orderReducer from "./slices/orderSlice";
+
+
 
 export const store = configureStore({
   reducer: {
     reward: rewardReducer,
-    orderUser: orderUserSlice,
-     cart: cartSlice, // Add this line
+    auth: authReducer,
+    product: productReducer,
+    category: categoryReducer,
+    cart: cartReducer,
+    reviews: reviewReducer,
+    chatbot: chatbotReducer,
+    order: orderReducer,
   },
 });
