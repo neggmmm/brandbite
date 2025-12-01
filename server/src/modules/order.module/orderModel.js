@@ -5,7 +5,7 @@ const OrderItemSchema = new mongoose.Schema(
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true,
+      required: false,
     },
     name: { type: String, required: true },
     image: { type: String, default: "" }, // Changed from 'img' to 'image' for consistency
@@ -122,6 +122,13 @@ toObject: { virtuals: true }
 }
 
 );
+// Applied reward metadata for reward-based orders
+OrderSchema.add({
+  appliedReward: {
+    rewardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Reward' },
+    rewardRedemptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'RewardOrder' },
+  }
+});
 
 // Virtual for order duration
 OrderSchema.virtual('duration').get(function() {
