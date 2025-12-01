@@ -31,7 +31,7 @@ export default function CombinedNavbar() {
       {/* BACKDROP (only visible on md and up when sidebar is open) */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden md:block"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden md:block "
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -40,12 +40,12 @@ export default function CombinedNavbar() {
       <aside
         className={`
           hidden md:block
-          fixed left-0 top-0 h-full bg-surface shadow-sm transition-all duration-300 z-50
+          fixed left-0 top-0 h-full bg-surface shadow-sm transition-all duration-300 z-50 
           ${isOpen ? "w-52" : "w-16"}
         `}
         onClick={(e) => e.stopPropagation()} // prevent backdrop clicks from bubbling inside
       >
-        <div className="flex flex-col h-full py-4 gap-2">
+        <div className="flex flex-col h-full py-4 gap-2 dark:bg-black">
           {/* Toggle Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
