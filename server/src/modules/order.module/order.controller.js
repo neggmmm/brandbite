@@ -1,5 +1,6 @@
 import orderService from "./order.service.js";
 import { notificationService } from "../../../server.js";
+import pushNotificationService from "../notification/pushNotification.service.js";
 
 // ==============================
 // CREATE ORDER FROM CART
@@ -71,13 +72,18 @@ export const createOrderFromCart = async (req, res) => {
       customerInfo,
     });
 
-    // Optional Notification
+    // Optional Notification to admin
     await notificationService?.sendToAdmin({
       title: "New Order",
       message: `A new order was created by ${order.customerInfo?.name || "Guest"}`,
       orderId: order._id,
-      estimatedReadyTime: order.formattedEstimatedTime, // Add estimated time to notification
+      estimatedReadyTime: order.formattedEstimatedTime,
     });
+
+    // Send push notification to user
+    if (order.userId) {
+      await pushNotificationService.notifyOrderCreated(order.userId, order);
+    }
 
     res.status(201).json({ 
       success: true, 
