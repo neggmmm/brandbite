@@ -1,7 +1,7 @@
 {
-  "name": "Restaurant Order System",
+  "name": "Brand Bite",
   "short_name": "Restaurant",
-  "description": "Order food and get real-time notifications",
+  "description": "Order food",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,7 +9,7 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/images/logo/logo-icon.svg",
+      "src": "/icon.png",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
