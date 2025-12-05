@@ -23,7 +23,7 @@ import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 import { SettingsProvider } from "./context/SettingContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
-import CashierOrders from "./pages/admin/CashierOrders";
+import CashierDashboard from "./pages/cashier/CashierDashboard";
 import KitchenOrders from "./pages/admin/KitchenOrders";
 import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
@@ -74,7 +74,7 @@ function App() {
               path="/cashier"
               element={
                 <ProtectedRoute roles={["cashier", "admin"]}>
-                  <CashierOrders />
+                  <CashierDashboard />
                 </ProtectedRoute>
               }
             />

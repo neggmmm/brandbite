@@ -1,0 +1,204 @@
+// OrdersTab.jsx - View and manage existing orders
+import React, { useState, useEffect } from "react";
+import { Loader2, Trash2, AlertCircle } from "lucide-react";
+import api from "../../../api/axios";
+import { useToast } from "../../../hooks/useToast";
+import FilterBar from "./FilterBar";
+import SortBar from "./SortBar";
+import OrderCard from "./OrderCard";
+import OrderDetailsModal from "./OrderDetailsModal";
+import StatusUpdateModal from "./StatusUpdateModal";
+import PaymentUpdateModal from "./PaymentUpdateModal";
+
+export default function OrdersTab() {
+  const toast = useToast();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeSort, setActiveSort] = useState("newest");
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [statusUpdateOrder, setStatusUpdateOrder] = useState(null);
+  const [paymentUpdateOrder, setPaymentUpdateOrder] = useState(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [updatingPayment, setUpdatingPayment] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
+  // Fetch orders
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/api/orders");
+      setOrders(response.data.data || response.data || []);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast.error("Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter and sort orders
+  const filteredOrders = orders
+    .filter((order) => activeFilter === "all" || order.status === activeFilter)
+    .sort((a, b) => {
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      const aItems = a.items?.length || 0;
+      const bItems = b.items?.length || 0;
+      const aPrep = bTime - aTime; // Prep time in ms
+      const bPrep = bTime - bTime; // Prep time in ms
+
+      switch (activeSort) {
+        case "newest":
+          return bTime - aTime;
+        case "oldest":
+          return aTime - bTime;
+        case "shortest_prep":
+          return aPrep - bPrep;
+        case "longest_prep":
+          return bPrep - aPrep;
+        case "fewest_items":
+          return aItems - bItems;
+        case "most_items":
+          return bItems - aItems;
+        default:
+          return 0;
+      }
+    });
+
+  const handleUpdateStatus = async (orderId, newStatus) => {
+    try {
+      setUpdatingStatus(true);
+      const response = await api.patch(`/api/orders/${orderId}/status`, {
+        status: newStatus,
+      });
+
+      setOrders(orders.map((o) => (o._id === orderId ? response.data : o)));
+      toast.success("Order status updated");
+      setStatusUpdateOrder(null);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update order status");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleUpdatePayment = async (orderId, newPaymentStatus) => {
+    try {
+      setUpdatingPayment(true);
+      const response = await api.patch(`/api/orders/${orderId}/payment`, {
+        paymentStatus: newPaymentStatus,
+      });
+
+      setOrders(orders.map((o) => (o._id === orderId ? response.data : o)));
+      toast.success("Payment status updated");
+      setPaymentUpdateOrder(null);
+    } catch (error) {
+      console.error("Error updating payment:", error);
+      toast.error("Failed to update payment status");
+    } finally {
+      setUpdatingPayment(false);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to delete this order?")) {
+      return;
+    }
+
+    try {
+      setDeletingId(orderId);
+      await api.delete(`/api/orders/${orderId}`);
+      setOrders(orders.filter((o) => o._id !== orderId));
+      toast.success("Order deleted");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error("Failed to delete order");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 text-amber-600 animate-spin" />
+          <p className="text-slate-600 font-medium">Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Filters and Sorting */}
+      <FilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+      <SortBar activeSort={activeSort} onSortChange={setActiveSort} />
+
+      {/* Orders Count */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-sm text-blue-900">
+          <span className="font-bold">{filteredOrders.length}</span> order(s) found
+        </p>
+      </div>
+
+      {/* Orders List */}
+      {filteredOrders.length > 0 ? (
+        <div>
+          {filteredOrders.map((order) => (
+            <OrderCard
+              key={order._id}
+              order={order}
+              onViewDetails={setSelectedOrder}
+              onUpdateStatus={setStatusUpdateOrder}
+              onUpdatePayment={setPaymentUpdateOrder}
+              onDelete={handleDeleteOrder}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="bg-slate-50 rounded-lg border-2 border-dashed border-slate-300 p-12 text-center">
+          <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No Orders Found</h3>
+          <p className="text-slate-600">
+            {activeFilter !== "all"
+              ? `There are no ${activeFilter} orders`
+              : "There are no orders yet"}
+          </p>
+        </div>
+      )}
+
+      {/* Modals */}
+      {selectedOrder && (
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+        />
+      )}
+
+      {statusUpdateOrder && (
+        <StatusUpdateModal
+          order={statusUpdateOrder}
+          onClose={() => setStatusUpdateOrder(null)}
+          onUpdate={handleUpdateStatus}
+          loading={updatingStatus}
+        />
+      )}
+
+      {paymentUpdateOrder && (
+        <PaymentUpdateModal
+          order={paymentUpdateOrder}
+          onClose={() => setPaymentUpdateOrder(null)}
+          onUpdate={handleUpdatePayment}
+          loading={updatingPayment}
+        />
+      )}
+    </div>
+  );
+}
