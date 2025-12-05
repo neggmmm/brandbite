@@ -1,6 +1,7 @@
 import { env } from "../../../config/env.js";
 import {
   forgetPasswordService,
+  googleAuthService,
   loginUserService,
   logoutUserService,
   registerUserService,
@@ -138,26 +139,24 @@ export const googleCallbackController = async (req, res) => {
 
   try {
     const { refreshToken, accessToken, user } = await googleAuthService(code);
+
     res.cookie("accessToken", accessToken, cookieOptions);
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({
-      message: "Logged in successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
-
-    res.redirect(env.frontendUrl);
+    // Redirect to frontend instead of sending JSON
+    res.redirect(
+      `${env.frontendUrl}?name=${encodeURIComponent(
+        user.name
+      )}&email=${encodeURIComponent(user.email)}`
+    );
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
 export const logoutController = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
