@@ -9,8 +9,8 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import RegistrationPage from "./pages/RegisterationPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
-import { getMe } from "./redux/slices/authSlice";
+import { useEffect, useState } from "react";
+import { getMe, refreshToken } from "./redux/slices/authSlice";
 import LoginPage from "./pages/LoginPage";
 import PrivateRoute from "./components/PrivateRoute";
 import CartPage from "./pages/CartPage";
@@ -21,13 +21,20 @@ import ForgotPassword from "./pages/ForgetPassword";
 import ResetPassword from "./pages/ResetPassword";
 
 function App() {
-  const { loadingGetMe } = useSelector((state) => state.auth);
-
+  const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
+  const [checked, setChecked] = useState(false);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getMe());
-  }, []);
+    if (!isAuthenticated && !checked) {
+      const verifyUser = async () => {
+        await dispatch(refreshToken()); // refresh token first
+        await dispatch(getMe()); // then fetch user info
+        setChecked(true);
+      };
+      verifyUser();
+    }
+  }, [dispatch, isAuthenticated, checked]);
 
   if (loadingGetMe) {
     return <LoadingSpinner />;

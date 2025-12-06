@@ -105,6 +105,20 @@ export const resetPassword = createAsyncThunk(
   }
 );
 
+export const refreshToken = createAsyncThunk(
+  "auth/refreshToken",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.post("/auth/refresh");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to refresh token"
+      );
+    }
+  }
+);
+
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
@@ -279,6 +293,21 @@ const authSlice = createSlice({
       })
       .addCase(resetPassword.rejected, (state, action) => {
         state.loadingReset = false;
+        state.error = action.payload;
+      })
+      .addCase(refreshToken.pending, (state) => {
+        state.loadingRefresh = true;
+        state.error = null;
+      })
+      .addCase(refreshToken.fulfilled, (state, action) => {
+        state.loadingRefresh = false;
+        state.user = action.payload.user;
+        state.isAuthenticated = true;
+      })
+      .addCase(refreshToken.rejected, (state, action) => {
+        state.loadingRefresh = false;
+        state.user = null;
+        state.isAuthenticated = false;
         state.error = action.payload;
       });
   },
