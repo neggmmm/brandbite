@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import rewardReducer from "./slices/rewardSlice";
 import authReducer from "./slices/authSlice";
+import usersReducer from "./slices/usersSlice";
 import productReducer from "./slices/ProductSlice";
 import categoryReducer from "./slices/CategorySlice";
 import cartReducer from "./slices/cartSlice";
@@ -14,12 +15,12 @@ import cashierReducer from "./slices/cashierSlice";
 
 import rewardOrderReducer from "./slices/rewardOrderSlice";
 
-
 export const store = configureStore({
   reducer: {
     reward: rewardReducer,
     rewardOrders: rewardOrderReducer,
     auth: authReducer,
+    users: usersReducer,
     product: productReducer,
     category: categoryReducer,
     cart: cartReducer,
