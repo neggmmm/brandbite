@@ -139,7 +139,7 @@ export default function OrdersTab() {
       setOrders(response.data.data || response.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      toast.error("Failed to load orders");
+      toast.showToast({message:"Failed to load orders"});
     } finally {
       setLoading(false);
     }
@@ -183,11 +183,11 @@ export default function OrdersTab() {
 
       const updatedOrder = response.data.data || response.data;
       setOrders(orders.map((o) => (o._id === orderId ? updatedOrder : o)));
-      toast.success("Order status updated");
+      toast.showToast({message:"Order status updated"});
       setStatusUpdateOrder(null);
     } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update order status");
+
+      toast.showToast({message:"Failed to update order status"});
     } finally {
       setUpdatingStatus(false);
     }
@@ -202,11 +202,11 @@ export default function OrdersTab() {
 
       const updatedOrder = response.data.data || response.data;
       setOrders(orders.map((o) => (o._id === orderId ? updatedOrder : o)));
-      toast.success("Payment status updated");
+      toast.showToast({message:"Payment status updated"});
       setPaymentUpdateOrder(null);
     } catch (error) {
       console.error("Error updating payment:", error);
-      toast.error("Failed to update payment status");
+      toast.showToast({message:"Failed to payment status"});
     } finally {
       setUpdatingPayment(false);
     }
@@ -221,10 +221,10 @@ export default function OrdersTab() {
       setDeletingId(orderId);
       await api.delete(`/api/orders/${orderId}`);
       setOrders(orders.filter((o) => o._id !== orderId));
-      toast.success("Order deleted");
+      toast.showToast({message:"Order deleted"});
     } catch (error) {
       console.error("Error deleting order:", error);
-      toast.error("Failed to delete order");
+      toast.showToast({message:"Failed to delete order"});
     } finally {
       setDeletingId(null);
     }
