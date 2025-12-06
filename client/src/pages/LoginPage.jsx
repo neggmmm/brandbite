@@ -176,6 +176,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser, getMe } from "../redux/slices/authSlice";
+import GoogleLoginButton from "../components/GoogleLoginButton";
 import { Mail, Lock, ArrowLeft, ChefHat } from "lucide-react";
 
 export default function LoginPage() {
@@ -385,6 +386,18 @@ export default function LoginPage() {
               </p>
             </div>
           </div>
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 text-sm">
+              Forgot password?{" "}
+              <Link
+                to="/forgot-password"
+                className="primary font-semibold hover:underline"
+              >
+                Reset Password
+              </Link>
+            </p>
+          </div>
+          <GoogleLoginButton />
         </div>
       </div>
     </div>

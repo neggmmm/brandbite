@@ -8,13 +8,18 @@ import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import RegistrationPage from "./pages/RegisterationPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
-import { useDispatch } from "react-redux";
-import { useEffect } from "react";
-import { getMe } from "./redux/slices/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { getMe, refreshToken } from "./redux/slices/authSlice";
 import LoginPage from "./pages/LoginPage";
+import PrivateRoute from "./components/PrivateRoute";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import Chatbot from "./components/chatbot/Chatbot";
+import LoadingSpinner from "./components/LoadingSpinner";
+import GoogleSuccess from "./components/GoogleSuccess";
+import ForgotPassword from "./pages/ForgetPassword";
+import ResetPassword from "./pages/ResetPassword";
 import OrdersPage from "./pages/orders/OrdersPage";
 import OrderDetailsPage from "./pages/orders/OrderDetailsPage";
 import PaymentPage from "./pages/PaymentPage";
@@ -32,9 +37,24 @@ import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
 import { requestNotificationPermission } from './utils/notifications';
 function App() {
+  const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
+  const [checked, setChecked] = useState(false);
   const dispatch = useDispatch();
 
   useEffect(() => {
+    if (!isAuthenticated && !checked) {
+      const verifyUser = async () => {
+        await dispatch(refreshToken()); // refresh token first
+        await dispatch(getMe()); // then fetch user info
+        setChecked(true);
+      };
+      verifyUser();
+    }
+  }, [dispatch, isAuthenticated, checked]);
+
+  if (loadingGetMe) {
+    return <LoadingSpinner />;
+  }
     // Only try to auto-fetch the current user if we know
     // there was a previous authenticated session.
     if (typeof window !== "undefined") {
@@ -63,6 +83,9 @@ function App() {
             <Route path="/register" element={<RegistrationPage />} />
             <Route path="/verifyOtp" element={<VerifyOtpPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/google/success" element={<GoogleSuccess />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/cart" element={<CartPage />} />

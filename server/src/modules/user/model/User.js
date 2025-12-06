@@ -20,7 +20,6 @@ const userSchema = new mongoose.Schema(
     googleId: String,
     phoneNumber: {
       type: String,
-      required: [true, "Phone number is required"],
       minlength: [11, "Phone number must be 11 characters long"],
     },
     role: {
@@ -37,7 +36,8 @@ const userSchema = new mongoose.Schema(
       default: 0,
       validate: {
         validator: function (val) {
-          return typeof val === 'number' && val >= 0;
+          // value must be non-negative; allow 0 for customers; admins, etc. can have points but business logic will restrict them as needed
+          return typeof val === "number" && val >= 0;
         },
         message: "Points must be a non-negative number",
       }
