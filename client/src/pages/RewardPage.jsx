@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Gift } from 'lucide-react';
 import { useDispatch, useSelector } from "react-redux";
 import { getAllRewards, redeemReward } from '../redux/slices/rewardSlice';
 import { useToast } from '../hooks/useToast';

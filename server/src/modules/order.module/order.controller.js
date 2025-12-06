@@ -338,7 +338,7 @@ export const updateOrderStatus = async (req, res) => {
       order.estimatedReadyTime = new Date(Date.now() + estimatedTime * 60000);
     }
 
-    await order.save();
+    await order.save({ validateModifiedOnly: true });
 
     // Populate for response
     const populatedOrder = await Order.findById(order._id)
