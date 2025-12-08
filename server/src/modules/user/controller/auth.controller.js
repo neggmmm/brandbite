@@ -14,8 +14,9 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "None" : "Lax",
+  sameSite: isProduction ? "None" : "Lax",  // <- Lax for local
+  secure: isProduction ? true : false,      // <- false for local
+  ...(isProduction && { domain: ".onrender.com" }),
   maxAge: 24 * 60 * 60 * 1000,
 };
 export const registerUserController = async (req, res) => {
