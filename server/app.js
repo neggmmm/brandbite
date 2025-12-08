@@ -43,11 +43,18 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://brandbite-three.vercel.app",
   "https://restaurant-system-zcar.vercel.app",
-  env.frontendUrl, // from your config
-].filter(Boolean); // removes undefined/null
+  env.frontendUrl,
+].filter(Boolean);
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    // allow requests with no origin (like curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, origin);
+    }
+    return callback(new Error('Not allowed by CORS'), false);
+  },
   credentials: true,
 }));
 
