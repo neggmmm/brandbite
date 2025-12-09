@@ -33,6 +33,11 @@ export default function Settings() {
   const [notifyDailySales, setNotifyDailySales] = useState(true);
   const [notifyLowStock, setNotifyLowStock] = useState(false);
 
+  const [aboutTitle, setAboutTitle] = useState(settings.about?.title || "About Us");
+  const [aboutContent, setAboutContent] = useState(settings.about?.content || "");
+  const [supportEmail, setSupportEmail] = useState(settings.support?.email || "");
+  const [supportPhone, setSupportPhone] = useState(settings.support?.phone || "");
+
   useEffect(() => {
     async function loadSettings() {
       const res = await api.get("/api/restaurant");
@@ -48,6 +53,10 @@ export default function Settings() {
       setPrimaryColor(data.branding?.primaryColor || "#FF5733");
       setSecondaryColor(data.branding?.secondaryColor || "#33C3FF");
       setLogoPreview(data.branding?.logoUrl || "");
+      setAboutTitle(data.about?.title || "About Us");
+      setAboutContent(data.about?.content || "");
+      setSupportEmail(data.support?.email || "");
+      setSupportPhone(data.support?.phone || "");
     }
     loadSettings();
   }, []);
@@ -64,6 +73,8 @@ export default function Settings() {
           secondaryColor,
           logoUrl: logoPreview,
         },
+        about: { title: aboutTitle, content: aboutContent },
+        support: { email: supportEmail, phone: supportPhone },
       };
 
       const res = await api.put("/api/restaurant", payload);
@@ -85,8 +96,8 @@ export default function Settings() {
         description="Manage restaurant branding, language and notifications"
       />
       <PageBreadcrumb pageTitle="Settings" />
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
               Restaurant Information
@@ -156,14 +167,7 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline">Cancel</Button>
-            <Button variant="primary" onClick={handleSave}>
-              Save Changes
-            </Button>
-          </div>
         </div>
-
         <div className="space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -269,7 +273,38 @@ export default function Settings() {
               </div>
             </div>
           </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+              About & Support
+            </h3>
+            <div className="mt-5 space-y-5">
+              <div>
+                <Label>About Title</Label>
+                <Input value={aboutTitle} onChange={(e)=>setAboutTitle(e.target.value)} />
+              </div>
+              <div>
+                <Label>About Content</Label>
+                <TextArea rows={4} value={aboutContent} onChange={setAboutContent} />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <Label>Support Email</Label>
+                  <Input value={supportEmail} onChange={(e)=>setSupportEmail(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Support Phone</Label>
+                  <Input value={supportPhone} onChange={(e)=>setSupportPhone(e.target.value)} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+      <div className="mt-6 flex items-center gap-3">
+        <Button variant="outline">Cancel</Button>
+        <Button variant="primary" onClick={handleSave}>
+          Save Changes
+        </Button>
       </div>
     </>
   );

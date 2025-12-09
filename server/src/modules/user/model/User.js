@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
       minlength: [6, "Password must be at least 6 characters long"],
     },
     googleId: String,
+    avatarUrl: { type: String, default: "" },
     phoneNumber: {
       type: String,
       minlength: [11, "Phone number must be 11 characters long"],
