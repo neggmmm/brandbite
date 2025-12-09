@@ -8,6 +8,8 @@ import requestIdMiddleware from "../../middlewares/requestId.middleware.js";
 const router = express.Router();
 // ============= PUBLIC/GUEST ROUTES =============
 
+// Ensure guest ID is generated and cookie is set
+router.get("/guest-id", optionalAuthMiddleware, orderController.getGuestId);
 
 router.post("/from-cart", optionalAuthMiddleware, orderController.createOrderFromCart);
 router.post("/direct", optionalAuthMiddleware, orderController.createDirectOrder);
