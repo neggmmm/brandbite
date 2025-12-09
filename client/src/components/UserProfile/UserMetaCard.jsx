@@ -1,13 +1,28 @@
 import { useModal } from "../../hooks/useModal";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import api from "../../api/axios";
+import { setUser } from "../../redux/slices/authSlice";
 
 export default function UserMetaCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user } = useSelector((s) => s.auth || {});
+  const dispatch = useDispatch();
+  const uploadAvatar = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("avatar", file);
+    try {
+      const res = await api.post("/users/me/avatar", fd);
+      if (res?.data?.user) dispatch(setUser(res.data.user));
+    } catch (err) {
+      console.error("Avatar upload failed", err);
+    }
+  };
   const handleSave = () => {
     // Handle save logic here
     console.log("Saving changes...");
@@ -19,8 +34,12 @@ export default function UserMetaCard() {
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
             <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-              <img src="/images/user/owner.jpg" alt="user" />
+              <img src={user?.avatarUrl || "/images/user/owner.jpg"} alt="user" className="w-full h-full object-cover" />
             </div>
+            <label className="hidden xl:block cursor-pointer text-xs px-3 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              Change Photo
+              <input type="file" accept="image/*" className="hidden" onChange={uploadAvatar} />
+            </label>
             <div className="order-3 xl:order-2">
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
                 {user?.name || "User"}
