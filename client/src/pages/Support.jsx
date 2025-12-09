@@ -46,21 +46,21 @@ export default function Support() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Name</label>
-            <input className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={name} onChange={(e) => setName(e.target.value)} />
+            <input className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={name} onChange={(e)=>setName(e.target.value)} />
           </div>
           <div>
             <label className="text-sm font-medium">Email</label>
-            <input type="email" className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input type="email" className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={email} onChange={(e)=>setEmail(e.target.value)} />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Subject</label>
-            <input className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={subject} onChange={(e) => setSubject(e.target.value)} />
+            <input className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={subject} onChange={(e)=>setSubject(e.target.value)} />
           </div>
           <div>
             <label className="text-sm font-medium">Type</label>
-            <select className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={type} onChange={(e) => setType(e.target.value)}>
+            <select className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={type} onChange={(e)=>setType(e.target.value)}>
               <option value="feedback">Feedback</option>
               <option value="complaint">Complaint</option>
               <option value="other">Other</option>
@@ -69,7 +69,7 @@ export default function Support() {
         </div>
         <div>
           <label className="text-sm font-medium">Message</label>
-          <textarea rows={5} className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={message} onChange={(e) => setMessage(e.target.value)} />
+          <textarea rows={5} className="mt-1 w-full border border-gray-200 dark:border-gray-800 rounded-lg p-2" value={message} onChange={(e)=>setMessage(e.target.value)} />
         </div>
         <div className="flex items-center gap-3">
           <button type="submit" className="px-5 py-2 rounded-lg bg-primary text-white">Send</button>

@@ -1,5 +1,6 @@
 import { useModal } from "../../hooks/useModal";
 import { useSelector, useDispatch } from "react-redux";
+import { useState } from "react";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
@@ -11,13 +12,16 @@ export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user } = useSelector((s) => s.auth || {});
   const dispatch = useDispatch();
+  const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
+  const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
+  const [phone, setPhone] = useState(user?.phoneNumber || "");
   const handleSave = async () => {
     try {
       const payload = {
-        name: `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`.trim(),
-        phoneNumber: document.getElementById('phone').value
+        name: `${firstName} ${lastName}`.trim(),
+        phoneNumber: phone
       };
-      const res = await api.patch('/api/users/me', payload);
+      const res = await api.patch('/users/me', payload);
       if (res?.data?.user) dispatch(setUser(res.data.user));
       closeModal();
     } catch (err) {
@@ -156,12 +160,12 @@ export default function UserInfoCard() {
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
                     <Label>First Name</Label>
-                    <Input id="firstName" type="text" value={user?.name?.split(" ")[0] || ""} />
+                    <Input type="text" value={firstName} onChange={(e)=>setFirstName(e.target.value)} />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Last Name</Label>
-                    <Input id="lastName" type="text" value={user?.name?.split(" ").slice(1).join(" ") || ""} />
+                    <Input type="text" value={lastName} onChange={(e)=>setLastName(e.target.value)} />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
@@ -171,7 +175,7 @@ export default function UserInfoCard() {
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Phone</Label>
-                    <Input id="phone" type="text" value={user?.phoneNumber || ""} />
+                    <Input type="text" value={phone} onChange={(e)=>setPhone(e.target.value)} />
                   </div>
 
                   <div className="col-span-2">
