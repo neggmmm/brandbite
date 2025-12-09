@@ -1,4 +1,4 @@
-import { Home, Utensils, Clock4, Star, Gift, ShoppingCart, User, LogOut, LifeBuoy } from "lucide-react";
+import { Home, Utensils, Clock4, Star, Gift, ShoppingCart, User, LogOut, HelpCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from "react-redux";
@@ -128,7 +128,7 @@ export default function Navbar() {
         to="/support"
         className={`flex flex-col items-center transition-colors ${isActive("/support") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}
       >
-        <LifeBuoy size={20} />
+        <HelpCircle size={20} />
         <span className="text-xs">Support</span>
       </Link>
 

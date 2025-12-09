@@ -23,7 +23,7 @@ const restaurantSchema = new mongoose.Schema(
       default: "",
     },
 
-    branding: {
+  branding: {
       primaryColor: {
         type: String,
         default: "#2563eb", // fallback
@@ -44,7 +44,18 @@ const restaurantSchema = new mongoose.Schema(
       dailySales: { type: Boolean, default: true },
       lowStock: { type: Boolean, default: false },
     },
+
+
+  about: {
+    title: { type: String, default: "About Us" },
+    content: { type: String, default: "" },
   },
+
+  support: {
+    email: { type: String, default: "" },
+    phone: { type: String, default: "" },
+  },
+},
   { timestamps: true }
 );
 
