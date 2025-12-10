@@ -10,9 +10,13 @@
       ]
     }
   ],
-  "rewrites": [
+ "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/:path*",
+      "destination": "https://brand-bite.onrender.com/api/:path*"
+    },
+    {
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
