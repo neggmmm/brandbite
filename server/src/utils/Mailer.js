@@ -13,17 +13,28 @@ console.log("Email config check:");
 console.log("Email User:", env.emailUser);
 console.log("Email Pass exists:", !!env.emailPass); // Check if password exists
 
-export async function sendEmail(to, subject, text) {
+export async function sendEmail(to, subject, text, html = null) {
   try {
     console.log(`Attempting to send email to: ${to}`);
     console.log(`Subject: ${subject}`);
     
-    const info = await transporter.sendMail({
+    if (!env.emailUser || !env.emailPass) {
+      throw new Error("Email credentials not configured (EMAIL_USER or EMAIL_PASS missing)");
+    }
+    
+    const mailOptions = {
       from: env.emailUser,
       to,
       subject,
       text,
-    });
+    };
+    
+    // Add HTML if provided
+    if (html) {
+      mailOptions.html = html;
+    }
+    
+    const info = await transporter.sendMail(mailOptions);
     
     console.log("Email sent successfully! Message ID:", info.messageId);
     return info;
