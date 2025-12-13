@@ -17,7 +17,7 @@ const isProduction = process.env.NODE_ENV === "production";
 // and enable `SameSite=None; Secure` in production for cross-site cookie usage.
 const cookieOptionsBase = {
   httpOnly: true,
-  sameSite: isProduction ? "none" : "Lax",
+  sameSite: "Lax", // Changed from conditional to always Lax for proxy setup
   secure: isProduction,
   maxAge: 24 * 60 * 60 * 1000,
   path: "/",
