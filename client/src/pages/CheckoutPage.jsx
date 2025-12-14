@@ -5,6 +5,7 @@ import { createOrderFromCart } from "../redux/slices/orderSlice";
 import { useNavigate } from "react-router-dom";
 import { updateCartQuantity, deleteProductFromCart, addToCart, getCartForUser, clearCart } from "../redux/slices/cartSlice";
 import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gift, X } from "lucide-react";
+import PointsModal from "../components/PointsModal";
 import api from "../api/axios";
 
 // Leaflet imports (same as before)
@@ -203,6 +204,12 @@ export default function CheckoutPage() {
     setPromoCode("");
     setCouponError("");
   };
+
+  // Calculate total points from cart items
+  const totalPoints = products.reduce((acc, item) => {
+    const productPoints = item.productId?.productPoints || 0;
+    return acc + (productPoints * item.quantity);
+  }, 0);
 
   // Handle order submission
   const handleSubmit = async () => {
@@ -465,6 +472,11 @@ export default function CheckoutPage() {
               <Plus className="w-5 h-5" />
               Add other items
             </button>
+
+            {/* Points Modal - Always Visible */}
+            {totalPoints > 0 && (
+              <PointsModal totalPoints={totalPoints} />
+            )}
           </div>
 
           {/* Right Column - Order Summary */}
