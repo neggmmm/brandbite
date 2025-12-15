@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, useEffect, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { useLocation } from "react-router-dom";
 import io from "socket.io-client";
 
@@ -7,7 +14,9 @@ const NotificationContext = createContext(undefined);
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error("useNotifications must be used within a NotificationProvider");
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
   }
   return context;
 };
@@ -21,203 +30,186 @@ export const NotificationProvider = ({ children }) => {
     hasMore: true,
     loading: false,
   });
+
   const socketRef = useRef(null);
   const location = useLocation();
-  const isOnReviewsPage = location.pathname === "/admin/reviews";
-  const envBase = import.meta.env.VITE_API_BASE_URL;
-  const BASE_URL = envBase || `${window.location.protocol}//${window.location.hostname}:5000`;
-  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || BASE_URL;
-  useEffect(() => {
-    // Only initialize socket for admin pages
-    if (!location.pathname.startsWith("/admin")) {
-      return;
-    }
 
-    // Fetch persisted notifications for admin area
-    const fetchNotifications = async (page = 1, append = false) => {
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || BASE_URL;
+
+  /* =========================
+     FETCH NOTIFICATIONS
+  ========================== */
+  const fetchNotifications = useCallback(
+    async (page = 1, append = false) => {
       try {
         setPagination(prev => ({ ...prev, loading: true }));
-        const url = `${BASE_URL.replace(/\/$/, "")}/api/notifications?page=${page}&limit=20`;
-        const res = await fetch(url, { credentials: "include" });
+
+        const res = await fetch(
+          `${BASE_URL}/api/notifications?page=${page}&limit=${pagination.limit}`,
+          { credentials: "include" }
+        );
+
+        if (!res.ok) throw new Error("Fetch failed");
+
         const json = await res.json();
-        if (json && json.notifications) {
-          // Normalize ids and set as current notifications
-          const normalized = json.notifications.map((n) => ({ ...n, id: n._id || n.id }));
-          
-          if (append) {
-            setNotifications(prev => {
-              const newNotifications = [...prev, ...normalized];
-              setUnreadCount(newNotifications.filter((n) => !n.isRead).length);
-              return newNotifications;
-            });
-          } else {
-            setNotifications(normalized);
-            setUnreadCount(normalized.filter((n) => !n.isRead).length);
-          }
+
+        if (json?.notifications) {
+          const normalized = json.notifications.map(n => ({
+            ...n,
+            id: n._id || n.id,
+          }));
+
+          setNotifications(prev => {
+            const updated = append
+              ? [...prev, ...normalized]
+              : normalized;
+
+            setUnreadCount(updated.filter(n => !n.isRead).length);
+            return updated;
+          });
+
+          setPagination(prev => ({
+            ...prev,
+            page,
+            hasMore: json.pagination?.hasMore ?? false,
+            loading: false,
+          }));
         }
       } catch (err) {
-        console.error("Failed to fetch admin notifications", err);
+        console.error("Failed to fetch notifications", err);
         setPagination(prev => ({ ...prev, loading: false }));
       }
-    };
+    },
+    [BASE_URL, pagination.limit]
+  );
+
+  /* =========================
+     SOCKET + INITIAL LOAD
+  ========================== */
+  useEffect(() => {
+    if (!location.pathname.startsWith("/admin")) return;
+
+    // Initial fetch
     fetchNotifications(1, false);
 
-    // Initialize socket connection (only once)
-    if (!socketRef.current || !socketRef.current.connected) {
-      socketRef.current = io(SOCKET_URL);
-      const socket = socketRef.current;
+    // Create socket ONCE
+    if (socketRef.current) return;
 
-      // Register with admin room when connected
-      socket.on("connect", () => {
-        socket.emit("joinAdmin");
+    const socket = io(SOCKET_URL, {
+      withCredentials: true,
+    });
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      socket.emit("joinAdmin");
+    });
+
+    socket.on("notification", notification => {
+      const currentPath = window.location.pathname;
+      const isOnReviews = currentPath === "/admin/reviews";
+      const isOnRewards = currentPath === "/admin/reward-orders";
+
+      const shouldIgnore =
+        (notification.type === "review" && isOnReviews) ||
+        (notification.type === "reward" && isOnRewards);
+
+      if (shouldIgnore) return;
+
+      const newNotification = {
+        id: notification._id || notification.id,
+        title: notification.title || "New Notification",
+        message: notification.message || "",
+        type: notification.type,
+        createdAt: notification.createdAt || new Date(),
+        isRead: false,
+        reviewId: notification.reviewId,
+        rewardId: notification.rewardId,
+      };
+
+      setNotifications(prev => {
+        const exists = prev.some(n => n.id === newNotification.id);
+        if (exists) return prev;
+
+        const updated = [newNotification, ...prev];
+        setUnreadCount(updated.filter(n => !n.isRead).length);
+        return updated;
       });
+    });
 
-      // Listen for admin notifications (single source of truth for menu notifications)
-      socket.on("notification", (notification) => {
-        console.log("Admin notification received:", notification);
-
-        // Check current pathname when notification arrives
-        const currentPath = window.location.pathname;
-        const isOnReviews = currentPath === "/admin/reviews";
-        const isOnReward = currentPath === "/admin/reward-orders";
-        // Only add review notifications if not on reviews page
-        if (notification.type === "review" && !isOnReviews) {
-          const newNotification = {
-            id: notification._id || notification.id || `review-${Date.now()}`,
-            title: notification.title || "New Review Submitted",
-            message: notification.message || "A new review has been submitted",
-            type: "review",
-            reviewId: notification.reviewId,
-            createdAt: notification.createdAt || new Date(),
-            isRead: false,
-          };
-          setNotifications((prev) => {
-            const exists = prev.some((n) => n.id === newNotification.id || n._id === newNotification.id);
-            if (exists) return prev;
-            return [newNotification, ...prev];
-          });
-          setUnreadCount((prev) => prev + 1);
-        }
-          if (notification.type === "reward" && !isOnReward) {
-          const newNotification = {
-              id: notification._id || notification.id || `Reward-${Date.now()}`,
-            title: notification.title || "Reward Redeemed",
-            message:
-              notification.message ||
-              "A new reward has been submitted",
-            type: "reward",
-            rewardId: notification.rewardId,
-            createdAt: notification.createdAt || new Date(),
-            isRead: false,
-          };
-          setNotifications((prev) => {
-            // Check if notification already exists
-            const exists = prev.some((n) => n.id === newNotification.id);
-            if (exists) return prev;
-            return [newNotification, ...prev];
-          });
-          setUnreadCount((prev) => prev + 1);
-        }
-      });
-
-      // We still listen for `new_review` elsewhere (e.g. in the Reviews page)
-      // to update the list in real time, but we do NOT create a menu
-      // notification here to avoid duplicates.
-    }
-
-    // Cleanup on unmount (only disconnect when leaving admin area)
     return () => {
-      if (!location.pathname.startsWith("/admin") && socketRef.current) {
+      if (socketRef.current) {
         socketRef.current.off("notification");
-        socketRef.current.off("new_review");
         socketRef.current.off("connect");
         socketRef.current.disconnect();
         socketRef.current = null;
       }
     };
-  }, [location.pathname]);
+  }, [location.pathname, fetchNotifications, SOCKET_URL]);
 
-  // Mark notification as read
-  const markAsRead = (notificationId) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId || n._id === notificationId ? { ...n, isRead: true } : n))
+  /* =========================
+     MARK AS READ
+  ========================== */
+  const markAsRead = notificationId => {
+    setNotifications(prev => {
+      const updated = prev.map(n =>
+        n.id === notificationId ? { ...n, isRead: true } : n
+      );
+      setUnreadCount(updated.filter(n => !n.isRead).length);
+      return updated;
+    });
+
+    fetch(`${BASE_URL}/api/notifications/${notificationId}/read`, {
+      method: "PATCH",
+      credentials: "include",
+    }).catch(err =>
+      console.error("Failed to mark notification as read", err)
     );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-
-    // Persist mark as read to server
-    (async () => {
-      try {
-        // Try the conventional endpoint first
-        let res = await fetch(`${BASE_URL}/api/notifications/${notificationId}/read`, { method: "PATCH", credentials: "include" });
-        if (res.status === 404) {
-          // Fallback: some backends expect a read endpoint that accepts body
-          res = await fetch(`${BASE_URL}/api/notifications/read`, {
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: notificationId }),
-          });
-        }
-        if (!res.ok) {
-          console.warn("markAsRead returned non-ok status", res.status);
-        }
-      } catch (err) {
-        console.error("Failed to mark notification as read", err);
-      }
-    })();
   };
 
-  // Mark all as read
+  /* =========================
+     MARK ALL AS READ
+  ========================== */
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setNotifications(prev =>
+      prev.map(n => ({ ...n, isRead: true }))
+    );
     setUnreadCount(0);
 
-    // Persist marks for all unread notifications
-    (async () => {
-      try {
-        const unread = notifications.filter((n) => !n.isRead);
-        await Promise.all(
-          unread.map(async (n) => {
-            let res = await fetch(`${BASE_URL}/api/notifications/${n._id || n.id}/read`, { method: "PATCH", credentials: "include" });
-            if (res.status === 404) {
-              res = await fetch(`${BASE_URL}/api/notifications/read`, {
-                method: "PATCH",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: n._id || n.id }),
-              });
-            }
-            if (!res.ok) console.warn("markAllAsRead item returned non-ok", res.status);
-          })
-        );
-      } catch (err) {
-        console.error("Failed to mark all notifications as read", err);
-      }
-    })();
+    notifications
+      .filter(n => !n.isRead)
+      .forEach(n => {
+        fetch(`${BASE_URL}/api/notifications/${n.id}/read`, {
+          method: "PATCH",
+          credentials: "include",
+        }).catch(() => {});
+      });
   };
 
-  // Clear notifications
-  const clearNotifications = () => {
-    setNotifications([]);
-    setUnreadCount(0);
-  };
-
-  // Load more notifications
+  /* =========================
+     LOAD MORE
+  ========================== */
   const loadMoreNotifications = () => {
     if (!pagination.loading && pagination.hasMore) {
       fetchNotifications(pagination.page + 1, true);
     }
   };
 
-  // Get unread notifications count
-  const hasUnread = unreadCount > 0;
+  /* =========================
+     CLEAR
+  ========================== */
+  const clearNotifications = () => {
+    setNotifications([]);
+    setUnreadCount(0);
+  };
 
   return (
     <NotificationContext.Provider
       value={{
         notifications,
         unreadCount,
-        hasUnread,
+        hasUnread: unreadCount > 0,
         pagination,
         markAsRead,
         markAllAsRead,
@@ -229,4 +221,3 @@ export const NotificationProvider = ({ children }) => {
     </NotificationContext.Provider>
   );
 };
-
