@@ -46,7 +46,7 @@
   width: 64px;
   height: 64px;
   border-radius: 24px;
-  background:  var(--color-primary);
+  background: var(--color-primary);
   border: none;
   box-shadow: 0 8px 32px rgba(47, 113, 240, 0.3);
   display: flex;
@@ -124,7 +124,7 @@
 /* Header */
 .chatbot-header {
   padding: 20px 24px;
-  background:var(--color-primary);
+  background: var(--color-primary);
   background-size: cover;
   background-position: center;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -199,6 +199,62 @@
   transform: rotate(90deg);
 }
 
+/* Header Menu */
+.header-menu {
+  position: relative;
+}
+
+.menu-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: var(--cb-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  min-width: 160px;
+  z-index: 100;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dark .menu-dropdown {
+  background: #1e293b;
+}
+
+.menu-dropdown button {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: right;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--cb-transition);
+  color: var(--cb-text);
+}
+
+.menu-dropdown button:hover {
+  background: var(--cb-surface);
+}
+
 /* Messages Area */
 .chatbot-messages {
   flex: 1;
@@ -211,7 +267,9 @@
   background: #fafafa;
 }
 
-.dark .chatbot-messages { background: #0f172a; }
+.dark .chatbot-messages {
+  background: #0f172a;
+}
 
 .message {
   display: flex;
@@ -314,7 +372,9 @@
   margin: 8px 0;
 }
 
-.dark .content-table-wrapper { border-color: rgba(255,255,255,0.08); }
+.dark .content-table-wrapper {
+  border-color: rgba(255, 255, 255, 0.08);
+}
 
 .content-table {
   width: 100%;
@@ -496,7 +556,7 @@
 
 .dark .suggestion-btn {
   background: #0b1220;
-  border-color: rgba(255,255,255,0.08);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .suggestion-btn:hover {
@@ -516,7 +576,7 @@
 
 .dark .chatbot-input-area {
   background: #0b1220;
-  border-top-color: rgba(255,255,255,0.06);
+  border-top-color: rgba(255, 255, 255, 0.06);
 }
 
 .input-wrapper {
