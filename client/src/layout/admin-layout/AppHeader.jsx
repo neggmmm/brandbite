@@ -34,7 +34,7 @@ const AppHeader = () => {
     <header className="sticky top-0 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-20">
       {/* Full width container for mobile/tablet, constrained width for desktop */}
       <div className="w-full xl:transition-all xl:duration-300 xl:ease-in-out">
-        <div className="flex items-center justify-between w-full px-4 py-3 xl:px-3 xl:py-4">
+        <div className="flex items-center justify-between w-full px-4 py-3 xl:px-6 xl:py-4">
           {/* Left - Hamburger + Logo */}
           <div className="flex items-center gap-3">
             {/* Hamburger Icon - Visible only on mobile/tablet */}
