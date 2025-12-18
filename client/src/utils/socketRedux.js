@@ -391,8 +391,9 @@ export const initSocket = (options = {}) => {
   if (socketInstance) return socketInstance;
   
   // Determine backend URL with fallback
-  let BASE = import.meta.env.VITE_API_BASE_URL || 
-             import.meta.env.VITE_SOCKET_URL || 
+  let BASE = 
+              import.meta.env.VITE_SOCKET_URL || 
+              import.meta.env.VITE_API_BASE_URL || 
              'https://brand-bite.onrender.com' ||
              window.location.origin;
   
