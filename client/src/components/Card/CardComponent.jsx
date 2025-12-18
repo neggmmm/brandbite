@@ -77,7 +77,7 @@ export default function CardComponent({
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
           >
-            <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-225">
+            <span className="text-2xl inline-block transform transition-transform duration-500 group-hover:rotate-270">
               +
             </span>
           </button>
