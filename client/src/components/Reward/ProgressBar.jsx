@@ -84,7 +84,7 @@ export default function ProgressBar({ Reward }) {
 
     return (
         <div className="relative mt-6">
-            {!user & !Reward && (
+            {!user && !Reward && (
                 <div className="absolute inset-0 p-12 -top-7 -right-6 z-20 flex items-center justify-center bg-white/10 dark:bg-gray-900/10 backdrop-blur-xs rounded-lg">
                     <p className="font-semibold text-center text-sm md:text-xl text-secondary cursor-pointer " onClick={() => navigate("/login")}>
                             {t("Login_Reward")}
@@ -96,14 +96,14 @@ export default function ProgressBar({ Reward }) {
                 <div
                     ref={progressBarRef}
                     className="bg-gradient-to-r from-secondary/50 via-secondary to-secondary h-full rounded-full relative"
-                    style={{ width: `${targetProgress}%` }}
+                    style={{ width: '0%' }}
                 >
                     {/* Animated shine effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
                 </div>
             </div>
             {/* Milestone markers */}
-            <div className="relative w-full">
+            <div className="relative w-full ">
                 {milestones.map((m, i) => {
                     const leftPos = (m / maxMilestone) * 100;
                     const isAchieved = points >= m;

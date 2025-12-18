@@ -18,7 +18,7 @@ export default function MileStones({userName, userPoints, handleViewRedemptions}
                 </button>
               </div>
 
-              <p className="text-4xl font-bold">{userPoints}</p>
+              <p className="text-4xl font-bold text-secondary dark:text-white">{userPoints}</p>
 
               {/* MILESTONE PROGRESS BAR */}
               <ProgressBar Reward/>
