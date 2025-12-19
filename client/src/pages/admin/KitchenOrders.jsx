@@ -196,8 +196,10 @@ export default function KitchenOrders() {
     const order = activeOrders.find(o => o._id === orderId);
     if (!order) return 0;
     
-    // Reward orders are always 100% complete (no preparation needed)
-    if (order.type === 'reward') return 100;
+    if (order.type === 'reward') {
+      // For reward orders, check if the single reward item is prepared
+      return preparationProgress[orderId]?.['reward'] === true ? 100 : 0;
+    }
     
     if (!order.items) return 0;
     
@@ -224,8 +226,9 @@ export default function KitchenOrders() {
     <>
       <PageMeta title="Kitchen Dashboard" description="Prepare and manage orders" />
       
-      {isAdmin &&<PageBreadcrumb pageTitle="Kitchen Dashboard" />}
+      {isAdmin && <PageBreadcrumb pageTitle="Kitchen Dashboard" />}
       {isKitchen && <StaffNavbar />}
+      
       {/* New Order Alert */}
       {newOrderAlert && (
         <div className="mb-4 animate-pulse">
@@ -445,8 +448,8 @@ export default function KitchenOrders() {
                       )}
                     </div>
 
-                    {/* Progress Bar - Only for regular orders */}
-                    {order.status === "preparing" && order.type !== 'reward' && (
+                    {/* Progress Bar */}
+                    {order.status === "preparing" && (
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Preparation Progress</span>
@@ -457,21 +460,6 @@ export default function KitchenOrders() {
                             className="h-full bg-purple-500 transition-all duration-300"
                             style={{ width: `${progress}%` }}
                           />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Reward Order Info */}
-                    {order.type === 'reward' && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">Reward Item</span>
-                          <span className="font-medium text-purple-600">{order.reward?.productId?.name || 'Reward Item'}</span>
-                        </div>
-                        <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-                          <span className="text-sm text-purple-700 dark:text-purple-300">
-                            Ready for pickup - No preparation required
-                          </span>
                         </div>
                       </div>
                     )}
@@ -487,14 +475,41 @@ export default function KitchenOrders() {
                       </span>
                     </div>
 
-                    {/* Items List - Only for regular orders */}
-                    {order.type !== 'reward' && (
-                      <div className="max-h-48 overflow-y-auto">
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                          ITEMS TO PREPARE
-                        </p>
-                        <div className="space-y-2">
-                          {order.items?.map((item, idx) => (
+                    {/* Items List */}
+                    <div className="max-h-48 overflow-y-auto">
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                        ITEMS TO PREPARE
+                      </p>
+                      <div className="space-y-2">
+                        {order.type === 'reward' ? (
+                          <div className="flex items-center justify-between p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                                1x {order.reward?.productId?.name || 'Reward Item'}
+                              </p>
+                              <p className="text-xs text-purple-600 dark:text-purple-400">
+                                Reward Redemption ({order.pointsUsed} pts)
+                              </p>
+                            </div>
+                            {order.status === "preparing" && (
+                              <button
+                                onClick={() => handleItemPreparation(
+                                  order._id, 
+                                  'reward', 
+                                  !preparationProgress[order._id]?.['reward']
+                                )}
+                                className={`ml-2 p-1 rounded ${
+                                  preparationProgress[order._id]?.['reward']
+                                    ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                                }`}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          order.items?.map((item, idx) => (
                             <div
                               key={idx}
                               className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800/50 rounded"
@@ -503,13 +518,11 @@ export default function KitchenOrders() {
                                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                                   {item.quantity}x {item.name}
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                                    <span className="truncate">
-                                      {Object.entries(item.selectedOptions).map(([key, val]) => `${key}: ${val}`).join(', ')}
-                                    </span>
-                                  )}
-                                </p>
+                                {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {Object.entries(item.selectedOptions).map(([key, val]) => `${key}: ${val}`).join(', ')}
+                                  </p>
+                                )}
                               </div>
                               {order.status === "preparing" && (
                                 <button
@@ -528,10 +541,10 @@ export default function KitchenOrders() {
                                 </button>
                               )}
                             </div>
-                          ))}
-                        </div>
+                          ))
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Action Buttons */}
@@ -548,6 +561,14 @@ export default function KitchenOrders() {
                           </Button>
                         )}
                         {order.status === "confirmed" && (
+                          <Button
+                            onClick={() => handleStatusChange(order._id, "preparing")}
+                            className="w-full bg-purple-500 hover:bg-purple-600"
+                          >
+                            Start Preparing
+                          </Button>
+                        )}
+                        {order.status === "preparing" && (
                           <Button
                             onClick={() => handleStatusChange(order._id, "ready")}
                             className="w-full bg-green-500 hover:bg-green-600"
@@ -625,11 +646,11 @@ export default function KitchenOrders() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Customer</p>
-                  <p className="font-medium">{viewOrder.customerInfo?.name || "Guest"}</p>
+                  <p className="font-medium">{viewOrder.user?.name || viewOrder.customerInfo?.name || "Guest"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Service Type</p>
-                  <p className="font-medium capitalize">{viewOrder.serviceType}</p>
+                  <p className="font-medium capitalize">{viewOrder.serviceType || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
@@ -644,7 +665,7 @@ export default function KitchenOrders() {
                     <button
                       onClick={() => {
                         setEstimatedTimeInput(viewOrder.estimatedTime || "");
-                        document.getElementById('estimatedTimeInput')?.focus();
+                        setTimeout(() => document.getElementById('estimatedTimeInput')?.focus(), 100);
                       }}
                       className="text-xs text-brand-600 hover:text-brand-700 dark:text-brand-400"
                     >
@@ -689,62 +710,72 @@ export default function KitchenOrders() {
               <div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Items to Prepare</p>
                 <div className="space-y-3">
-                  {viewOrder.items?.map((item, idx) => (
-                    <div 
-                      key={idx} 
-                      className={`p-3 rounded-lg border ${
-                        preparationProgress[viewOrder._id]?.[item._id || item.productId]
-                          ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/10"
-                          : "border-gray-200 dark:border-gray-700"
-                      }`}
-                    >
+                  {viewOrder.type === 'reward' ? (
+                    <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-gray-900 dark:text-white">
-                              {item.quantity}x {item.name}
+                              1x {viewOrder.reward?.productId?.name || 'Reward Item'}
                             </span>
-                            {preparationProgress[viewOrder._id]?.[item._id || item.productId] && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                                Prepared
-                              </span>
-                            )}
                           </div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Price: EGP {item.price?.toFixed(2)} each
+                            Reward Redemption ({viewOrder.pointsUsed} points)
                           </p>
-                          {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {Object.entries(item.selectedOptions).map(([key, val]) => (
-                                <span 
-                                  key={key}
-                                  className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-                                >
-                                  {key}: {val}
-                                </span>
-                              ))}
-                            </div>
-                          )}
                         </div>
-                        {viewOrder.status === "preparing" && (
-                          <button
-                            onClick={() => handleItemPreparation(
-                              viewOrder._id, 
-                              item._id || item.productId, 
-                              !preparationProgress[viewOrder._id]?.[item._id || item.productId]
-                            )}
-                            className={`ml-4 p-2 rounded-lg ${
-                              preparationProgress[viewOrder._id]?.[item._id || item.productId]
-                                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
-                            }`}
-                          >
-                            <CheckCircle className="h-5 w-5" />
-                          </button>
-                        )}
                       </div>
                     </div>
-                  ))}
+                  ) : (
+                    viewOrder.items?.map((item, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`p-3 rounded-lg border ${
+                          preparationProgress[viewOrder._id]?.[item._id || item.productId]
+                            ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
+                            : "border-gray-200 dark:border-gray-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {item.quantity}x {item.name}
+                              </span>
+                              {preparationProgress[viewOrder._id]?.[item._id || item.productId] && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                  Prepared
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              Price: EGP {item.price?.toFixed(2)} each
+                            </p>
+                            {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Options: {Object.entries(item.selectedOptions).map(([key, val]) => `${key}: ${val}`).join(', ')}
+                              </p>
+                            )}
+                          </div>
+                          {viewOrder.status === "preparing" && (
+                            <button
+                              onClick={() => handleItemPreparation(
+                                viewOrder._id, 
+                                item._id || item.productId, 
+                                !preparationProgress[viewOrder._id]?.[item._id || item.productId]
+                              )}
+                              className={`ml-4 p-2 rounded-lg ${
+                                preparationProgress[viewOrder._id]?.[item._id || item.productId]
+                                  ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400"
+                                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
+                              }`}
+                            >
+                              <CheckCircle className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 

@@ -799,16 +799,44 @@ export const getOrder = async (req, res) => {
     console.log("[GET ORDER] User:", { _id: user?._id, isGuest: user?.isGuest });
     console.log("[GET ORDER] Cookies:", req.cookies);
 
-    const order = await Order.findById(id)
+    let order = await Order.findById(id)
       .populate('user', 'name email phone')
       .populate('createdBy', 'name')
       .lean();
 
+    let isRewardOrder = false;
+
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found"
-      });
+      // Try to find as reward order
+      order = await RewardOrder.findById(id)
+        .populate({
+          path: "rewardId",
+          populate: { path: "productId" }
+        })
+        .populate("userId", 'name email phone')
+        .lean();
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found"
+        });
+      }
+
+      isRewardOrder = true;
+
+      // Format reward order for consistency
+      order = {
+        ...order,
+        type: 'reward',
+        orderNumber: `R-${order._id.toString().slice(-6)}`,
+        user: order.userId,
+        reward: order.rewardId,
+        pointsUsed: order.pointsUsed,
+        createdAt: order.redeemedAt,
+        totalAmount: 0, // Reward orders don't have monetary value
+        status: order.status
+      };
     }
 
     console.log("[GET ORDER] Found order with customerId:", order.customerId);
@@ -820,14 +848,15 @@ export const getOrder = async (req, res) => {
     // 3. OR User is staff (admin, cashier, kitchen)
     const userId = getOrderUserId(req, res);
     const userIdStr = user?._id?.toString();
-    const isOwner = userIdStr && order.customerId === userIdStr;
-    const isGuestOwner = !user?._id && userId === order.customerId;
+    const orderCustomerId = order.customerId || (isRewardOrder ? order.user?._id?.toString() : null);
+    const isOwner = userIdStr && orderCustomerId === userIdStr;
+    const isGuestOwner = !user?._id && userId === orderCustomerId;
     const isStaff = ["admin", "cashier", "kitchen"].includes(user?.role);
 
     console.log("[GET ORDER] Permission check:", {
       userId,
       userIdStr,
-      orderCustomerId: order.customerId,
+      orderCustomerId,
       isOwner,
       isGuestOwner,
       isStaff
