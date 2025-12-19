@@ -27,14 +27,8 @@ const PAYMENT_STATUS_COLORS = {
   refunded: "bg-blue-100 text-blue-800",
 };
 
-export default function OrderCard({
-  order,
-  onViewDetails,
-  onUpdateStatus,
-  onUpdatePayment,
-  onDelete,
-}) {
-  const [expanded, setExpanded] = useState(false);
+export default function OrderCard({order,onViewDetails, onUpdateStatus,onUpdatePayment, onDelete,}) {
+  const [expanded, setExpanded] = useState(true);
   const colors = STATUS_COLORS[order.status] || STATUS_COLORS.pending;
   const paymentColor = PAYMENT_STATUS_COLORS[order.paymentStatus] || "bg-gray-100 text-gray-800";
 
@@ -92,7 +86,7 @@ export default function OrderCard({
           {isRewardOrder ? (
             <div className="flex items-center gap-1">
               <ChefHat className="w-4 h-4" />
-              <span>Reward Redemption</span>
+              <span>1 item</span>
             </div>
           ) : (
             <div className="flex items-center gap-1">
@@ -142,19 +136,17 @@ export default function OrderCard({
         {isRewardOrder ? (
           /* Reward Order Details */
           <div>
-            <h4 className="font-bold text-slate-900 mb-2 text-sm">Reward Details</h4>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-slate-700">Reward Item:</span>
-                <span className="font-bold text-purple-700">
-                  {order.reward?.productId?.name || 'Reward Item'}
+            <h4 className="font-bold text-slate-900 mb-2 text-sm">Items</h4>
+            <ul className="space-y-2">
+              <li className="flex justify-between items-center text-sm text-slate-700 bg-purple-50 p-2 rounded-lg shadow-sm">
+                <span>
+                  {order.reward?.productId?.name || 'Reward Item'} x 1
                 </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-700">Points Used:</span>
-                <span className="font-bold text-purple-700">{order.pointsUsed} pts</span>
-              </div>
-            </div>
+                <span className="font-bold text-purple-700">
+                  {order.pointsUsed} pts
+                </span>
+              </li>
+            </ul>
           </div>
         ) : (
           /* Regular Order Details */
@@ -198,13 +190,14 @@ export default function OrderCard({
           </>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 flex-wrap mt-2">
+        {/* Quick Action Buttons */}
+        <div className="flex gap-2 ml-4 items-start">
           <button
-            onClick={() => onViewDetails(order)}
-            className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105"
+            onClick={() => onUpdateStatus(order)}
+            className="bg-[#7B4019] hover:bg-[#593114] text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-transform transform "
+            title="Update Status"
           >
-            Full Details
+            <Edit2 className="w-4 h-4" />
           </button>
           {!isRewardOrder && (
             <button
@@ -217,7 +210,62 @@ export default function OrderCard({
         </div>
       </div>
     )}
-  </div>
-);
+      {expanded && (
+        <div className="border-t-2 border-slate-200 dark:border-slate-700 pt-4 mt-4 space-y-4">
+          {/* Items List */}
+          <div>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-sm">Items</h4>
+            <ul className="space-y-2">
+              {order.items?.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex justify-between items-center text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-gray-800 p-2 rounded-lg shadow-sm hover:bg-[#FDE1A5] transition-colors"
+                >
+                  <span>
+                    {item.name || item.productId?.name} x {item.quantity}
+                  </span>
+                  <span className="font-bold text-[#7B4019]">
+                    ${(item.totalPrice || item.price * item.quantity).toFixed(2)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
+          {/* Payment Status */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Payment:</span>
+            <div className="flex gap-2 flex-wrap">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold ${paymentColor} uppercase`}
+              >
+                {order.paymentStatus || "pending"}
+              </span>
+              {order.paymentMethod && (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 dark:bg-gray-700 text-slate-800 dark:text-slate-200">
+                  {order.paymentMethod}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 flex-wrap mt-2">
+            <button
+              onClick={() => onViewDetails(order)}
+              className="w-0.5 flex-1 bg-[#7B4019] hover:bg-[#593114]  text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
+            >
+              Full Details
+            </button>
+            <button
+              onClick={() => onUpdatePayment(order)}
+              className="flex-1 bg-[#7B4019] hover:bg-[#593114] text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform "
+            >
+              Payment
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
