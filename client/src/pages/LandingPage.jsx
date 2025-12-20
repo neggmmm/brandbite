@@ -564,7 +564,7 @@ export default function LandingPage() {
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 p-4">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                   <MapPin className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                  Find Our Location
+                  {t("find_us")}
                 </h3>
               </div>
               <LocationMap />
