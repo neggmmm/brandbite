@@ -20,7 +20,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: new URL("../node_modules/leaflet/dist/images/marker-shadow.png", import.meta.url).href,
 });
 
-export default function CheckoutPage() {
+export default function CheckoutPage({total}) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { products, totalPrice, loading, _id: cartId } = useSelector(
