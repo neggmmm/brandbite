@@ -27,8 +27,8 @@ export default function CardComponent({
       }
         group cursor-pointer rounded-xl shadow-md md:hover:translate-y-2 md:relative
           bg-white dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-900 flex sm:flex sm:flex-col
-         ${isReward ? "sm:justify-between  h-20 sm:h-50" : "h-32 lg:h-80"} 
-         hover:shadow-lg hover:shadow-secondary/20 transition-all duration-300 overflow-hidden transform hover:scale-105`}
+         ${isReward ? "sm:justify-between hover:shadow-secondary/20  h-20 sm:h-50" : "hover:shadow-primary/20 h-32 lg:h-80"} 
+         hover:shadow-lg  transition-all duration-300 overflow-hidden transform hover:scale-105`}
     >
       
       {isReward ? (
