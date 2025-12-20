@@ -18,15 +18,30 @@ class StaffChatService {
     const id1 = new mongoose.Types.ObjectId(userId1);
     const id2 = new mongoose.Types.ObjectId(userId2);
 
-    // Find existing conversation - check both orderings
-    let conversation = await StaffConversation.findOne({
-      type: "private",
-      $and: [
-        { "participants.userId": id1 },
-        { "participants.userId": id2 }
-      ],
-      "participants": { $size: 2 }
-    }).populate("participants.userId", "name avatarUrl role");
+    // Find existing conversation
+    let query;
+    if (id1.equals(id2)) {
+      // Self-chat: find conversation with exactly 2 participants, both being this user
+      query = {
+        type: "private",
+        "participants": { 
+          $size: 2,
+          $not: { $elemMatch: { "userId": { $ne: id1 } } }
+        }
+      };
+    } else {
+      // Chat between two different users
+      query = {
+        type: "private",
+        $and: [
+          { "participants.userId": id1 },
+          { "participants.userId": id2 }
+        ],
+        "participants": { $size: 2 }
+      };
+    }
+
+    let conversation = await StaffConversation.findOne(query).populate("participants.userId", "name avatarUrl role");
 
     if (!conversation) {
       // Get user details
