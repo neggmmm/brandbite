@@ -640,6 +640,24 @@ export default function StaffChat() {
     }
   };
 
+  // Greeting bubble state
+  const [showGreeting, setShowGreeting] = useState(true);
+  const [hasOpenedBefore, setHasOpenedBefore] = useState(false);
+
+  // Hide greeting when chat opens
+  useEffect(() => {
+    if (isOpen && !hasOpenedBefore) {
+      setShowGreeting(false);
+      setHasOpenedBefore(true);
+    }
+  }, [isOpen, hasOpenedBefore]);
+
+  const onDismissGreeting = (e) => {
+    e.stopPropagation();
+    setShowGreeting(false);
+    setHasOpenedBefore(true);
+  };
+
   if (!isStaff) return null;
 
   // Filter out self from staff list
@@ -948,6 +966,24 @@ export default function StaffChat() {
           </>
         )}
       </div>
+
+      {/* Greeting Bubble */}
+      {showGreeting && !isOpen && !hasOpenedBefore && (
+        <div className="greeting-bubble" style={{ position: "absolute", bottom: "80px", right: 0, zIndex: 10000 }}>
+          <button className="greeting-close" onClick={onDismissGreeting} type="button">
+            <CloseIcon />
+          </button>
+          <div className="greeting-content">
+            <span className="greeting-wave">👋</span>
+            <strong>Hi {user?.name?.split(" ")[0] || "Team"}!</strong>
+          </div>
+          <p>
+            {totalUnread > 0
+              ? `You have ${totalUnread} unread messages from your team.`
+              : "Connect with your colleagues here."}
+          </p>
+        </div>
+      )}
 
       {/* Floating Buttons Container */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
