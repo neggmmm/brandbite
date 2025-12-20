@@ -60,7 +60,7 @@ export default function CheckoutPage() {
     }
   }, [authUser]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (!showMapPicker || mapRef.current) return;
 
     const map = L.map("map", {
@@ -171,11 +171,11 @@ export default function CheckoutPage() {
   const subtotal = products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vat = +(subtotal * 0.14).toFixed(2);
   let discountAmount = 0;
-  
+
   if (coupon) {
     discountAmount = +(subtotal * (coupon.discountPercentage / 100)).toFixed(2);
   }
-  
+
   const total = +(subtotal + vat - discountAmount).toFixed(2);
 
   // Apply coupon function
@@ -264,13 +264,20 @@ export default function CheckoutPage() {
         orderData.promoCode = promoCode.trim();
       }
 
-      // Add delivery location if applicable
-      if (serviceType === "delivery" && deliveryLocation) {
+      // ✅ FIX: Add delivery location as top-level property for delivery orders
+      if (serviceType === "delivery") {
+        if (!deliveryLocation) {
+          setOrderError("Please select a delivery location.");
+          setSubmitting(false);
+          return;
+        }
+
+        // Add deliveryLocation at the root level to match backend expectations
         orderData.deliveryLocation = {
-          address: deliveryLocation.address,
+          address: deliveryLocation.address || "",
           lat: deliveryLocation.lat,
           lng: deliveryLocation.lng,
-          notes: notes.trim() || undefined
+          notes: deliveryLocation.notes || ""
         };
       }
 
@@ -602,7 +609,7 @@ export default function CheckoutPage() {
                           </button>
                           <button
                             onClick={() => setShowMapPicker(true)}
-className="flex-0 px-4 py-3 rounded-xl
+                            className="flex-0 px-4 py-3 rounded-xl
            bg-primary hover:bg-primary/90
            border border-primary/30
            text-white
@@ -654,7 +661,7 @@ className="flex-0 px-4 py-3 rounded-xl
                   <Gift className="w-4 h-4 mr-2" />
                   Coupon / Promo Code
                 </h3>
-                
+
                 {coupon ? (
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-xl p-4 mb-4">
                     <div className="flex justify-between items-start">
@@ -693,7 +700,7 @@ className="flex-0 px-4 py-3 rounded-xl
                     </button>
                   </div>
                 )}
-                
+
                 {couponError && (
                   <p className="text-red-600 dark:text-red-400 text-sm mt-2">{couponError}</p>
                 )}

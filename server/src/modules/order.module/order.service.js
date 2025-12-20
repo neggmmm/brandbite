@@ -61,7 +61,12 @@ class OrderService {
       user: isGuest ? null : user,
       serviceType,
       tableNumber: serviceType === "dine-in" ? (tableNumber || "") : null,
-      deliveryAddress: serviceType === "delivery" ? (deliveryLocation?.address || "") : "",
+       deliveryAddress: serviceType === "delivery" && deliveryLocation ? {
+        address: deliveryLocation.address || "",
+        lat: deliveryLocation.lat || undefined,
+        lng: deliveryLocation.lng || undefined,
+        notes: deliveryLocation.notes || ""
+      } : undefined,
       items,
       subtotal: totals.subtotal,
       vat: totals.tax,
@@ -133,7 +138,12 @@ class OrderService {
       user: null,
       serviceType,
       tableNumber: serviceType === "dine-in" ? tableNumber : null,
-      deliveryAddress: serviceType === "delivery" ? (customerInfo?.address || "") : "",
+      deliveryAddress: serviceType === "delivery" && deliveryLocation ? {
+        address: deliveryLocation.address || "",
+        lat: deliveryLocation.lat || undefined,
+        lng: deliveryLocation.lng || undefined,
+        notes: deliveryLocation.notes || ""
+      } : undefined,
       subtotal: totals.subtotal,
       vat: totals.tax,
       deliveryFee: totals.deliveryFee,
@@ -159,12 +169,12 @@ class OrderService {
   }
 
   // Get order by ID or order number
-    async getOrder(identifier) {
+  async getOrder(identifier) {
     if (!identifier) return null;
     let order;
     // Check if ObjectId
     if (mongoose.Types.ObjectId.isValid(identifier)) {
-       order = await Order.findById(identifier)
+      order = await Order.findById(identifier)
         .populate('user', 'name email')
         .populate({
           path: 'items.productId',
