@@ -18,12 +18,24 @@ export function setupStaffChatSocket(io) {
     // Send message
     socket.on("staffChat:sendMessage", async ({ conversationId, senderId, content }) => {
       try {
-        const message = await staffChatService.sendMessage(conversationId, senderId, content);
-        // Broadcast to all in conversation
+        const { message, conversation } = await staffChatService.sendMessage(conversationId, senderId, content);
+        
+        // Broadcast to conversation room (for open chats)
         io.to(`staffChat:${conversationId}`).emit("staffChat:newMessage", {
           conversationId,
           message,
         });
+
+        // Broadcast to participants' personal rooms (for notifications/updates)
+        if (conversation && conversation.participants) {
+          conversation.participants.forEach((p) => {
+            const pId = p.userId._id || p.userId;
+            io.to(`staffUser:${pId}`).emit("staffChat:newMessage", {
+              conversationId,
+              message,
+            });
+          });
+        }
       } catch (error) {
         socket.emit("staffChat:error", { message: error.message });
       }

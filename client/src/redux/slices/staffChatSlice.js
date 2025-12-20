@@ -196,7 +196,7 @@ const staffChatSlice = createSlice({
       })
       // Send message
       .addCase(sendMessage.fulfilled, (state, action) => {
-        const msg = action.payload;
+        const msg = action.payload.message || action.payload;
         const exists = state.messages.find((m) => m._id === msg._id);
         if (!exists) {
           state.messages.push(msg);

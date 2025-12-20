@@ -105,16 +105,16 @@ class StaffChatService {
     });
 
     // Update conversation's last message
-    await StaffConversation.findByIdAndUpdate(conversationId, {
+    const updatedConversation = await StaffConversation.findByIdAndUpdate(conversationId, {
       lastMessage: {
         content,
         senderId,
         senderName: sender.name,
         timestamp: new Date(),
       },
-    });
+    }, { new: true }).populate("participants.userId", "name avatarUrl role");
 
-    return message;
+    return { message, conversation: updatedConversation };
   }
 
   // Get messages for a conversation

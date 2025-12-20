@@ -482,6 +482,11 @@ export default function StaffChat() {
   const imageInputRef = useRef(null);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const activeConversationRef = useRef(activeConversation);
+
+  useEffect(() => {
+    activeConversationRef.current = activeConversation;
+  }, [activeConversation]);
 
   const primaryColor = settings?.branding?.primaryColor || "#e85c41";
 
@@ -498,42 +503,93 @@ export default function StaffChat() {
     }
   }, [isStaff, dataFetched, dispatch]);
 
-  // Setup socket listeners
+  // Join conversation rooms
   useEffect(() => {
     if (!isStaff) return;
 
+    // Initialize socket
     const socket = socketClient.getSocket() || socketClient.initSocket();
     socketRef.current = socket;
 
-    if (socket) {
-      const handleNewMessage = (data) => {
-        dispatch(receiveNewMessage(data));
-        // Show toast if chat is closed
-        if (!isOpen) {
-          toast.showToast({
+    // Define handlers
+    const handleNewMessage = (data) => {
+      console.log("Socket: New Message Received", data);
+      
+      // Dispatch content update
+      dispatch(receiveNewMessage(data));
+
+      // Force fetch messages if it's the active conversation to ensure sync
+      // Use ref to access latest activeConversation without dependency
+      if (activeConversationRef.current && activeConversationRef.current._id === data.conversationId) {
+        dispatch(fetchMessages(data.conversationId));
+      }
+
+      // Notification logic
+      const myId = user?._id?.toString?.() || user?._id;
+      const senderId = data.message.senderId?._id?.toString?.() || data.message.senderId?.toString?.();
+      const isMyMessage = myId === senderId;
+      
+      // Use ref for isOpen
+      if (!isOpenRef.current && !isMyMessage) {
+         toast.showToast({
             message: `💬 ${data.message.senderName}: ${data.message.content.slice(0, 50)}`,
             type: "info",
           });
-        }
-      };
-
+      }
+    };
+    
+    // Attach listeners
+    if (socket) {
       socket.on("staffChat:newMessage", handleNewMessage);
       socket.on("staffChat:userTyping", (data) => dispatch(setTyping(data)));
+
+      // Join rooms if we have conversations
+      if (user && conversations.length > 0) {
+         socket.emit("staffChat:join", { 
+           conversationIds: conversations.map((c) => c._id), 
+           userId: user._id 
+         });
+      }
 
       return () => {
         socket.off("staffChat:newMessage", handleNewMessage);
         socket.off("staffChat:userTyping");
       };
     }
-  }, [isStaff, isOpen, dispatch, toast]);
+  }, [isStaff, conversations, user, dispatch]); // Removed isOpen from dependency
 
-  // Join conversation rooms
+  // Toast notification logic in a separate effect that depends on the latest message
+  // Or better, handle the toast inside the socket handler but access current state via ref?
+  // Let's use a ref for isOpen to access it inside the stable socket handler
+  const isOpenRef = useRef(isOpen);
   useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  // Update handleNewMessage to use Ref
+  useEffect(() => {
+    if (!isStaff) return;
     const socket = socketRef.current;
-    if (socket && conversations.length > 0 && user) {
-      socket.emit("staffChat:join", { conversationIds: conversations.map((c) => c._id), userId: user._id });
-    }
-  }, [conversations, user]);
+    if (!socket) return;
+
+    const onMessage = (data) => {
+      // Don't show toast if it's my own message
+      const myId = user?._id?.toString?.() || user?._id;
+      const senderId = data.message.senderId?._id?.toString?.() || data.message.senderId?.toString?.();
+      
+      const isMyMessage = myId === senderId;
+
+      if (!isOpenRef.current && !isMyMessage) {
+         toast.showToast({
+            message: `💬 ${data.message.senderName}: ${data.message.content.slice(0, 50)}`,
+            type: "info",
+          });
+      }
+    };
+    
+    socket.on("staffChat:newMessage", onMessage);
+    return () => socket.off("staffChat:newMessage", onMessage);
+  }, [isStaff, user, toast]); // Stable dependencies
 
   // Scroll to bottom
   useEffect(() => {
@@ -857,12 +913,26 @@ export default function StaffChat() {
                   No messages yet. Say hello! 👋
                 </div>
               ) : (
-                messages.map((msg) => {
+                messages.map((msg, index) => {
                   // Robust ID comparison
                   const rawSenderId = msg.senderId?._id || msg.senderId || msg.sender?._id || msg.sender;
                   const msgSenderId = normalizeId(rawSenderId);
                   const myId = normalizeId(user);
-                  const isMe = (msgSenderId && myId && msgSenderId === myId) || (msg.senderName === user?.name); // Fallback to name check
+                  const isMe = (msgSenderId && myId && msgSenderId === myId) || (msg.senderName === user?.name);
+                  
+                  // Debug log for latest message
+                  if (index === messages.length - 1) {
+                     console.log("MsgDebug:", { 
+                       content: msg.content,
+                       rawSenderId, 
+                       msgSenderId, 
+                       myId, 
+                       isMe, 
+                       senderName: msg.senderName, 
+                       userName: user?.name,
+                       userObj: user
+                     });
+                  }
                   
                   return (
                     <div key={msg._id} className={`message ${isMe ? "user-message" : "bot-message"}`}>
