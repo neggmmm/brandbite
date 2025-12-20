@@ -245,7 +245,7 @@ export default function CheckoutPage() {
     setOrderError("");
 
     try {
-      // Prepare order data
+      // ✅ FIX: Prepare order data correctly
       const orderData = {
         cartId,
         serviceType,
@@ -259,12 +259,12 @@ export default function CheckoutPage() {
         }
       };
 
-      // Include promo code if provided (backend will validate/apply)
-      if (promoCode && promoCode.trim()) {
+      // ✅ IMPORTANT: Only add promoCode if a coupon was validated
+      if (coupon && promoCode.trim()) {
         orderData.promoCode = promoCode.trim();
       }
 
-      // ✅ FIX: Add delivery location as top-level property for delivery orders
+      // ✅ Add delivery location for delivery orders
       if (serviceType === "delivery") {
         if (!deliveryLocation) {
           setOrderError("Please select a delivery location.");
@@ -272,7 +272,6 @@ export default function CheckoutPage() {
           return;
         }
 
-        // Add deliveryLocation at the root level to match backend expectations
         orderData.deliveryLocation = {
           address: deliveryLocation.address || "",
           lat: deliveryLocation.lat,
@@ -281,20 +280,14 @@ export default function CheckoutPage() {
         };
       }
 
-      console.log("Submitting order data:", orderData);
-
       // Dispatch order creation
       const result = await dispatch(createOrderFromCart(orderData)).unwrap();
-
-      console.log("Order creation response:", result);
-
       // Handle response based on backend structure
       if (result.success && result.data) {
-        // Clear the cart on the client since order was created successfully
+        // Clear the cart on the client
         try {
           await dispatch(clearCart()).unwrap();
         } catch (clearErr) {
-          // Non-blocking: log and continue to navigate to payment
           console.warn("Failed to clear cart after order creation:", clearErr);
         }
 
@@ -306,14 +299,12 @@ export default function CheckoutPage() {
           }
         });
       } else {
-        // Handle error response
         setOrderError(result.message || "Failed to create order. Please try again.");
       }
 
     } catch (err) {
-      console.error("Order creation failed:", err);
+      console.error("❌ Order creation failed:", err);
 
-      // Handle different error formats
       if (err.message) {
         setOrderError(err.message);
       } else if (typeof err === 'string') {
