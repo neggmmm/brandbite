@@ -4,9 +4,17 @@
 .staff-chat-container {
   position: fixed;
   bottom: 24px;
-  right: 100px; /* Positioned to the left of customer chatbot */
+  right: 24px;
   z-index: 9998;
   font-family: var(--cb-font, "Inter", system-ui, sans-serif);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.staff-chat-container > * {
+  pointer-events: auto;
 }
 
 /* Window */
@@ -205,3 +213,81 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
+/* Message Styles */
+.staff-chat-container .message {
+  display: flex;
+  margin-bottom: 12px;
+  padding: 0 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Sent messages - right aligned */
+.staff-chat-container .message.user-message {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.staff-chat-container .message.user-message .message-content-wrapper {
+  align-items: flex-end;
+}
+
+/* Received messages - left aligned */
+.staff-chat-container .message.bot-message {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.staff-chat-container .message.bot-message .message-content-wrapper {
+  align-items: flex-start;
+}
+
+.staff-chat-container .message-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%; /* wrapper takes full width of message container, which is max 75% */
+}
+
+/* Message bubble */
+.staff-chat-container .bubble {
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+/* User message bubble - primary color */
+.staff-chat-container .user-message .bubble {
+  background: var(--cb-primary, #e85c41);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+/* Bot message bubble - gray */
+.staff-chat-container .bot-message .bubble {
+  background: #f0f0f0;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+/* Message time */
+.staff-chat-container .message-time {
+  font-size: 11px;
+  color: var(--cb-text-light, #888);
+  margin-top: 4px;
+}
+
+.staff-chat-container .user-message .message-time {
+  text-align: right;
+}
+
+.staff-chat-container .bot-message .message-time {
+  text-align: left;
+}
+

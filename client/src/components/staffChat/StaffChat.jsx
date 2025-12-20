@@ -15,6 +15,7 @@ import {
 import * as socketClient from "../../utils/socket";
 import { useSettings } from "../../context/SettingContext";
 import { useToast } from "../../hooks/useToast";
+import ScrollToTopButton from "../common/ScrollToTopButton";
 import "../chatbot/Chatbot.css";
 import "./StaffChat.css";
 
@@ -48,10 +49,377 @@ const SendIcon = () => (
   </svg>
 );
 
+const ImageIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+    <circle cx="9" cy="9" r="2"/>
+    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+  </svg>
+);
+
+const EmojiIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+    <line x1="9" x2="9.01" y1="9" y2="9" />
+    <line x1="15" x2="15.01" y1="9" y2="9" />
+  </svg>
+);
+
+const GifIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <text x="6" y="16" fontSize="8" fontWeight="bold" fill="currentColor" stroke="none">GIF</text>
+  </svg>
+);
+
+const MicIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" x2="12" y1="19" y2="22" />
+  </svg>
+);
+
+const StopIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </svg>
+);
+
+// Common Emojis data
+const EMOJI_CATEGORIES = {
+  "Frequently Used": ["👍", "👎", "😢", "🙂", "😐", "😊", "🤩"],
+  "Smileys & Emotion": ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "😮‍💨", "🤥"],
+  "Gestures": ["👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👍", "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝", "🙏"],
+  "Food & Drink": ["🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🍆", "🥑", "🥦", "🥬", "🥒", "🌶️", "🫑", "🌽", "🥕", "🧄", "🧅", "🥔", "🍔", "🍟", "🍕", "🌭", "🥪", "🌮", "🌯", "🫔", "🥙", "🧆"],
+};
+
 // Get initials from name
 const getInitials = (name) => {
   if (!name) return "?";
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+};
+
+// Helper to parse message content with Markdown support
+const MessageParser = ({ content }) => {
+  if (!content) return null;
+
+  const lines = content.split("\n");
+  const blocks = [];
+  let currentBlock = null;
+
+  const flushBlock = () => {
+    if (currentBlock) {
+      blocks.push(currentBlock);
+      currentBlock = null;
+    }
+  };
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushBlock();
+      return;
+    }
+
+    // Check for Markdown Image ![alt](url)
+    const mdImgRegex = /!\[([^\]]*)\]\(([^)]+)\)/;
+    const mdImgMatch = line.match(mdImgRegex);
+    if (mdImgMatch) {
+      flushBlock();
+      const textBefore = line.substring(0, mdImgMatch.index).trim();
+      const textAfter = line.substring(mdImgMatch.index + mdImgMatch[0].length).trim();
+      if (textBefore) {
+        blocks.push({ type: "text", content: textBefore });
+      }
+      blocks.push({ type: "image", url: mdImgMatch[2], alt: mdImgMatch[1] });
+      if (textAfter) {
+        blocks.push({ type: "text", content: textAfter });
+      }
+      return;
+    }
+
+    // Default to Text
+    if (!currentBlock || currentBlock.type !== "text") {
+      flushBlock();
+      currentBlock = { type: "text", content: line };
+    } else {
+      currentBlock.content += "\n" + line;
+    }
+  });
+  flushBlock();
+
+  const renderInline = (text) => {
+    // Simple bold support
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
+  return (
+    <>
+      {blocks.map((block, idx) => {
+        if (block.type === "text") {
+          return (
+            <div key={idx} className="content-text" style={{ whiteSpace: "pre-wrap" }}>
+              {renderInline(block.content)}
+            </div>
+          );
+        }
+        if (block.type === "image") {
+          return (
+            <div key={idx} className="content-image-wrapper">
+              <img
+                src={block.url}
+                alt={block.alt || "Content"}
+                className="content-image"
+                style={{ maxWidth: "100%", borderRadius: "8px", marginTop: 4 }}
+              />
+            </div>
+          );
+        }
+        return null;
+      })}
+    </>
+  );
+};
+
+// Emoji Picker Component
+const EmojiPicker = ({ onSelect, onClose }) => {
+  const [search, setSearch] = useState("");
+  const pickerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  const filteredEmojis = useMemo(() => {
+    if (!search) return EMOJI_CATEGORIES;
+    const filtered = {};
+    Object.entries(EMOJI_CATEGORIES).forEach(([category, emojis]) => {
+      const matching = emojis.filter(e => e.includes(search));
+      if (matching.length) filtered[category] = matching;
+    });
+    return filtered;
+  }, [search]);
+
+  return (
+    <div className="picker-popup emoji-picker" ref={pickerRef}>
+      <div className="picker-search">
+        <SearchIcon />
+        <input
+          type="text"
+          placeholder="Search emoji..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoFocus
+        />
+      </div>
+      <div className="picker-content">
+        {Object.entries(filteredEmojis).map(([category, emojis]) => (
+          <div key={category} className="emoji-category">
+            <div className="category-title">{category.toUpperCase()}</div>
+            <div className="emoji-grid">
+              {emojis.map((emoji, idx) => (
+                <button
+                  key={idx}
+                  className="emoji-btn"
+                  onClick={() => onSelect(emoji)}
+                  type="button"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// GIF Picker Component
+const GifPicker = ({ onSelect, onClose }) => {
+  const [search, setSearch] = useState("");
+  const [gifs, setGifs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const pickerRef = useRef(null);
+
+  // Sample trending GIFs
+  const trendingGifs = [
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMTV2ZTBhdzFmbmJieXFvaW9ienBjbndxMmlsemN6OWN6ODdhZTZjeiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/L3UFa9OvkOjA6c16Xn/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3amtkOW5panE2MHU0bXQzano3cGx4MnQwY3NjaXdsc2s3c251dno0YSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/wjEQMRyynvrdx5g7Mn/giphy.gif",
+    "https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif",
+    "https://media.giphy.com/media/26gsspfbt1HfVQ9va/giphy.gif",
+    "https://media.giphy.com/media/3oz8xIsloV7zOmt81G/giphy.gif",
+    "https://media.giphy.com/media/l2JhtKtDWYNKdRpoA/giphy.gif",
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  useEffect(() => {
+    setGifs(trendingGifs);
+  }, []);
+
+  return (
+    <div className="picker-popup gif-picker" ref={pickerRef}>
+      <div className="picker-search">
+        <SearchIcon />
+        <input
+          type="text"
+          placeholder="Search GIFs..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoFocus
+        />
+      </div>
+      <div className="picker-content gif-content">
+        {loading ? (
+          <div className="picker-loading">Loading...</div>
+        ) : (
+          <div className="gif-grid">
+            {gifs.map((gif, idx) => (
+              <button
+                key={idx}
+                className="gif-btn"
+                onClick={() => onSelect(gif)}
+                type="button"
+              >
+                <img src={gif} alt="GIF" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Voice Recorder Component
+const VoiceRecorder = ({ onClose, onSend, primaryColor }) => {
+  const [isRecording, setIsRecording] = useState(true);
+  const [duration, setDuration] = useState(0);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    startRecording();
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      
+      intervalRef.current = setInterval(() => {
+        setDuration(d => d + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Microphone access denied:", err);
+      onClose();
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+  };
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Generate waveform bars
+  const waveformBars = useMemo(() => {
+    return Array.from({ length: 30 }, () => Math.random() * 100);
+  }, [duration]);
+
+  return (
+    <div className="voice-recorder">
+      <button className="recorder-cancel" onClick={onClose} type="button">
+        <CloseIcon />
+      </button>
+      
+      <div className="waveform">
+        {waveformBars.map((height, idx) => (
+          <div
+            key={idx}
+            className="waveform-bar"
+            style={{ 
+              height: `${Math.max(10, height * (isRecording ? 1 : 0.3))}%`,
+              backgroundColor: primaryColor 
+            }}
+          />
+        ))}
+      </div>
+      
+      <span className="recorder-duration">{formatDuration(duration)}</span>
+      
+      <button 
+        className="recorder-send" 
+        onClick={isRecording ? stopRecording : () => onSend(audioUrl)}
+        style={{ backgroundColor: primaryColor }}
+        type="button"
+      >
+        {isRecording ? <StopIcon /> : <SendIcon />}
+      </button>
+    </div>
+  );
 };
 
 // Format time
@@ -61,24 +429,25 @@ const formatTime = (timestamp) => {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
-// Get other participant from private chat - improved ID comparison
+// Helper to normalize IDs
+const normalizeId = (id) => {
+  if (!id) return null;
+  if (typeof id === "string") return id;
+  if (id._id) return id._id.toString?.() || String(id._id);
+  if (id.id) return id.id.toString?.() || String(id.id); // Handle .id case
+  if (id.toString && typeof id.toString === "function" && id.toString() !== "[object Object]") return id.toString();
+  return String(id);
+};
+
+// Get other participant from private chat
 const getOtherParticipant = (conversation, currentUserId) => {
   if (!conversation || !conversation.participants) return null;
-  
-  // Normalize current user ID to string
-  const normalizeId = (id) => {
-    if (!id) return null;
-    if (typeof id === "string") return id;
-    if (id._id) return id._id.toString?.() || String(id._id);
-    if (id.toString) return id.toString();
-    return String(id);
-  };
   
   const currentId = normalizeId(currentUserId);
   
   // Find participant that is NOT the current user
   const other = conversation.participants.find((p) => {
-    const participantId = normalizeId(p.userId?._id || p.userId);
+    const participantId = normalizeId(p.userId?._id || p.userId || p);
     return participantId && participantId !== currentId;
   });
   
@@ -98,7 +467,11 @@ export default function StaffChat() {
   const [selectedChatInfo, setSelectedChatInfo] = useState(null); // Store selected chat person info
   const [dataFetched, setDataFetched] = useState(false);
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const messagesRef = useRef(null);
+  const imageInputRef = useRef(null);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -204,11 +577,12 @@ export default function StaffChat() {
     setView("list");
   }, [dispatch]);
 
-  // Handle send
-  const handleSend = useCallback(() => {
-    if (!input.trim() || !activeConversation) return;
-    dispatch(sendMessage({ conversationId: activeConversation._id, content: input.trim() }));
-    setInput("");
+  const handleSend = useCallback((contentOverride = null) => {
+    const contentToSend = contentOverride || input.trim();
+    if (!contentToSend || !activeConversation) return;
+
+    dispatch(sendMessage({ conversationId: activeConversation._id, content: contentToSend }));
+    if (!contentOverride) setInput("");
 
     // Stop typing
     const socket = socketRef.current;
@@ -217,6 +591,34 @@ export default function StaffChat() {
       socket.emit("staffChat:typing", { conversationId: activeConversation._id, userId: user._id, userName: user.name, isTyping: false });
     }
   }, [input, activeConversation, dispatch, user]);
+
+  const onEmojiSelect = (emoji) => {
+    setInput(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const onGifSelect = (gifUrl) => {
+    handleSend(`![GIF](${gifUrl})`);
+    setShowGifPicker(false);
+  };
+
+  const onImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // For demo we use object URL. In production, upload file first.
+      const imageUrl = URL.createObjectURL(file);
+      handleSend(`![Image](${imageUrl})`);
+    }
+    e.target.value = "";
+  };
+
+  const onVoiceSend = (audioUrl) => {
+    if (audioUrl) {
+      // For demo, just sending a text representation. In real app, upload blob.
+      handleSend(`🎤 Voice message sent`);
+    }
+    setShowVoiceRecorder(false);
+  };
 
   // Handle typing
   const handleInputChange = (e) => {
@@ -414,20 +816,23 @@ export default function StaffChat() {
                 </div>
               ) : (
                 messages.map((msg) => {
-                  // Properly extract sender ID (handles object or string)
-                  const msgSenderId = msg.senderId?._id?.toString?.() || msg.senderId?._id || msg.senderId?.toString?.() || String(msg.senderId);
-                  const isMe = msgSenderId === currentId;
+                  // Robust ID comparison
+                  const rawSenderId = msg.senderId?._id || msg.senderId || msg.sender?._id || msg.sender;
+                  const msgSenderId = normalizeId(rawSenderId);
+                  const myId = normalizeId(user);
+                  const isMe = (msgSenderId && myId && msgSenderId === myId) || (msg.senderName === user?.name); // Fallback to name check
+                  
                   return (
                     <div key={msg._id} className={`message ${isMe ? "user-message" : "bot-message"}`}>
                       <div className="message-content-wrapper">
                         {/* Show sender name for received messages */}
-                        {!isMe && msg.senderName && (
+                        {!isMe && (
                           <span style={{ fontSize: 11, color: primaryColor, marginBottom: 2, display: "block" }}>
-                            {msg.senderName}
+                            {msg.senderName || "Unknown"}
                           </span>
                         )}
-                        <div className="bubble" style={isMe ? { background: primaryColor } : {}}>
-                          {msg.content}
+                        <div className="bubble">
+                          <MessageParser content={msg.content} />
                         </div>
                         <span className="message-time">{formatTime(msg.createdAt)}</span>
                       </div>
@@ -449,49 +854,124 @@ export default function StaffChat() {
 
             {/* Input */}
             <div className="chatbot-input-area">
-              <div className="input-container">
-                <div className="input-wrapper">
-                  <input
-                    type="text"
-                    placeholder="Type a message..."
-                    value={input}
-                    onChange={handleInputChange}
-                    onKeyPress={handleKeyPress}
-                  />
+              {/* Pickers */}
+              {showEmojiPicker && (
+                <EmojiPicker
+                  onSelect={onEmojiSelect}
+                  onClose={() => setShowEmojiPicker(false)}
+                />
+              )}
+
+              {showGifPicker && (
+                <GifPicker
+                  onSelect={onGifSelect}
+                  onClose={() => setShowGifPicker(false)}
+                />
+              )}
+
+              {showVoiceRecorder ? (
+                <VoiceRecorder 
+                  onClose={() => setShowVoiceRecorder(false)}
+                  onSend={onVoiceSend}
+                  primaryColor={primaryColor}
+                />
+              ) : (
+                <div className="input-container">
+                  <div className="input-wrapper">
+                    <input
+                      type="text"
+                      placeholder="Type a message..."
+                      value={input}
+                      onChange={handleInputChange}
+                      onKeyPress={handleKeyPress}
+                    />
+                  </div>
+                  <div className="input-actions">
+                    <div className="input-icons">
+                      <input
+                        type="file"
+                        ref={imageInputRef}
+                        accept="image/*"
+                        onChange={onImageSelect}
+                        style={{ display: "none" }}
+                      />
+                      <button 
+                        className="input-icon-btn" 
+                        title="Send image"
+                        onClick={() => imageInputRef.current?.click()}
+                      >
+                        <ImageIcon />
+                      </button>
+                      <button 
+                        className={`input-icon-btn ${showEmojiPicker ? "active" : ""}`}
+                        title="Add emoji"
+                        onClick={() => {
+                          setShowEmojiPicker(!showEmojiPicker);
+                          setShowGifPicker(false);
+                        }}
+                        style={showEmojiPicker ? { color: primaryColor } : {}}
+                      >
+                        <EmojiIcon />
+                      </button>
+                      <button 
+                        className={`input-icon-btn ${showGifPicker ? "active" : ""}`}
+                        title="Add GIF"
+                        onClick={() => {
+                          setShowGifPicker(!showGifPicker);
+                          setShowEmojiPicker(false);
+                        }}
+                        style={showGifPicker ? { color: primaryColor } : {}}
+                      >
+                        <GifIcon />
+                      </button>
+                      <button 
+                        className="input-icon-btn" 
+                        title="Voice message"
+                        onClick={() => setShowVoiceRecorder(true)}
+                      >
+                        <MicIcon />
+                      </button>
+                    </div>
+
+                    <button
+                      className="send-btn"
+                      onClick={() => handleSend()}
+                      disabled={!input.trim()}
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      <SendIcon />
+                    </button>
+                  </div>
                 </div>
-                <div className="input-actions">
-                  <button
-                    className="send-btn"
-                    onClick={handleSend}
-                    disabled={!input.trim()}
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <SendIcon />
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
           </>
         )}
       </div>
 
-      {/* Toggle Button */}
-      <button
-        className="staff-chat-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-        style={{ backgroundColor: primaryColor }}
-      >
-        <span className="toggle-icon users-icon">
-          <UsersIcon />
-        </span>
-        <span className="toggle-icon close-icon">
-          <CloseIcon />
-        </span>
-        {/* Unread Badge */}
-        {totalUnread > 0 && !isOpen && (
-          <span className="staff-chat-badge">{totalUnread > 99 ? "99+" : totalUnread}</span>
-        )}
-      </button>
+      {/* Floating Buttons Container */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Scroll to Top Button */}
+        <ScrollToTopButton />
+
+        {/* Toggle Button */}
+        <button
+          className="staff-chat-toggle"
+          onClick={() => setIsOpen(!isOpen)}
+          style={{ backgroundColor: primaryColor }}
+        >
+          <span className="toggle-icon users-icon">
+            <UsersIcon />
+          </span>
+          <span className="toggle-icon close-icon">
+            <CloseIcon />
+          </span>
+          {/* Unread Badge */}
+          {totalUnread > 0 && !isOpen && (
+            <span className="staff-chat-badge">{totalUnread > 99 ? "99+" : totalUnread}</span>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
