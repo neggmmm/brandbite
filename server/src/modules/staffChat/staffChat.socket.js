@@ -28,12 +28,16 @@ export function setupStaffChatSocket(io) {
 
         // Broadcast to participants' personal rooms (for notifications/updates)
         if (conversation && conversation.participants) {
+          const notifiedUsers = new Set();
           conversation.participants.forEach((p) => {
-            const pId = p.userId._id || p.userId;
-            io.to(`staffUser:${pId}`).emit("staffChat:newMessage", {
-              conversationId,
-              message,
-            });
+            const pId = (p.userId._id || p.userId).toString();
+            if (!notifiedUsers.has(pId)) {
+              io.to(`staffUser:${pId}`).emit("staffChat:newMessage", {
+                conversationId,
+                message,
+              });
+              notifiedUsers.add(pId);
+            }
           });
         }
       } catch (error) {
