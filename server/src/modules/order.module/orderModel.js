@@ -139,7 +139,7 @@ const OrderSchema = new mongoose.Schema(
     // ============= COUPON =============
     couponCode: { type: String, default: null },
     couponDiscount: { type: Number, default: 0 },
-
+    promoCode: { type: String, default: null }, 
     // ============= ORDER STATUS & TRACKING =============
     status: {
       type: String,
