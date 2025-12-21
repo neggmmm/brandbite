@@ -113,7 +113,7 @@ export default function UserDropdown() {
                   fill=""
                 />
               </svg>
-               {t("edit_profile")}
+               {t("nav.profile")}
             </DropdownItem>
           </li>
           <li>
@@ -138,7 +138,7 @@ export default function UserDropdown() {
                   fill=""
                 />
               </svg>
-              {t("account_settings")}
+              {t("nav.settings")}
             </DropdownItem>
           </li>
         </ul>
@@ -161,7 +161,7 @@ export default function UserDropdown() {
               fill=""
             />
           </svg>
-          {t("sign_out")}
+          {t("nav.logout")}
         </button>
       </Dropdown>
     </div>
