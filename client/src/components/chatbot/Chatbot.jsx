@@ -934,9 +934,9 @@ export default function Chatbot() {
       )}
 
       {/* Floating Buttons Container */}
-      <div className="flex items-center gap-3">
+      <div className="chatbot-buttons-container">
         {/* Scroll to Top Button */}
-        <ScrollToTopButton />
+        <ScrollToTopButton className="scroll-to-top-btn"/>
         
         {/* Toggle Button */}
         <button
