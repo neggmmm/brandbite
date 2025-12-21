@@ -63,25 +63,26 @@ export default function ReviewsPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current text-amber-500" />
                   <span className="text-xs sm:text-sm text-amber-600 dark:text-amber-400 font-medium">
-                    {t("share_experience")}
+                    {t("reviews.share_experience_cta")}
                   </span>
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-                  {t("tell_us_about_meal")}
+                  {t("reviews.tell_us_about_meal")}
                 </h2>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 max-w-2xl">
-                  {t("feedback_helps")}
+                  {t("reviews.feedback_helps_others")}
                 </p>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                   <button
                     onClick={handleOpenReviewModal}
                     className="bg-gradient-to-r from-gray-900 to-black dark:from-amber-600 dark:to-orange-600 text-white font-semibold py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg sm:rounded-xl hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 text-sm sm:text-base w-full sm:w-auto text-center"
                   >
-                    {t("write_review")}
+                    {t("reviews.write_review_btn")}
                   </button>
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500" />
-                    <span>{t("authentic_feedback")}</span>
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500" />
+                    <span>{t("reviews.authentic_feedback_badge")}</span>
                   </div>
                 </div>
               </div>
@@ -103,14 +104,14 @@ export default function ReviewsPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-3 sm:gap-0">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
-                {t("recent_reviews")}
+                {t("reviews.recent_reviews_title")}
               </h2>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                {t("latest_feedback")}
+                {t("reviews.latest_feedback_subtitle")}
               </p>
             </div>
             <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg">
-              {t("total_reviews")}: {totalReviews}
+              {t("reviews.total_reviews")}: {totalReviews}
             </div>
           </div>
 
@@ -164,7 +165,7 @@ export default function ReviewsPage() {
                             Limited seats available.
                           </p>
                           <button className="bg-white text-gray-900 font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl hover:bg-gray-100 transition-all duration-300 flex items-center gap-1.5 sm:gap-2 group text-sm sm:text-base w-full sm:w-auto">
-                            {t("view_details")}
+                            {t("reviews.view_details")}
                             <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
                           </button>
                         </div>
@@ -184,16 +185,16 @@ export default function ReviewsPage() {
               <MessageSquare className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-              {t("no_reviews_yet")}
+              {t("reviews.no_reviews_title")}
             </h3>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 max-w-md mx-auto">
-              {t("be_first_review")}
+              {t("reviews.be_first_review")}
             </p>
             <button
               onClick={handleOpenReviewModal}
               className="bg-gradient-to-r from-gray-900 to-black dark:from-amber-600 dark:to-orange-600 text-white font-semibold py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg sm:rounded-xl hover:shadow-xl transition-all duration-300 text-sm sm:text-base"
             >
-              {t("write_first_review")}
+              {t("reviews.write_first_review")}
             </button>
           </div>
         )}
@@ -202,10 +203,10 @@ export default function ReviewsPage() {
         <div className="mt-8 sm:mt-12 md:mt-16">
           <div className="text-center mb-6 sm:mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
-              {t("verified_reviews")}
+              {t("reviews.verified_reviews")}
             </h2>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              {t("all_reviews_verified")}
+              {t("reviews.all_reviews_verified")}
             </p>
           </div>
           
@@ -215,10 +216,10 @@ export default function ReviewsPage() {
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 dark:bg-green-900/20 rounded-lg sm:rounded-xl flex items-center justify-center">
                   <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{t("authentic_feedback")}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{t("reviews.authentic_feedback_badge")}</h3>
               </div>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                {t("all_reviews_verified")}
+                {t("reviews.all_reviews_verified")}
               </p>
             </div>
             
@@ -227,10 +228,10 @@ export default function ReviewsPage() {
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg sm:rounded-xl flex items-center justify-center">
                   <Star className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{t("community_driven")}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{t("reviews.community_driven")}</h3>
               </div>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                {t("feedback_helps")}
+                {t("reviews.feedback_helps_others")}
               </p>
             </div>
           </div>
@@ -244,7 +245,7 @@ export default function ReviewsPage() {
                 <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current text-amber-500" />
                 <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{averageRating}</span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("average_rating")}</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("reviews.average_rating")}</p>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-white dark:bg-gray-800/50 rounded-lg sm:rounded-xl">
@@ -252,7 +253,7 @@ export default function ReviewsPage() {
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
                 <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{totalReviews}</span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("total_reviews")}</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("reviews.total_reviews")}</p>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-white dark:bg-gray-800/50 rounded-lg sm:rounded-xl">
@@ -262,7 +263,7 @@ export default function ReviewsPage() {
                   {reviews.filter(r => r.rating >= 4).length}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("positive_reviews")}</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("reviews.positive_reviews")}</p>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-white dark:bg-gray-800/50 rounded-lg sm:rounded-xl">
@@ -272,7 +273,7 @@ export default function ReviewsPage() {
                   {reviews.length > 0 ? Math.round((reviews.filter(r => r.rating >= 4).length / reviews.length) * 100) : 0}%
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("satisfaction_rate")}</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t("reviews.satisfaction_rate")}</p>
             </div>
           </div>
         </div>

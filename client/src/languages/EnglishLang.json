@@ -1,11 +1,23 @@
 {
-  "home": "Home",
-  "menu": "Menu",
-  "orders": "Orders",
+  "nav": {
+    "home": "Home",
+    "menu": "Menu",
+    "orders": "Orders",
+    "reviews": "Reviews",
+    "rewards": "Rewards",
+    "support": "Support",
+    "login": "Login",
+    "profile": "Profile",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "kitchen": "Kitchen",
+    "cashier": "Cashier",
+    "me": "Me",
+    "settings": "Settings",
+    "switch_language": "Switch Language"
+  },
   "cart": "Cart",
-  "reviews": "Reviews",
-  "rewards": "Rewards",
-  "reviews_title": "Reviews",
+  "reviews_title_global": "Reviews",
   "write_review": "Write a Review",
   "rating": "Rating",
   "comment": "Comment",
@@ -15,6 +27,78 @@
   "no_comment": "No comment",
   "anonymous": "Anonymous",
   "loading": "Loading...",
+  "orders": {
+    "page_title": "My Orders",
+    "page_desc": "Track your active orders and view your order history.",
+    "active_orders": "Active Orders",
+    "order_history": "Order History",
+    "refresh": "Refresh",
+    "status_steps": {
+        "confirmed": "Confirmed",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled" 
+    },
+    "empty": {
+        "title": "No Orders Yet",
+        "description": "Place your first order and track it in real time.",
+        "browse_menu": "Browse Menu",
+        "rewards_tip": "💡 Join our rewards program and get 10% off your first order!",
+        "messages": [
+            "🍕 Your cart is as empty as our delivery guys' gas tanks!",
+            "🍔 No orders yet? Let's fix that hunger situation!",
+            "🍜 Your taste buds are waiting for an adventure!",
+            "🥗 Breaking: Local restaurant still has no orders from you",
+            "🍱 It's pizza o'clock and you're not participating?",
+            "🌮 Your stomach is staging a protest!",
+            "🍰 Life is short, eat dessert first... we have it!",
+            "☕ Even our coffee is lonely without your orders!"
+        ]
+    },
+    "history": {
+        "title": "Order History",
+        "count_suffix": "order(s)",
+        "dine_in": "Dine In",
+        "show_details": "Show Details",
+        "hide_details": "Hide Details",
+        "view_order": "View Order",
+        "items_label": "Items:",
+        "customer_label": "Customer:",
+        "notes_label": "Notes:"
+    },
+    "order_details": { 
+         "order_number": "Order Number",
+         "estimated_ready_time": "Estimated Ready Time",
+         "customer": "Customer",
+         "guest": "Guest",
+         "service_details": "Service Details",
+         "table_prefix": "Table #",
+         "items": "Items",
+         "subtotal": "Subtotal",
+         "vat": "VAT (14%)",
+         "total": "Total",
+         "payment_status": "Payment Status"
+    },
+    "action": {
+        "cancel": "Cancel",
+        "track": "Track Order"
+    },
+    "error": {
+        "cannot_cancel": "Cannot cancel - Order already {{status}}"
+    },
+    "modal": { 
+        "cancel_title": "Cancel Order?",
+        "cancel_confirm": "Are you sure you want to cancel order {{orderNumber}}?",
+        "keep_order": "Keep Order",
+        "yes_cancel": "Yes, Cancel",
+        "canceling": "Canceling..."
+    },
+    "toast": {
+        "cancel_success": "Order cancelled",
+        "cancel_fail": "Failed to cancel"
+    }
+  },
   "choose_your_photos": "Choose your photos",
   "share_experience": "Share your experience",
   "Notify_login": "NOTIFICATION",
@@ -37,7 +121,7 @@
   "call_us": "Call Us",
   
 
-  "login": "Login",
+
   "welcome_back": "Welcome back! Please login to continue",
   "email_address": "Email Address",
   "password": "Password",
@@ -57,9 +141,7 @@
   "min_characters": "At least 8 characters",
   "lowercase_letter": "One lowercase letter",
   "uppercase_letter": "One uppercase letter",
-  "edit_profile": "Edit Profile",
-  "account_settings": "Account Settings",
-  "sign_out": "Sign out",
+
   "peak_hours": "Peak Hours",
   "personal_info": "Personal Information",
   "first_name": "First Name",
@@ -292,35 +374,9 @@
   "opening_hours": "Opening Hours",
   "open_hours": "Open daily from 8:00 AM to 11:00 PM",
 
-  "profile": "Profile",
-  "logout": "Logout",
-  "dashboard": "Dashboard",
-  "kitchen": "Kitchen",
-  "cashier": "Cashier",
-  "me": "Me",
-  "my_profile": "My Profile",
-  "personal_info": "Personal Information",
-  "update_profile": "Update Profile",
-  "address": "Address",
-  "city": "City",
-  "country": "Country",
-  "save_changes": "Save Changes",
-  "cancel_changes": "Cancel",
+
   
-  "active_orders": "Active Orders",
-  "order_history": "Order History",
-  "no_active_orders": "No active orders",
-  "no_order_history": "No order history yet",
-  "view_details": "View Details",
-  "reorder": "Reorder",
-  "order_placed": "Order Placed",
-  "being_prepared": "Being Prepared",
-  "ready_pickup": "Ready for Pickup",
-  "completed": "Completed",
-  "cancelled": "Cancelled",
-  "order_date": "Order Date",
-  "order_total": "Order Total",
-  "order_id": "Order ID",
+
   
   "add_to_cart": "Add to Cart",
   "adding": "Adding...",
@@ -354,15 +410,7 @@
   "ago": "ago",
   "just_now": "Just now",
   
-  "support_title": "Customer Support",
-  "faq_title": "Frequently Asked Questions",
-  "contact_us": "Contact Us",
-  "send_message": "Send Message",
-  "your_message": "Your Message",
-  "email": "Email",
-  "phone": "Phone",
-  "name": "Name",
-  "message_sent": "Message sent successfully!",
+
   
   "page_not_found": "Page Not Found",
   "page_not_found_desc": "The page you are looking for does not exist",
@@ -671,5 +719,301 @@
     "failed": "Failed",
     "refunded": "Refunded"
   },
-  "switch_to_lang": "التبديل للعربية"
+  "switch_to_lang": "التبديل للعربية",
+  "reviews": {
+    "share_experience_cta": "Share your experience",
+    "tell_us_about_meal": "Tell us about your meal",
+    "feedback_helps_others": "Your feedback helps others discover our best dishes.",
+    "write_review_btn": "Write a Review",
+    "authentic_feedback_badge": "Authentic Feedback",
+    "recent_reviews_title": "Recent Reviews",
+    "latest_feedback_subtitle": "See what our customers are saying",
+    "total_reviews": "Total Reviews",
+    "average_rating": "Average Rating",
+    "positive_reviews": "Positive Reviews",
+    "satisfaction_rate": "Satisfaction Rate",
+    "no_reviews_title": "No reviews yet",
+    "be_first_review": "Be the first to share your experience",
+    "write_first_review": "Write the first review",
+    "verified_reviews": "Verified Reviews",
+    "all_reviews_verified": "All reviews are from verified customers",
+    "community_driven": "Community Driven",
+    "view_details": "View Details",
+    "promotions": {
+        "weekend_special": "Weekend Special",
+        "family_feast": "Family Feast Deal",
+        "family_feast_desc": "Enjoy our exclusive weekend family bundle with 30% off.",
+        "new_menu_launch": "New Menu Launch",
+        "seasonal_specials": "Seasonal Specials",
+        "seasonal_desc": "Experience our chef's new seasonal creations.",
+        "book_now": "Book Now",
+        "view_menu": "View Menu",
+        "offer_ends_in": "Offer ends in"
+    },
+    "modal": {
+        "rate_experience": "Rate Your Experience",
+        "how_would_you_rate": "How would you rate your experience?",
+        "select_rating": "Select a rating",
+        "share_feedback_placeholder": "Tell us about your experience...",
+        "upload_photos": "Upload Photos",
+        "max_images": "Maximum 4 images",
+        "post_anonymously": "Post Anonymously",
+        "public_review_notice": "Your review will be publicly visible.",
+        "submit": "Submit Review",
+        "cancel": "Cancel",
+         "choose_photos": "Choose your photos",
+         "your_name_hidden": "Your name won't be shown publicly"
+    }
+  },
+  "checkout": {
+    "my_order": "My Order",
+    "confirm_order_desc": "Confirm your order so we can prep it.",
+    "back": "Back",
+    "cart_empty": "Your cart is empty",
+    "browse_menu": "Browse our menu",
+    "add_items": "Add other items",
+    "pickup": "Pick up",
+    "dine_in": "Dine-in",
+    "delivery": "Delivery",
+    "select_opt": "Select {{name}}",
+    "delete": "Delete",
+    "current_location": "Current Location",
+    "location_saved": "Location Saved",
+    "change_location": "Change Location",
+    "pick_on_map": "Pick on map",
+    "share_location": "Share My Location",
+    "getting_location": "Getting location...",
+    "picked_on_map": "Picked on map",
+    "map_picker_title": "Pick location",
+    "confirm_location": "Confirm location",
+    "cancel": "Cancel",
+    "close": "Close",
+    "table_number": "Table Number",
+    "enter_table_number": "Enter table number",
+    "special_instructions": "Special Instructions",
+    "special_instructions_placeholder": "Any special requests? (e.g., extra sauce, no onions)",
+    "coupon_code": "Coupon / Promo Code",
+    "enter_coupon_placeholder": "Enter coupon code",
+    "apply": "Apply",
+    "checking": "Checking...",
+    "discount_applied": "discount applied",
+    "subtotal": "Subtotal",
+    "vat": "VAT",
+    "discount_with_pct": "Discount ({{pct}}%)",
+    "total": "Total",
+    "confirm_order": "Confirm Order",
+    "creating_order": "Creating Order...",
+    "delivery_location": "Delivery Location",
+    "full_name": "Full name",
+    "phone_number": "Phone number",
+    "address_details": "Address details"
+  },
+  "support": {
+     "page_title": "Support Center",
+     "page_desc": "We are here to help you",
+     "hero_tagline": "24/7 Support",
+     "hero_title": "Support Center",
+     "hero_desc": "Find answers to common questions or reach out to our team for personalized assistance.",
+     "about": {
+        "title": "About Us",
+        "description": "We are a restaurant dedicated to great food and exceptional service. Our passion is creating memorable dining experiences for every guest.",
+        "stats": {
+            "made_with_love": "Made with Love",
+            "happy_customers": "Happy Customers",
+            "years_experience": "Years Experience",
+            "quality_rating": "Quality Rating"
+        }
+     },
+     "faq": {
+        "title": "Frequently Asked Questions",
+        "subtitle": "Quick answers to common questions",
+        "no_faqs": "No FAQs available at the moment."
+     },
+     "policies": {
+         "terms": "Terms of Service",
+         "privacy": "Privacy Policy",
+         "terms_placeholder": "Terms of service content will appear here.",
+         "privacy_placeholder": "Privacy policy content will appear here."
+     },
+     "contact": {
+         "title": "Get in Touch",
+         "subtitle": "We'd love to hear from you",
+         "form": {
+            "name_label": "Your Name",
+            "name_placeholder": "John Doe",
+            "email_label": "Email Address",
+            "email_placeholder": "john@example.com",
+            "subject_label": "Subject",
+            "subject_placeholder": "How can we help?",
+            "category_label": "Category",
+            "message_label": "Message",
+            "message_placeholder": "Tell us more about your inquiry..."
+         },
+         "categories": {
+             "feedback": "Feedback",
+             "complaint": "Complaint",
+             "other": "Other"
+         },
+         "send": "Send Message",
+         "success": "Submitted successfully! We'll get back to you soon.",
+         "fail": "Failed to submit. Please try again.",
+         "error": "An error occurred.",
+         "info_title": "Contact Information",
+         "methods": {
+            "email": "Email Us",
+            "phone": "Phone Us",
+            "visit": "Visit Us",
+            "hours": "Working Hours"
+         }
+     },
+     "social_title": "Follow us on social media"
+  },
+  "orders": {
+    "page_title": "Your Orders",
+    "page_desc": "Track your active orders and view history",
+    "view_history": "View History",
+    "refresh": "Refresh",
+    "refresh_success": "Orders refreshed",
+    "refresh_error": "Failed to refresh orders",
+    "loading": "Loading orders...",
+    "order_in_progress": "Order in Progress",
+    "track_status_subtitle": "Track your order status in real-time",
+    "call_restaurant": "Call Restaurant",
+    "rate_experience": "Rate Experience",
+    "rate_experience_modal_title": "Rate Your Experience",
+    "how_was_your_order": "How was your order?",
+    "share_feedback_placeholder": "Tell us more about your experience...",
+    "submit_review": "Submit Review",
+    "cancel": "Cancel",
+    "history_modal_title": "Order History",
+    "no_history": "No order history found",
+    "status_steps": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "preparing": "Preparing",
+      "ready": "Ready to Pickup",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "order_details": {
+      "order_number": "Order #",
+      "estimated_ready_time": "Estimated Ready Time",
+      "customer": "Customer",
+      "guest": "Guest",
+      "service_details": "Service Details",
+      "table_prefix": "Table ",
+      "items": "Items",
+      "subtotal": "Subtotal",
+      "vat": "VAT",
+      "total": "Total",
+      "payment_status": "Payment Status"
+    },
+    "action": {
+      "cancel": "Cancel Order"
+    },
+    "error": {
+      "cannot_cancel": "Cannot cancel order in {{status}} status"
+    },
+    "modal": {
+      "cancel_title": "Cancel Order?",
+      "cancel_confirm": "Are you sure you want to cancel order #{{orderNumber}}?",
+      "keep_order": "Keep Order",
+      "yes_cancel": "Yes, Cancel",
+      "canceling": "Canceling..."
+    },
+    "empty": {
+      "title": "No Active Orders",
+      "description": "It looks like you don't have any orders at the moment. Hungry? Explore our menu and find something delicious!",
+      "browse_menu": "Browse Menu",
+      "rewards_tip": "Pro Tip: You earn points for every order!",
+      "messages": [
+        "Your stomach is growling... we can hear it from here!",
+        "The kitchen is bored. Send them something to do!",
+        "Empty plate, empty heart. Let's fix that.",
+        "Nothing to eat? That's a solvable problem."
+      ]
+    },
+    "toast": {
+      "cancel_success": "Order canceled successfully",
+      "cancel_fail": "Failed to cancel order"
+    }
+  },
+  "auth": {
+    "login": {
+      "welcome_back": "Welcome Back",
+      "login_desc": "Please login to continue",
+      "email_label": "Email Address",
+      "email_placeholder": "john@example.com",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "forgot_password": "Forgot password?",
+      "submit": "Login",
+      "logging_in": "Logging in...",
+      "no_account": "Don't have an account?",
+      "sign_up_now": "Sign up now",
+      "sign_in_title": "Sign In to BrandBite",
+      "secure_login": "Secure Login",
+      "24_7_support": "24/7 Support",
+      "or_continue": "Or continue with",
+      "join_message": "Join 500+ Happy Customers",
+      "need_help": "Need help?",
+      "contact_support": "Contact Support",
+      "brand_title": "BrandBite",
+      "brand_tagline": "The best restaurant experience",
+      "brand_welcome": "Welcome back to the best restaurant experience in the world. Your culinary journey continues here.",
+      "offer_card": {
+        "title": "20% OFF",
+        "subtitle": "Special Offer",
+        "desc": "Click to explore menu & order now"
+      },
+      "reviews_card": {
+        "title": "89",
+        "subtitle": "Excellent Reviews",
+        "desc": "Click to read customer stories"
+      },
+      "customers_card": {
+        "title": "500+",
+        "subtitle": "Happy Customers",
+        "desc": "Click to join our rewards program"
+      }
+    },
+    "register": {
+      "page_title": "Create Account",
+      "page_desc": "Join BrandBite for an exceptional dining experience",
+      "name_label": "Full Name",
+      "name_placeholder": "Enter your full name",
+      "email_label": "Email Address",
+      "email_placeholder": "Enter your email",
+      "phone_label": "Phone Number",
+      "phone_placeholder": "Enter phone number",
+      "password_label": "Password",
+      "password_placeholder": "Create a strong password",
+      "password_hint": "Must be 8+ characters",
+      "submit": "Create Account",
+      "creating": "Creating Account...",
+      "have_account": "Already have an account?",
+      "sign_in": "Sign in here",
+      "success_title": "Account created successfully!",
+      "success_desc": "Check your email for OTP",
+      "brand_subtitle": "Join the food revolution",
+      "customers": "Customers",
+      "reviews": "Reviews",
+      "service": "Service",
+      "join_family": "Join Our Food Family",
+      "join_desc": "Register now for exclusive offers and the best dining experience"
+    },
+    "validation": {
+      "email_required": "Email is required",
+      "email_invalid": "Please enter a valid email",
+      "password_required": "Password is required",
+      "password_min": "Password must be at least 8 characters",
+      "name_required": "Name is required",
+      "name_min": "Name must be at least 2 characters",
+      "phone_required": "Phone number is required",
+      "phone_invalid": "Please enter a valid phone number",
+      "password_lowercase": "Password must contain a lowercase letter",
+      "password_uppercase": "Password must contain an uppercase letter",
+      "password_number": "Password must contain a number"
+    }
+  }
 }
