@@ -73,7 +73,7 @@ const AppHeader = () => {
             <button
               onClick={() => i18n.changeLanguage(i18n.language === "ar" ? "en" : "ar")}
               className="relative flex items-center justify-center text-gray-500 transition-colors bg-transparent rounded-full h-11 w-11 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white font-bold"
-              title={i18n.language === "ar" ? "Switch to English" : "التبديل للعربية"}
+              title={t("switch_to_lang")}
             >
               {i18n.language === "ar" ? "En" : "ع"}
             </button>
