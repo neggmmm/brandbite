@@ -1,8 +1,8 @@
-// OrdersTab.jsx - View and manage existing orders
+// OrdersTab.jsx - FIXED VERSION
 import React, { useState, useEffect } from "react";
 import { Loader2, Trash2, AlertCircle } from "lucide-react";
 import api from "../../../api/axios";
-import socketClient, { setupSocketListeners, joinSocketRooms } from "../../../utils/socketRedux";
+import socketClient from "../../../utils/socketRedux";
 import { useToast } from "../../../hooks/useToast";
 import { useSelector } from "react-redux";
 import FilterBar from "./FilterBar";
@@ -27,31 +27,91 @@ export default function OrdersTab() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [socketReady, setSocketReady] = useState(false);
 
   // Fetch orders
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  // Socket listeners for real-time updates
+  // Socket setup - SIMPLIFIED AND FIXED
   useEffect(() => {
     const socket = socketClient.getSocket() || socketClient.initSocket();
-    if (!socket) return;
-
-    // Setup global socket listeners (handles Redux dispatches)
-    setupSocketListeners(socket);
-
-    // Join socket rooms
-    if (user) {
-      joinSocketRooms(socket, user);
+    
+    if (!socket) {
+      console.error("❌ [CASHIER] Socket not initialized");
+      return;
     }
 
-    // Listen for order status changes
+    console.log("🔌 [CASHIER] Setting up socket listeners");
+
+    // Wait for connection
+    const handleConnect = () => {
+      console.log("✅ [CASHIER] Socket connected:", socket.id);
+      
+      // Register user and join rooms
+      if (user?._id) {
+        console.log("📝 [CASHIER] Registering user:", user._id, "role:", user.role);
+        socket.emit("register", user._id);
+        
+        if (user.role) {
+          socket.emit("joinRole", user.role);
+        }
+        
+        if (user.role === "cashier" || user.role === "admin") {
+          console.log("🏪 [CASHIER] Joining cashier room");
+          socket.emit("joinCashier");
+        }
+      }
+      
+      setSocketReady(true);
+    };
+
+    // Handle connection
+    if (socket.connected) {
+      handleConnect();
+    } else {
+      socket.on("connect", handleConnect);
+    }
+
+    // ===== ORDER CREATED/NEW EVENTS =====
+    const handleNewOrder = (order) => {
+      console.log("✅ [CASHIER] New order received:", order?.orderNumber, order?._id);
+      
+      if (!order || !order._id) {
+        console.warn("⚠️ [CASHIER] Invalid order received:", order);
+        return;
+      }
+
+      setOrders((prevOrders) => {
+        // Check if order already exists
+        const exists = prevOrders.some(o => o._id === order._id);
+        if (exists) {
+          console.log("ℹ️ [CASHIER] Order already exists, skipping:", order._id);
+          return prevOrders;
+        }
+        
+        console.log("➕ [CASHIER] Adding new order to list");
+        return [order, ...prevOrders];
+      });
+      
+      toast.showToast({
+        message: `📋 ${t("new_order")}: #${order.orderNumber} ${t("from")} ${order.customerInfo?.name || t("guest")}`,
+        type: "success",
+        duration: 5000,
+      });
+    };
+
+    // ===== STATUS CHANGE EVENTS =====
     const handleStatusChange = (data) => {
-      console.log("Cashier: Order status changed", data);
+      console.log("🔄 [CASHIER] Order status changed:", data);
+      
+      const orderId = data._id || data.orderId;
+      if (!orderId) return;
+
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order._id === (data.orderId || data._id)
+          order._id === orderId
             ? {
                 ...order,
                 status: data.status,
@@ -60,8 +120,9 @@ export default function OrdersTab() {
             : order
         )
       );
+
       // Update modal if open
-      if (statusUpdateOrder && statusUpdateOrder._id === (data.orderId || data._id)) {
+      if (statusUpdateOrder?._id === orderId) {
         setStatusUpdateOrder((prev) => prev ? ({
           ...prev,
           status: data.status,
@@ -70,12 +131,16 @@ export default function OrdersTab() {
       }
     };
 
-    // Listen for payment status changes
+    // ===== PAYMENT CHANGE EVENTS =====
     const handlePaymentChange = (data) => {
-      console.log("Cashier: Order payment changed", data);
+      console.log("💳 [CASHIER] Order payment changed:", data);
+      
+      const orderId = data._id || data.orderId;
+      if (!orderId) return;
+
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order._id === (data.orderId || data._id)
+          order._id === orderId
             ? {
                 ...order,
                 paymentStatus: data.paymentStatus,
@@ -86,7 +151,7 @@ export default function OrdersTab() {
       );
 
       // Update modal if open
-      if (paymentUpdateOrder && paymentUpdateOrder._id === (data.orderId || data._id)) {
+      if (paymentUpdateOrder?._id === orderId) {
         setPaymentUpdateOrder((prev) => prev ? ({
           ...prev,
           paymentStatus: data.paymentStatus,
@@ -95,35 +160,56 @@ export default function OrdersTab() {
       }
     };
 
-    // Listen for new orders
-    const handleNewOrder = (order) => {
-      console.log("✅ [CASHIER] New order received via socket:", order?.orderNumber, order?._id);
-      setOrders((prevOrders) => [order, ...prevOrders]);
-      toast.showToast({
-        message: `📋 ${t("new_order")}: #${order.orderNumber} ${t("from")} ${order.customerInfo?.name || t("guest")}`,
-        type: "success",
-        duration: 3000,
-      });
-    };
-
-    socket.on("order:status-changed", handleStatusChange);
-    socket.on("order:your-status-changed", handleStatusChange);
-    socket.on("order:payment-updated", handlePaymentChange);
-    socket.on("order:your-payment-updated", handlePaymentChange);
+    // ===== REGISTER ALL EVENT LISTENERS =====
+    
+    // New order events (multiple event names for compatibility)
     socket.on("order:new", handleNewOrder);
     socket.on("order:created", handleNewOrder);
     socket.on("order:direct", handleNewOrder);
+    socket.on("order:new:paid", handleNewOrder);
+    socket.on("order:new:online", handleNewOrder);
+    socket.on("order:new:instore", handleNewOrder);
 
+    // Status change events
+    socket.on("order:status-changed", handleStatusChange);
+    socket.on("order:your-status-changed", handleStatusChange);
+    socket.on("order:updated", handleStatusChange);
+
+    // Payment events
+    socket.on("order:payment-updated", handlePaymentChange);
+    socket.on("order:your-payment-updated", handlePaymentChange);
+    socket.on("order:payment:success", handlePaymentChange);
+
+    // Connection events
+    socket.on("disconnect", () => {
+      console.log("❌ [CASHIER] Socket disconnected");
+      setSocketReady(false);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("❌ [CASHIER] Socket connect error:", error);
+    });
+
+    // ===== CLEANUP =====
     return () => {
-      socket.off("order:status-changed", handleStatusChange);
-      socket.off("order:your-status-changed", handleStatusChange);
-      socket.off("order:payment-updated", handlePaymentChange);
-      socket.off("order:your-payment-updated", handlePaymentChange);
+      console.log("🧹 [CASHIER] Cleaning up socket listeners");
+      socket.off("connect", handleConnect);
       socket.off("order:new", handleNewOrder);
       socket.off("order:created", handleNewOrder);
       socket.off("order:direct", handleNewOrder);
+      socket.off("order:new:paid", handleNewOrder);
+      socket.off("order:new:online", handleNewOrder);
+      socket.off("order:new:instore", handleNewOrder);
+      socket.off("order:status-changed", handleStatusChange);
+      socket.off("order:your-status-changed", handleStatusChange);
+      socket.off("order:updated", handleStatusChange);
+      socket.off("order:payment-updated", handlePaymentChange);
+      socket.off("order:your-payment-updated", handlePaymentChange);
+      socket.off("order:payment:success", handlePaymentChange);
+      socket.off("disconnect");
+      socket.off("connect_error");
     };
-  }, [statusUpdateOrder, paymentUpdateOrder, user]);
+  }, [user, statusUpdateOrder, paymentUpdateOrder, t, toast]);
 
   const fetchOrders = async () => {
     try {
@@ -146,18 +232,12 @@ export default function OrdersTab() {
       const bTime = new Date(b.createdAt).getTime();
       const aItems = a.items?.length || 0;
       const bItems = b.items?.length || 0;
-      const aPrep = bTime - aTime; // Prep time in ms
-      const bPrep = bTime - bTime; // Prep time in ms
 
       switch (activeSort) {
         case "newest":
           return bTime - aTime;
         case "oldest":
           return aTime - bTime;
-        case "shortest_prep":
-          return aPrep - bPrep;
-        case "longest_prep":
-          return bPrep - aPrep;
         case "fewest_items":
           return aItems - bItems;
         case "most_items":
@@ -179,7 +259,6 @@ export default function OrdersTab() {
       toast.showToast({message: t("admin.order_status_updated")});
       setStatusUpdateOrder(null);
     } catch (error) {
-
       toast.showToast({message: t("admin.failed_update_status")});
     } finally {
       setUpdatingStatus(false);
@@ -236,6 +315,15 @@ export default function OrdersTab() {
 
   return (
     <div className="space-y-6">
+      {/* Socket Status Indicator (for debugging) */}
+      {!socketReady && (
+        <div className="bg-yellow-50 border border-yellow-200 dark:bg-yellow-900 dark:border-yellow-600 rounded-lg p-3">
+          <p className="text-sm text-yellow-900 dark:text-yellow-50">
+            ⚠️ Connecting to real-time updates...
+          </p>
+        </div>
+      )}
+
       {/* Filters and Sorting */}
       <FilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
       <SortBar activeSort={activeSort} onSortChange={setActiveSort} />
