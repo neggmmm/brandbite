@@ -126,7 +126,7 @@ export default function LandingPage() {
     },
     {
       image: "https://plus.unsplash.com/premium_photo-1682310144714-cb77b1e6d64a?w=600&h=600&fit=crop",
-      title: t("reviews"),
+      title: t("nav.reviews"),
       description: t("explore_reviews"),
       color: "text-purple-600 dark:text-purple-400",
       bgColor: "bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900",
@@ -134,7 +134,7 @@ export default function LandingPage() {
       navigate: "/reviews",
     },
     {
-      image: "https://media.istockphoto.com/id/1251768924/photo/pink-piggy-bank-with-life-belt.jpg?s=612x612&w=0&k=20&c=vFf4ClK44lfGsMWfQTowqIScnSfZPuAJquARuFhcfRg=",
+      image: "/images/support_icon.png",
       title: t("Support"),
       description: t("FAQ_and_help"),
       color: "text-emerald-600 dark:text-emerald-400",
@@ -445,12 +445,15 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-3 mb-6">
                 <Instagram className="w-8 h-8 text-pink-600 dark:text-pink-500" />
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Follow Us
-                </h2>
+  {t("Follow Us")}
+</h2>
               </div>
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Tag us <span className="font-bold text-amber-600 dark:text-amber-500">@{settings.restaurantName?.replace(/\s+/g, '') || "ourrestaurant"}</span> to be featured!
-              </p>
+  {t("instagram_tag")}{" "}
+  <span className="font-bold text-amber-600 dark:text-amber-500">
+    @{settings.restaurantName?.replace(/\s+/g, "") || "restaurant"}
+  </span>
+</p>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -488,6 +491,7 @@ export default function LandingPage() {
             </div>
             
             <div className="text-center mt-8">
+<<<<<<< HEAD
               <a 
                 href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, '') || "restaurant"}`}
                 target="_blank"
@@ -506,6 +510,18 @@ className="
                 <Instagram className="w-5 h-5" />
                 Follow on Instagram
               </a>
+=======
+            <a
+  href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, "") || "restaurant"}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="inline-flex items-center gap-3 bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
+>
+  <Instagram className="w-5 h-5" />
+  {t("follow_instagram")}
+</a>
+
+>>>>>>> bcdce09b17d7a5ab5f549ca48fd5a82697f75498
             </div>
           </div>
 
@@ -535,8 +551,8 @@ className="
                 },
                 {
                   icon: Clock,
-                  title: t("opening_hours") || "Opening Hours",
-                  content: "Mon-Fri: 11AM-10PM\nSat-Sun: 10AM-11PM",
+                  title: t("opening_hours"),
+                  content: "Mon-Fri: 11AM - 10PM\nSat-Sun: 10AM - 11PM",
                   color: "text-amber-600 dark:text-amber-400",
                   bgColor: "bg-amber-100 dark:bg-amber-900/20",
                 },
@@ -569,7 +585,7 @@ className="
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 p-4">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                   <MapPin className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                  {t("find_us") || "Find Our Location"}
+                  {t("find_us")}
                 </h3>
               </div>
               <LocationMap />
@@ -578,10 +594,7 @@ className="
 
           {/* Footer Note */}
           <div className="text-center mt-12 text-gray-600 dark:text-gray-400">
-            <p className="text-sm">
-              {t("open_hours") || "Open daily from 8:00 AM to 11:00 PM"}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
               © {new Date().getFullYear()} {settings.restaurantName || "Restaurant"}. All rights reserved.
             </p>
           </div>

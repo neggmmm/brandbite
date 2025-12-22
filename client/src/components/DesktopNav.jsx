@@ -15,13 +15,14 @@ import {
   ChefHat,
   LayoutDashboard,
   CreditCard,
+  LogOut,
 } from "lucide-react";
 import { ThemeToggleButton } from "./common/ThemeToggleButton";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useEffect } from "react";
-import { useSelector } from "react-redux";
-import LogoutButton from "./ui/button/LogoutButton";
+import { useSelector, useDispatch } from "react-redux";
+import { logoutUser, logout } from "../redux/slices/authSlice";
 import LoginButton from "./ui/button/LoginButton";
 import { useRole } from "../hooks/useRole";
 
@@ -61,56 +62,31 @@ export default function CombinedNavbar() {
           {/* Toggle Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="px-4 py-2 hover:bg-gray-100 flex items-center"
+            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center"
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          {/* Admin view toggle */}
-            {isOpen && isAdmin && (
-              <div className="px-2">
-                <button
-                onClick={() => {window.location.replace("/admin")}}
-                  className="px-3 py-2 bg-primary text-white rounded-md hover:opacity-90"
-                >
-                Switch to Admin
-                </button>
-              </div>
-            )}
-          {/* Language + Dark Mode */}
-          <div className="flex justify-between items-center px-2">
-            {isOpen && (
-              <>
-                {i18n.language === "en" && (
-                  <button
-                    onClick={() => i18n.changeLanguage("ar")}
-                    className="px-2 py-2 hover:bg-gray-100 rounded-md"
-                  >
-                    AR
-                  </button>
-                )}
-
-                {i18n.language === "ar" && (
-                  <button
-                    onClick={() => i18n.changeLanguage("en")}
-                    className="px-2 py-2 hover:bg-gray-100 rounded-md"
-                  >
-                    EN
-                  </button>
-                )}
-              </>
-            )}
-
-            <div className="">
-              <ThemeToggleButton />
-            </div>
+          
+          {/* Language + Dark Mode - Side by Side */}
+          <div className="flex items-center justify-center gap-1 px-2">
+            {/* Language Button */}
+            <button
+              onClick={() => i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")}
+              className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 transition-colors"
+              title={i18n.language === "en" ? "Switch to Arabic" : "Switch to English"}
+            >
+              {i18n.language === "en" ? "ع" : "En"}
+            </button>
             
+            {/* Dark Mode Toggle */}
+            <ThemeToggleButton />
           </div>
 
           {/* Navigation Items */}
           <DesktopNavItem
             to="/"
             icon={<Home size={20} />}
-            label={t("home")}
+            label={t("nav.home")}
             active={isActive("/")}
             isOpen={isOpen}
             onClick={handleNavClick}
@@ -119,7 +95,7 @@ export default function CombinedNavbar() {
           <DesktopNavItem
             to="/menu"
             icon={<Utensils size={20} />}
-            label={t("menu")}
+            label={t("nav.menu")}
             active={isActive("/menu")}
             isOpen={isOpen}
             onClick={handleNavClick}
@@ -128,7 +104,7 @@ export default function CombinedNavbar() {
           <DesktopNavItem
             to="/orders"
             icon={<Clock4 size={20} />}
-            label={t("orders")}
+            label={t("nav.orders")}
             active={isActive("/orders")}
             isOpen={isOpen}
             onClick={handleNavClick}
@@ -137,7 +113,7 @@ export default function CombinedNavbar() {
           <DesktopNavItem
             to="/reviews"
             icon={<Star size={20} />}
-            label={t("reviews")}
+            label={t("nav.reviews")}
             active={isActive("/reviews")}
             isOpen={isOpen}
             onClick={handleNavClick}
@@ -146,7 +122,7 @@ export default function CombinedNavbar() {
           <DesktopNavItem
             to="/rewards"
             icon={<Gift size={20} className="text-secondary" />}
-            label={t("rewards")}
+            label={t("nav.rewards")}
             active={isActive("/rewards")}
             isOpen={isOpen}
             onClick={handleNavClick}
@@ -154,7 +130,7 @@ export default function CombinedNavbar() {
           <DesktopNavItem
             to="/support"
             icon={<HelpCircle size={20} />}
-            label={"Support"}
+            label={t("nav.support")}
             active={isActive("/support")}
             isOpen={isOpen}
             onClick={handleNavClick}
@@ -164,12 +140,8 @@ export default function CombinedNavbar() {
           <div className="flex-1" />
           
           {/* User Profile Section */}
-          {isAuthenticated && user && (
+          {isAuthenticated && user ? (
             <UserDropdown isOpen={isOpen} user={user} onNavClick={handleNavClick} />
-          )}
-          
-          {isAuthenticated ? (
-            <LogoutButton isOpen={isOpen} />
           ) : (
             <LoginButton isOpen={isOpen} />
           )}
@@ -183,7 +155,7 @@ export default function CombinedNavbar() {
           <MobileNavItem
             to="/"
             icon={<Home size={20} />}
-            label={t("home")}
+            label={t("nav.home")}
             active={isActive("/")}
             onClick={handleNavClick}
           />
@@ -192,7 +164,7 @@ export default function CombinedNavbar() {
           <MobileNavItem
             to="/menu"
             icon={<Utensils size={20} />}
-            label={t("menu")}
+            label={t("nav.menu")}
             active={isActive("/menu")}
             onClick={handleNavClick}
           />
@@ -201,7 +173,7 @@ export default function CombinedNavbar() {
           <MobileNavItem
             to="/orders"
             icon={<Clock4 size={20} />}
-            label={t("orders")}
+            label={t("nav.orders")}
             active={isActive("/orders")}
             onClick={handleNavClick}
           />
@@ -210,7 +182,7 @@ export default function CombinedNavbar() {
           <MobileNavItem
             to="/support"
             icon={<HelpCircle size={20} />}
-            label={"Support"}
+            label={t("nav.support")}
             active={isActive("/support")}
             onClick={handleNavClick}
           />
@@ -227,7 +199,7 @@ export default function CombinedNavbar() {
             <MobileNavItem
               to="/login"
               icon={<User size={20} />}
-              label={t("login")}
+              label={t("nav.login")}
               active={isActive("/login")}
               onClick={handleNavClick}
             />
@@ -246,7 +218,7 @@ function DesktopNavItem({ to, icon, label, active, isOpen, onClick, badge }) {
       to={to}
       onClick={() => onClick && onClick()}
       className={`
-        px-4 py-3 w-full flex items-center gap-3 hover:bg-gray-100 
+        px-4 py-3 w-full flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
         ${active ? "text-primary" : "text-muted"}
       `}
     >
@@ -315,11 +287,15 @@ function MobileNavItem({ to, icon, label, active, onClick, badge }) {
 
 /* ------------ User Dropdown ------------ */
 function UserDropdown({ isOpen, user, onNavClick }) {
+  const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const { profile } = useSelector((state) => state.userProfile || {});
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const displayName = user?.name || user?.email?.split("@")[0] || "User";
-  const avatarUrl = user?.avatarUrl || "/images/user/owner.jpg";
+  const avatarUrl = profile?.avatarUrl || user?.avatarUrl;
   const role = user?.role || "customer";
 
   // Close dropdown when clicking outside
@@ -336,13 +312,24 @@ function UserDropdown({ isOpen, user, onNavClick }) {
   const getRoleLink = () => {
     switch (role) {
       case "admin":
-        return { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> };
+        return { to: "/admin", label: t("nav.dashboard"), icon: <LayoutDashboard size={16} /> };
       case "kitchen":
-        return { to: "/kitchen", label: "Kitchen", icon: <ChefHat size={16} /> };
+        return { to: "/kitchen", label: t("nav.kitchen"), icon: <ChefHat size={16} /> };
       case "cashier":
-        return { to: "/cashier", label: "Cashier", icon: <CreditCard size={16} /> };
+        return { to: "/cashier", label: t("nav.cashier"), icon: <CreditCard size={16} /> };
       default:
         return null;
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser());
+      dispatch(logout());
+      setDropdownOpen(false);
+      navigate("/");
+    } catch (err) {
+      console.error("Logout failed", err);
     }
   };
 
@@ -356,11 +343,15 @@ function UserDropdown({ isOpen, user, onNavClick }) {
           isOpen ? "justify-start" : "justify-center"
         }`}
       >
-        <img
-          src={avatarUrl}
-          alt={displayName}
-          className="w-8 h-8 rounded-full object-cover border-2 border-primary/30"
-        />
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={displayName}
+            className="w-8 h-8 rounded-full object-cover border-2 border-primary/30"
+          />
+        ) : (
+          <User size={20} className="w-8 h-8 rounded-full object-cover border-2 border-primary/30" />
+        )}
         {isOpen && (
           <>
             <div className="flex-1 text-left">
@@ -379,25 +370,35 @@ function UserDropdown({ isOpen, user, onNavClick }) {
 
       {/* Dropdown Menu */}
       {dropdownOpen && (
-        <div className={`absolute ${isOpen ? "left-2 right-2" : "left-0"} bottom-full mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50`}>
+        <div className={`absolute ${isOpen ? "inset-x-2" : "left-0"} bottom-full mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50 min-w-[160px]`}>
           <Link
             to="/profile"
             onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <User size={16} />
-            Profile
+            {t("nav.profile")}
           </Link>
           {roleLink && (
-            <Link
-              to={roleLink.to}
+            <a
+              href={roleLink.to}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => { setDropdownOpen(false); onNavClick && onNavClick(); }}
               className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               {roleLink.icon}
               {roleLink.label}
-            </Link>
+            </a>
           )}
+          <div className="border-t border-gray-200 dark:border-gray-700"></div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+          >
+            <LogOut size={16} />
+            {t("nav.logout")}
+          </button>
         </div>
       )}
     </div>
@@ -406,6 +407,7 @@ function UserDropdown({ isOpen, user, onNavClick }) {
 
 /* ------------ Mobile User Dropdown ------------ */
 function MobileUserDropdown({ user, onNavClick }) {
+  const { t } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { profile } = useSelector((state) => state.userProfile || {});
@@ -427,11 +429,11 @@ function MobileUserDropdown({ user, onNavClick }) {
   const getRoleLink = () => {
     switch (role) {
       case "admin":
-        return { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={16} /> };
+        return { to: "/admin", label: t("nav.dashboard"), icon: <LayoutDashboard size={16} /> };
       case "kitchen":
-        return { to: "/kitchen", label: "Kitchen", icon: <ChefHat size={16} /> };
+        return { to: "/kitchen", label: t("nav.kitchen"), icon: <ChefHat size={16} /> };
       case "cashier":
-        return { to: "/cashier", label: "Cashier", icon: <CreditCard size={16} /> };
+        return { to: "/cashier", label: t("nav.cashier"), icon: <CreditCard size={16} /> };
       default:
         return null;
     }
@@ -450,7 +452,7 @@ function MobileUserDropdown({ user, onNavClick }) {
           alt="User"
           className="w-7 h-7 rounded-full object-cover border-2 border-primary/40"
         />
-        <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">Me</span>
+        <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">{t("nav.me")}</span>
       </button>
 
       {/* Dropdown Menu - appears above the button */}
@@ -462,7 +464,7 @@ function MobileUserDropdown({ user, onNavClick }) {
             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <User size={16} />
-            Profile
+            {t("nav.profile")}
           </Link>
           <Link
             to="/reviews"
@@ -470,7 +472,7 @@ function MobileUserDropdown({ user, onNavClick }) {
             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Star size={16} />
-            Reviews
+            {t("nav.reviews")}
           </Link>
           <Link
             to="/rewards"
@@ -478,7 +480,7 @@ function MobileUserDropdown({ user, onNavClick }) {
             className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Gift size={16} className="text-secondary" />
-            Rewards
+            {t("nav.rewards")}
           </Link>
           {roleLink && (
             <Link

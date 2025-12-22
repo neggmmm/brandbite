@@ -53,9 +53,21 @@
   cursor: pointer;
   transition: var(--cb-transition);
   color: white;
-  position: relative;
+  position: relative; /* Changed from absolute to relative */
+  /* Removed left: 0, bottom: 24px */
   overflow: hidden;
-  margin-top: 16px;
+  /* margin-top: 16px; handled by flex gap now */
+}
+
+/* Floating Buttons Container adjustments */
+.chatbot-buttons-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+html[dir="rtl"] .chatbot-buttons-container {
+  flex-direction: row-reverse; /* Ensure Toggle is closest to the edge in RTL too */
 }
 
 .chatbot-toggle:hover {
@@ -87,14 +99,14 @@
   transform: rotate(-90deg) scale(0.5);
 }
 
-/* Greeting Bubble */
+/* Greeting Bubble - Compact */
 .greeting-bubble {
   background: var(--cb-bg);
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  padding: 16px;
-  margin-bottom: 12px;
-  max-width: 280px;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+  margin-bottom: 1px;
+  max-width: 220px;
   position: relative;
   animation: slideIn 0.4s ease-out;
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -118,13 +130,13 @@
 
 .greeting-close {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 4px;
+  right: 4px;
   background: transparent;
   border: none;
   color: var(--cb-text-light);
   cursor: pointer;
-  padding: 4px;
+  padding: 2px;
   border-radius: 4px;
   transition: var(--cb-transition);
   display: flex;
@@ -138,32 +150,32 @@
 }
 
 .greeting-close svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .greeting-content {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding-right: 24px;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding-right: 20px;
 }
 
 .greeting-wave {
-  font-size: 20px;
+  font-size: 14px;
 }
 
 .greeting-content strong {
-  font-size: 15px;
+  font-size: 13px;
   color: var(--cb-text);
 }
 
 .greeting-bubble p {
   margin: 0;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--cb-text-light);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* Chat Window - Normal State */
@@ -1204,4 +1216,127 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* ===== RTL (Right-to-Left) SUPPORT FOR CHATBOT ===== */
+
+/* Move chatbot container to left side in RTL */
+html[dir="rtl"] .chatbot-container {
+  right: auto !important;
+  left: 24px !important;
+  align-items: flex-start !important;
+  width: auto !important;
+  max-width: fit-content !important;
+}
+
+/* Ensure buttons are arranged correctly in RTL (Toggle on left, Scroll on right) */
+html[dir="rtl"] .chatbot-buttons-container {
+  flex-direction: row-reverse !important;
+  justify-content: flex-end !important; /* Align to start of flex container (which is left in RTL context if dir=rtl inherits? No, row-reverse flips visual order) */
+  /* Wait, justify-content works on main axis. 
+     If row-reverse, start is right, end is left. 
+     We want them visually on LEFT. 
+     So we need justify-content: flex-end (which is visually LEFT in row-reverse?? No)
+     
+     In row-reverse:
+     Main axis: Right to Left.
+     Start: Right. End: Left.
+     
+     If we want items on Left (End):
+     justify-content: flex-end.
+     
+     Items order: [Item1, Item2] -> Visually: Item2 Item1
+     HTML: [Scroll, Toggle]
+     Visual (row-reverse): [Toggle] [Scroll]
+     Toggle is Item2.
+     
+     If justify-content: flex-end (Left):
+     Result: [Toggle] [Scroll] (at Left edge)
+  */
+}
+
+/* Toggle button specific RTL adjustments */
+html[dir="rtl"] .chatbot-toggle {
+  margin-left: 0 !important;
+  /* margin-right: 0 !important; handled by gap */
+  right: 300px !important;
+}
+
+/* Adjust window animation origin */
+html[dir="rtl"] .chatbot-window {
+  transform-origin: bottom left;
+}
+
+/* Adjust greeting bubble position */
+html[dir="rtl"] .greeting-bubble {
+  text-align: right;
+  align-self: flex-start !important; /* Force bubble to align left */
+  display: none;
+}
+
+/* Adjust header layout */
+html[dir="rtl"] .chatbot-header {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .header-info {
+  text-align: right;
+}
+
+/* Adjust messages */
+html[dir="rtl"] .user-message {
+  align-self: flex-start;
+}
+
+html[dir="rtl"] .bot-message {
+  align-self: flex-end;
+}
+
+html[dir="rtl"] .user-message .message-content-wrapper {
+  align-items: flex-start;
+}
+
+html[dir="rtl"] .bot-message .message-content-wrapper {
+  align-items: flex-end;
+}
+
+/* Adjust suggestions */
+html[dir="rtl"] .suggestion-buttons {
+  justify-content: flex-start;
+}
+
+/* Adjust input area */
+html[dir="rtl"] .input-actions {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .input-icons {
+  flex-direction: row-reverse;
+}
+
+/* Adjust menu dropdown */
+html[dir="rtl"] .menu-dropdown {
+  right: 0px;
+}
+
+html[dir="rtl"] .menu-dropdown button {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+/* Adjust close button position */
+html[dir="rtl"] .greeting-close {
+  right: auto;
+  left: 4px;
+}
+html[dir="rtl"] .scroll-to-top-btn {
+  position: relative;
+  right: 170px;
+}
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  html[dir="rtl"] .chatbot-container {
+    left: 12px;
+    right: auto;
+  }
 }
