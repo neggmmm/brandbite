@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   toggleChatbot,
   addLocalMessage,
@@ -12,6 +13,7 @@ import {
   setWelcomeMessage,
 } from "../../redux/slices/chatbotSlice";
 import { useSettings } from "../../context/SettingContext";
+import ScrollToTopButton from "../common/ScrollToTopButton";
 import "./Chatbot.css";
 
 // Common Emojis data
@@ -113,13 +115,63 @@ const MessageParser = ({ content, type }) => {
           );
         }
         if (block.type === "image") {
+          const handleDownload = async () => {
+            try {
+              const response = await fetch(block.url);
+              const blob = await response.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = block.alt ? `${block.alt.replace(/\s+/g, "_")}.png` : "menu-image.png";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);
+            } catch (error) {
+              console.error("Download failed:", error);
+              // Fallback: open in new tab
+              window.open(block.url, "_blank");
+            }
+          };
+          
           return (
-            <div key={idx} className="content-image-wrapper">
+            <div key={idx} className="content-image-wrapper" style={{ position: "relative" }}>
               <img
                 src={block.url}
                 alt={block.alt || "Content"}
                 className="content-image"
               />
+              <button
+                onClick={handleDownload}
+                className="image-download-btn"
+                title="Download Image"
+                style={{
+                  position: "absolute",
+                  bottom: "8px",
+                  right: "8px",
+                  background: "rgba(0,0,0,0.6)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "6px 12px",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  backdropFilter: "blur(4px)",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => e.target.style.background = "rgba(0,0,0,0.8)"}
+                onMouseLeave={(e) => e.target.style.background = "rgba(0,0,0,0.6)"}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                Download
+              </button>
             </div>
           );
         }
@@ -317,8 +369,8 @@ const GifPicker = ({ onSelect, onClose, primaryColor }) => {
 
   // Sample trending GIFs (in production, use Giphy/Tenor API)
   const trendingGifs = [
-    "https://media.giphy.com/media/l0MYGb1LuZ3n7dRnO/giphy.gif",
-    "https://media.giphy.com/media/3o7TKU8RvQuomFfUUU/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMTV2ZTBhdzFmbmJieXFvaW9ienBjbndxMmlsemN6OWN6ODdhZTZjeiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/L3UFa9OvkOjA6c16Xn/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3amtkOW5panE2MHU0bXQzano3cGx4MnQwY3NjaXdsc2s3c251dno0YSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/wjEQMRyynvrdx5g7Mn/giphy.gif",
     "https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif",
     "https://media.giphy.com/media/26gsspfbt1HfVQ9va/giphy.gif",
     "https://media.giphy.com/media/3oz8xIsloV7zOmt81G/giphy.gif",
@@ -476,6 +528,7 @@ const VoiceRecorder = ({ onClose, onSend, primaryColor }) => {
 
 export default function Chatbot() {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { settings } = useSettings();
   const { isActive, isWaiting, messages, suggestions, conversationState, isLoaded } =
     useSelector((s) => s.chatbot);
@@ -529,11 +582,12 @@ export default function Chatbot() {
     if (isActive && !isLoaded) {
       dispatch(loadChatHistory()).then((result) => {
         if (!result.payload?.messages?.length) {
-          dispatch(setWelcomeMessage(restaurantName));
+          // Send "start" to backend to get welcome message with menu image
+          dispatch(sendChatMessage("start"));
         }
       });
     }
-  }, [isActive, isLoaded, dispatch, restaurantName]);
+  }, [isActive, isLoaded, dispatch]);
 
   // Handle logout - clear chat when user logs out
   useEffect(() => {
@@ -548,11 +602,12 @@ export default function Chatbot() {
     if (!prevAuth && isAuthenticated && isActive) {
       dispatch(loadChatHistory()).then((result) => {
         if (!result.payload?.messages?.length) {
-          dispatch(setWelcomeMessage(restaurantName));
+          // Send "start" to backend to get welcome message with menu image
+          dispatch(sendChatMessage("start"));
         }
       });
     }
-  }, [isAuthenticated, prevAuth, isActive, dispatch, restaurantName]);
+  }, [isAuthenticated, prevAuth, isActive, dispatch]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -704,9 +759,14 @@ export default function Chatbot() {
     );
   }, [isWaiting]);
 
+  // In LTR: add some margin from right edge. In RTL: no extra margin needed
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
+  const marginClass = isRTL ? "" : "lg:mr-10";
+
   return (
     <div
-      className={`chatbot-container lg:mx-10 ${isActive ? "active" : ""} ${isExpanded ? "expanded" : ""}`}
+      className={`chatbot-container ${marginClass} ${isActive ? "active" : ""} ${isExpanded ? "expanded" : ""}`}
       id="chatbot"
       style={{ "--cb-primary": primaryColor }}
     >
@@ -729,7 +789,7 @@ export default function Chatbot() {
           
           <div className="header-info">
             <h3>{agentName}</h3>
-            <p>Active</p>
+            <p>{t("chatbot_active")}</p>
           </div>
           
           {/* Menu Button */}
@@ -745,15 +805,15 @@ export default function Chatbot() {
               <div className="menu-dropdown">
                 <button onClick={onToggleExpand}>
                   {isExpanded ? <CollapseIcon /> : <ExpandIcon />}
-                  <span>{isExpanded ? "Collapse window" : "Expand window"}</span>
+                  <span>{isExpanded ? t("chatbot_collapse") : t("chatbot_expand")}</span>
                 </button>
                 <button onClick={onDownloadTranscript}>
                   <DownloadIcon />
-                  <span>Download transcript</span>
+                  <span>{t("chatbot_download")}</span>
                 </button>
                 <button onClick={onResetChat}>
                   <span style={{ fontSize: "18px" }}>🔄</span>
-                  <span>New Conversation</span>
+                  <span>{t("chatbot_new_conversation")}</span>
                 </button>
               </div>
             )}
@@ -833,7 +893,7 @@ export default function Chatbot() {
               <form className="input-wrapper" onSubmit={onSubmit}>
                 <input
                   type="text"
-                  placeholder="Message..."
+                  placeholder={t("chatbot_placeholder")}
                   aria-label="Type your message"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -854,7 +914,7 @@ export default function Chatbot() {
                   <button 
                     type="button" 
                     className="input-icon-btn" 
-                    title="Send image"
+                    title={t("send_image")}
                     onClick={() => imageInputRef.current?.click()}
                   >
                     <ImageIcon />
@@ -862,7 +922,7 @@ export default function Chatbot() {
                   <button 
                     type="button" 
                     className={`input-icon-btn ${showEmojiPicker ? "active" : ""}`}
-                    title="Add emoji"
+                    title={t("add_emoji")}
                     onClick={() => {
                       setShowEmojiPicker(!showEmojiPicker);
                       setShowGifPicker(false);
@@ -874,7 +934,7 @@ export default function Chatbot() {
                   <button 
                     type="button" 
                     className={`input-icon-btn ${showGifPicker ? "active" : ""}`}
-                    title="Add GIF"
+                    title={t("add_gif")}
                     onClick={() => {
                       setShowGifPicker(!showGifPicker);
                       setShowEmojiPicker(false);
@@ -886,7 +946,7 @@ export default function Chatbot() {
                   <button 
                     type="button" 
                     className="input-icon-btn" 
-                    title="Voice message"
+                    title={t("voice_message")}
                     onClick={() => setShowVoiceRecorder(true)}
                   >
                     <MicIcon />
@@ -917,27 +977,34 @@ export default function Chatbot() {
           </button>
           <div className="greeting-content">
             <span className="greeting-wave">👋</span>
-            <strong>Hi, I'm {agentName}!</strong>
+            <strong>{t("chatbot_greeting_hi")} {agentName}!</strong>
           </div>
-          <p>I can help with menu selection, orders, or connect you to support.</p>
+          <p>{t("chatbot_greeting_help")}</p>
         </div>
       )}
 
-      {/* Toggle Button */}
-      <button
-        className="chatbot-toggle"
-        aria-label="Toggle chatbot"
-        aria-expanded={isActive}
-        onClick={onToggle}
-        style={{ backgroundColor: primaryColor }}
-      >
-        <span className="toggle-icon chat-icon" aria-hidden="true">
-          <ChatIcon />
-        </span>
-        <span className="toggle-icon close-icon" aria-hidden="true">
-          <CloseIcon />
-        </span>
-      </button>
+      {/* Floating Buttons Container */}
+      <div className="chatbot-buttons-container">
+        {/* Scroll to Top Button */}
+        <ScrollToTopButton className="scroll-to-top-btn"/>
+        
+        {/* Toggle Button */}
+        <button
+          className="chatbot-toggle"
+          aria-label="Toggle chatbot"
+          aria-expanded={isActive}
+          onClick={onToggle}
+          style={{ backgroundColor: primaryColor }}
+        >
+          <span className="toggle-icon chat-icon" aria-hidden="true">
+            <ChatIcon />
+          </span>
+          <span className="toggle-icon close-icon" aria-hidden="true">
+            <CloseIcon />
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
+
