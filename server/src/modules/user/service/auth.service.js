@@ -1,66 +1,6 @@
-import twilio from "twilio";
-import { env } from "../../../config/env";
 import User from "../model/User.js";
 import jwt from "jsonwebtoken";
-import {
-  createAccessToken,
-  createRefreshToken,
-  createTempToken,
-} from "../utils/jwt.js";
-
-const client = twilio(env.twilioAccSID, env.twilioAuthToken)
-
-export async function startAuthServices(phoneNumber) {
-  await client.verify.v2
-    .services(env.twilioVerifySID)
-    .verifications.create({
-      to: phoneNumber,
-      channel: "sms",
-    });
-
-  return { message: "OTP sent" };
-}
-
-
-export async function verifyOTPServices(otp, phoneNumber) {
-  const check = await client.verify.v2
-    .services(env.twilioVerifySID)
-    .verificationChecks.create({
-      to: phoneNumber,
-      code: otp,
-    });
-
-  if (check.status !== "approved") {
-    throw new Error("Invalid OTP");
-  }
-
-  const user = await User.findOne({ phoneNumber });
-
-  // 🔁 Existing user
-  if (user) {
-    const accessToken = createAccessToken(user);
-    const refreshToken = createRefreshToken(user);
-
-    user.refreshToken = refreshToken;
-    user.isVerified = true;
-    await user.save();
-
-    return {
-      isNewUser: false,
-      accessToken,
-      refreshToken,
-      user,
-    };
-  }
-
-  // 🆕 New user
-  const tempToken = createTempToken(phoneNumber);
-
-  return {
-    isNewUser: true,
-    tempToken,
-  };
-}
+import {createAccessToken,createRefreshToken} from "../../../utils/jwt.js";
 
 export async function completeProfileServices(name, tempToken) {
   const decoded = jwt.verify(tempToken, process.env.TEMP_JWT_SECRET);
