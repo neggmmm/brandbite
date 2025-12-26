@@ -2,9 +2,8 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { firebaseLogin, getMe } from "../redux/slices/authSlice";
-import GoogleLoginButton from "../components/GoogleLoginButton";
-import { Mail, Lock, ArrowLeft, ChefHat, Star, Users, Tag, Shield, ArrowRight } from "lucide-react";
+import { firebaseLogin, completeProfile  } from "../redux/slices/authSlice";
+import { Mail, ArrowLeft, ChefHat, Star, Users, Tag, Shield, ArrowRight,User } from "lucide-react";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "../utils/firebase";
 
@@ -17,7 +16,9 @@ export default function LoginPage() {
   // State management
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
+  const [name, setName] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
+  const [showNameInput, setShowNameInput] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -38,45 +39,59 @@ export default function LoginPage() {
 
   // Validate phone number (Egyptian format)
   const validatePhoneNumber = (phone) => {
-    // Egyptian format: +20 or 0, then 10|11|12|15, then 8 digits
     const phoneRegex = /^(\+20|0)?1(0|1|2|5)\d{8}$/;
     if (!phone) return t("auth.validation.phoneNumber_required");
     if (!phoneRegex.test(phone)) return t("auth.validation.phoneNumber_invalid");
     return "";
   };
 
-  // Format phone number for Firebase (must start with +)
+  const validateName = (name) => {
+    if (!name || name.trim().length < 2) return "Name must be at least 2 characters";
+    return "";
+  };
+
   const formatPhoneNumber = (phone) => {
-    // Remove all spaces and dashes
     phone = phone.replace(/[\s-]/g, "");
-    
     // If starts with 0, replace with +20
     if (phone.startsWith("0")) {
       return "+20" + phone.slice(1);
     }
-    
     // If doesn't start with +, add +20
     if (!phone.startsWith("+")) {
       return "+20" + phone;
     }
-    
     return phone;
   };
 
-  const handleChange = (e) => {
+  const handlePhoneChange = (e) => {
     const { value } = e.target;
     setPhoneNumber(value);
-
     if (touched.phoneNumber) {
       const error = validatePhoneNumber(value);
       setErrors((prev) => ({ ...prev, phoneNumber: error }));
     }
   };
 
-  const handleBlur = () => {
+  const handlePhoneBlur = () => {
     setTouched((prev) => ({ ...prev, phoneNumber: true }));
     const error = validatePhoneNumber(phoneNumber);
     setErrors((prev) => ({ ...prev, phoneNumber: error }));
+  };
+
+  const handleNameChange = (e) => {
+    const { value } = e.target;
+    setName(value);
+    if (touched.name) {
+      const error = validateName(value);
+      setErrors((prev) => ({ ...prev, name: error }));
+    }
+  };
+
+
+  const handleNameBlur = () => {
+    setTouched((prev) => ({ ...prev, name: true }));
+    const error = validateName(name);
+    setErrors((prev) => ({ ...prev, name: error }));
   };
 
   const handleOtpChange = (e) => {
@@ -89,7 +104,7 @@ export default function LoginPage() {
   // Step 1: Send OTP
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    
+
     const error = validatePhoneNumber(phoneNumber);
     if (error) {
       setErrors({ phoneNumber: error });
@@ -101,20 +116,20 @@ export default function LoginPage() {
     try {
       setupRecaptcha();
       const formattedPhone = formatPhoneNumber(phoneNumber);
-      
+
       const result = await signInWithPhoneNumber(
         auth,
         formattedPhone,
         window.recaptchaVerifier
       );
-      
+
       setConfirmationResult(result);
       setShowOtpInput(true);
       setErrors({});
     } catch (err) {
       console.error("Error sending OTP:", err);
-      setErrors({ 
-        phoneNumber: err.message || "Failed to send OTP. Please try again." 
+      setErrors({
+        phoneNumber: err.message || "Failed to send OTP. Please try again."
       });
     } finally {
       setIsLoading(false);
@@ -124,7 +139,7 @@ export default function LoginPage() {
   // Step 2: Verify OTP and login
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    
+
     if (otp.length !== 6) {
       setErrors({ otp: "Please enter a valid 6-digit code" });
       return;
@@ -141,37 +156,80 @@ export default function LoginPage() {
 
       // Send token to backend
       const resultAction = await dispatch(firebaseLogin(idToken));
-      
+
       if (firebaseLogin.fulfilled.match(resultAction)) {
-        // Fetch full user profile
-        const meAction = await dispatch(getMe());
-        const user = meAction.payload || resultAction.payload?.user || null;
+        const user = resultAction.payload?.user || resultAction.payload;
 
-        // Redirect based on role
-        const role = (user?.role || "").toString().toLowerCase();
-        if (role === "admin") {
-          window.location.replace("/admin");
+        // Check if user has a name
+        if (!user.name || user.name.trim() === "") {
+          // New user - show name input
+          // Cookies are already set from firebaseLogin, so completeProfile will work
+          setShowNameInput(true);
+          setShowOtpInput(false);
+          setIsLoading(false);
           return;
         }
-        if (role === "cashier") {
-          window.location.replace("/cashier");
-          return;
-        }
-        if (role === "kitchen") {
-          window.location.replace("/kitchen");
-          return;
-        }
-
-        // Default: customer -> menu
-        window.location.replace("/menu");
+        redirectUser(user);
+      } else {
+        setErrors({
+          otp: "Login failed. Please try again."
+        });
+        setIsLoading(false);
       }
     } catch (err) {
       console.error("Error verifying OTP:", err);
-      setErrors({ 
-        otp: err.message || "Invalid verification code. Please try again." 
+      setErrors({
+        otp: err.message || "Invalid verification code. Please try again."
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCompletProfile = async (e) => {
+    e.preventDefault();
+
+    const error = validateName(name);
+    if (error) {
+      setErrors({ name: error });
+      setTouched({ name: true });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const resultAction = await dispatch(completeProfile({
+        name: name.trim()
+      }));
+
+      if (completeProfile.fulfilled.match(resultAction)) {
+        const user = resultAction.payload?.user || resultAction.payload;
+        redirectUser(user);
+      } else {
+        setErrors({
+          name: "Failed to complete profile. Please try again."
+        });
+      }
+    } catch (err) {
+      console.error("Error completing profile:", err);
+      setErrors({
+        name: err.message || "Failed to complete profile. Please try again."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const redirectUser = (user) => {
+    const role = (user?.role || "").toString().toLowerCase();
+    if (role === "admin") {
+      window.location.replace("/admin");
+    } else if (role === "cashier") {
+      window.location.replace("/cashier");
+    } else if (role === "kitchen") {
+      window.location.replace("/kitchen");
+    } else {
+      window.location.replace("/menu");
     }
   };
 
@@ -205,14 +263,18 @@ export default function LoginPage() {
 
           {/* Login Form Card */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-br from-primary/70 to-primary text-center">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-br from-orange-500/90 to-orange-600 text-center">
               <h2 className="text-3xl font-bold text-white mb-1">
-                {t("auth.login.welcome_back")}
+                {showNameInput
+                  ? "Complete Your Profile"
+                  : t("auth.login.welcome_back") || "Welcome Back"}
               </h2>
-              <p className="text-gray-200 dark:text-gray-400 text-sm">
-                {showOtpInput 
-                  ? "Enter the code sent to your phone" 
-                  : t("auth.login.login_desc")}
+              <p className="text-white/90 text-sm">
+                {showNameInput
+                  ? "Please enter your name to continue"
+                  : showOtpInput
+                    ? "Enter the code sent to your phone"
+                    : t("auth.login.login_desc") || "Sign in to continue"}
               </p>
             </div>
 
@@ -225,7 +287,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {!showOtpInput ? (
+              {!showOtpInput && !showNameInput && (
                 // Phone Number Input
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   <div>
@@ -239,14 +301,13 @@ export default function LoginPage() {
                         id="phoneNumber"
                         name="phoneNumber"
                         value={phoneNumber}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
+                        onChange={handlePhoneChange}
+                        onBlur={handlePhoneBlur}
                         onKeyPress={handleKeyPress}
-                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${
-                          errors.phoneNumber && touched.phoneNumber
-                            ? "border-red-500"
-                            : "border-gray-200 dark:border-gray-600"
-                        } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
+                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${errors.phoneNumber && touched.phoneNumber
+                          ? "border-red-500"
+                          : "border-gray-200 dark:border-gray-600"
+                          } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
                         placeholder="01012345678"
                       />
                     </div>
@@ -265,66 +326,93 @@ export default function LoginPage() {
                     {isLoading ? "Sending..." : "Send Verification Code"}
                   </button>
                 </form>
-              ) : (
-                // OTP Input
-                <form onSubmit={handleVerifyOtp} className="space-y-4">
-                  <div>
-                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Verification Code
-                    </label>
-                    <input
-                      type="text"
-                      id="otp"
-                      value={otp}
-                      onChange={handleOtpChange}
-                      onKeyPress={handleKeyPress}
-                      maxLength={6}
-                      className={`w-full px-4 py-2.5 text-center text-2xl tracking-widest bg-gray-50 dark:bg-gray-700/50 border ${
-                        errors.otp ? "border-red-500" : "border-gray-200 dark:border-gray-600"
+              )}
+               {showOtpInput && (
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <div>
+                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    id="otp"
+                    value={otp}
+                    onChange={handleOtpChange}
+                    onKeyPress={handleKeyPress}
+                    maxLength={6}
+                    className={`w-full px-4 py-2.5 text-center text-2xl tracking-widest bg-gray-50 dark:bg-gray-700/50 border ${errors.otp ? "border-red-500" : "border-gray-200 dark:border-gray-600"
                       } rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
-                      placeholder="000000"
-                    />
-                    {errors.otp && (
+                    placeholder="000000"
+                  />
+                  {errors.otp && (
+                    <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                      {errors.otp}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || otp.length !== 6}
+                  className="w-full bg-gradient-to-r from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? "Verifying..." : "Verify & Login"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowOtpInput(false);
+                    setOtp("");
+                    setErrors({});
+                  }}
+                  className="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                >
+                  Change phone number
+                </button>
+              </form>
+              )}
+
+              {showNameInput && (
+                <form onSubmit={handleCompletProfile} className="space-y-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Your Name
+                    </label>
+                    <div className="relative">
+                      <User className={`absolute ${isRtl ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500`} />
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={name}
+                        onChange={handleNameChange}
+                        onBlur={handleNameBlur}
+                        onKeyPress={handleKeyPress}
+                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${
+                          errors.name && touched.name
+                            ? "border-red-500"
+                            : "border-gray-200 dark:border-gray-600"
+                        } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
+                        placeholder="Enter your name"
+                      />
+                    </div>
+                    {errors.name && touched.name && (
                       <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-                        {errors.otp}
+                        {errors.name}
                       </p>
                     )}
                   </div>
 
                   <button
                     type="submit"
-                    disabled={isLoading || otp.length !== 6}
-                    className="w-full bg-gradient-to-r from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? "Verifying..." : "Verify & Login"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowOtpInput(false);
-                      setOtp("");
-                      setErrors({});
-                    }}
-                    className="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
-                  >
-                    Change phone number
+                    {isLoading ? "Completing..." : "Complete Profile"}
                   </button>
                 </form>
               )}
-
-              <div className="mt-6">
-                <GoogleLoginButton />
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 text-center">
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  {t("auth.login.no_account")}{" "}
-                  <Link to="/register" className="font-semibold text-orange-600 dark:text-orange-400">
-                    {t("auth.login.sign_up_now")}
-                  </Link>
-                </p>
-              </div>
             </div>
           </div>
         </div>

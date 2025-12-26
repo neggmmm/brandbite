@@ -37,7 +37,7 @@ export const getMe = createAsyncThunk(
 );
 
 // --- FORGOT PASSWORD ---
-export const sendResetEmail = createAsyncThunk(
+export const completeProfile = createAsyncThunk(
   "auth/complete-profile",
   async ({phoneNumber,name}, { rejectWithValue }) => {
     try {
@@ -146,7 +146,26 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
       });
-
+       builder
+      .addCase(completeProfile.pending, (state) => {
+        state.loadingLogin = true;
+        state.error = null;
+      })
+      .addCase(completeProfile.fulfilled, (state, action) => {
+        state.loadingLogin = false;
+        state.user = action.payload.user || action.payload;
+        state.isAuthenticated = true;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("hasSession", "true");
+        }
+      })
+      .addCase(completeProfile.rejected, (state, action) => {
+        state.loadingLogin = false;
+        state.error = action.payload;
+        state.user = null;
+        state.isAuthenticated = false;
+      });
+      
     // --- GET ME ---
     builder
       .addCase(getMe.pending, (state) => {

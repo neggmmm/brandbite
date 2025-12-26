@@ -2,12 +2,13 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-     name: { type: String, trim: true },
+    name: { type: String, trim: true },
     avatarUrl: { type: String, default: "" },
     phoneNumber: {
       type: String,
       required:true,
       unique:true,
+      trim: true,
       minlength: [11, "Phone number must be 11 characters long"],
     },
     role: {
