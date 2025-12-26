@@ -7,6 +7,9 @@ import Admin from "./pages/admin/Admin";
 import Coupons from "./pages/admin/Coupons";
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
+import FeaturedOfferCard from "./components/offers/FeaturedOfferCard";
+import RegistrationPage from "./pages/RegisterationPage";
+import VerifyOtpPage from "./pages/VerifyOtpPage";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { getMe, refreshToken } from "./redux/slices/authSlice";
@@ -21,6 +24,7 @@ import PaymentPage from "./pages/PaymentPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
+import Offers from "./pages/admin/Offers";
 
 import NotFound from "./pages/NotFoundPage";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
@@ -121,6 +125,14 @@ function App() {
                 element={
                   <ProtectedRoute roles={["admin"]}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/offers"  // Add this route
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <Offers />  {/* Your Offers component */}
                   </ProtectedRoute>
                 }
               />
