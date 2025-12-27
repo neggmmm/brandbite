@@ -2,13 +2,56 @@
 export const settingsSections = [
   {
     id: 'general',
-    icon: '🏢',
+    icon: '',
     label: 'Business Settings',
     description: 'Core business information and configuration',
     subItems: [
       { id: 'business-info', label: 'Business Information' },
       { id: 'regional', label: 'Regional & Localization' },
       { id: 'tax-financial', label: 'Tax & Financial' }
+    ]
+  },
+  {
+    id: 'services',
+    icon: '',
+    label: 'Services & Operations',
+    description: 'Order types, fees, and operational settings',
+    subItems: [
+      { id: 'order-types', label: 'Order Types' },
+      { id: 'fees-surcharges', label: 'Fees & Surcharges' },
+      { id: 'policies-agreements', label: 'Policies & Agreements' },
+      { id: 'functionality', label: 'Functionality' },
+      { id: 'receipt-printing', label: 'Receipt Printing' },
+      { id: 'email-notifications', label: 'E-Mail Notifications' },
+      { id: 'audio-notifications', label: 'Audio Notifications' },
+      { id: 'customer-accounts', label: 'Customer Accounts' },
+      { id: 'age-verification', label: 'Age Verification' },
+      { id: 'webhooks', label: 'Webhooks' },
+      { id: 'tipping', label: 'Tipping' },
+      { id: 'ordering', label: 'Ordering' },
+      { id: 'misc', label: 'Miscellaneous' }
+    ]
+  },
+  {
+    id: 'payments',
+    icon: '',
+    label: 'Payments',
+    description: 'Payment methods and gateway configuration',
+    subItems: [
+      { id: 'payment-methods', label: 'Payment Methods' },
+      { id: 'gateway-setup', label: 'Gateway Setup' },
+      { id: 'payout-settings', label: 'Payout Settings' }
+    ]
+  },
+  {
+    id: 'website',
+    icon: '',
+    label: 'Website & Content',
+    description: 'Landing page, SEO, and content management',
+    subItems: [
+      { id: 'landing-page', label: 'Landing Page' },
+      { id: 'seo-settings', label: 'SEO Settings' },
+      { id: 'content-pages', label: 'Content Pages' }
     ]
   },
   {
@@ -23,50 +66,6 @@ export const settingsSections = [
     ]
   },
   {
-    id: 'website',
-    icon: '🌐',
-    label: 'Website & Content',
-    description: 'Landing page, SEO, and content management',
-    subItems: [
-      { id: 'landing-page', label: 'Landing Page' },
-      { id: 'seo-settings', label: 'SEO Settings' },
-      { id: 'content-pages', label: 'Content Pages' }
-    ]
-  },
-  {
-    id: 'services',
-    icon: '🍽️',
-    label: 'Services & Operations',
-    description: 'Order types, fees, and operational settings',
-    subItems: [
-      { id: 'order-types', label: 'Order Types' },
-      { id: 'fees-surcharges', label: 'Fees & Surcharges' },
-      { id: 'policies-agreements', label: 'Policies & Agreements' }
-    ]
-  },
-  {
-    id: 'payments',
-    icon: '💳',
-    label: 'Payments',
-    description: 'Payment methods and gateway configuration',
-    subItems: [
-      { id: 'payment-methods', label: 'Payment Methods' },
-      { id: 'gateway-setup', label: 'Gateway Setup' },
-      { id: 'payout-settings', label: 'Payout Settings' }
-    ]
-  },
-  {
-    id: 'integrations',
-    icon: '🔌',
-    label: 'Integrations',
-    description: 'APIs, webhooks, and third-party services',
-    subItems: [
-      { id: 'api-webhooks', label: 'API & Webhooks' },
-      { id: 'pos-integration', label: 'POS Integration' },
-      { id: 'third-party-apps', label: 'Third-party Apps' }
-    ]
-  },
-  {
     id: 'notifications',
     icon: '🔔',
     label: 'Notifications',
@@ -78,8 +77,19 @@ export const settingsSections = [
     ]
   },
   {
+    id: 'integrations',
+    icon: '',
+    label: 'Integrations',
+    description: 'APIs, webhooks, and third-party services',
+    subItems: [
+      { id: 'api-webhooks', label: 'API & Webhooks' },
+      { id: 'pos-integration', label: 'POS Integration' },
+      { id: 'third-party-apps', label: 'Third-party Apps' }
+    ]
+  },
+  {
     id: 'advanced',
-    icon: '⚙️',
+    icon: '',
     label: 'Advanced',
     description: 'System configuration and security',
     subItems: [
