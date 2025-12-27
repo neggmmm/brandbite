@@ -6,14 +6,12 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: "" },
     phoneNumber: {
       type: String,
-      unique: true,
       trim: true,
       sparse: true,
       minlength: [11, "Phone number must be 11 characters long"],
     },
     email: {
       type: String,
-      unique: true,
       sparse: true,
     },
     firebaseUid: {
