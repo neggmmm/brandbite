@@ -25,15 +25,17 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 import Offers from "./pages/admin/Offers";
-import SettingsLayout from "./features/settings/components/SettingsLayout";
-import GeneralSettings from "./features/settings/pages/GeneralSettings";
-import BrandingSettings from "./features/settings/pages/BrandingSettings";
-import WebsiteSettings from "./features/settings/pages/WebsiteSettings";
-import ServicesSettings from "./features/settings/pages/ServicesSettings";
-import NotificationsSettings from "./features/settings/pages/NotificationsSettings";
-import PaymentsSettings from "./features/settings/pages/PaymentsSettings";
-import IntegrationsSettings from "./features/settings/pages/IntegrationsSettings";
-import AdvancedSettings from "./features/settings/pages/AdvancedSettings";
+import Settings from "./pages/admin/Settings";
+
+// import SettingsLayout from "./features/settings/components/SettingsLayout";
+// import GeneralSettings from "./features/settings/pages/GeneralSettings";
+// import BrandingSettings from "./features/settings/pages/BrandingSettings";
+// import WebsiteSettings from "./features/settings/pages/WebsiteSettings";
+// import ServicesSettings from "./features/settings/pages/ServicesSettings";
+// import NotificationsSettings from "./features/settings/pages/NotificationsSettings";
+// import PaymentsSettings from "./features/settings/pages/PaymentsSettings";
+// import IntegrationsSettings from "./features/settings/pages/IntegrationsSettings";
+// import AdvancedSettings from "./features/settings/pages/AdvancedSettings";
 import NotFound from "./pages/NotFoundPage";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
@@ -45,6 +47,7 @@ import AdminDashboard from "./pages/admin/Admin";
 import { requestNotificationPermission } from "./utils/notifications";
 import Support from "./pages/Support";
 import ProfilePage from "./pages/ProfilePage";
+
 function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
@@ -74,8 +77,6 @@ function App() {
   if (loadingGetMe) {
     return <LoadingSpinner />;
   }
-  // Only try to auto-fetch the current user if we know
-  // there was a previous authenticated session.
 
   return (
     <BrowserRouter>
@@ -84,6 +85,7 @@ function App() {
         <SocketProvider />
         <Layout>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/rewards" element={<RewardPage />} />
@@ -108,6 +110,7 @@ function App() {
             {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailsPage />} />
+            
             {/* Cashier & Kitchen Dashboards */}
             <Route
               path="/cashier"
@@ -137,10 +140,10 @@ function App() {
                 }
               />
               <Route
-                path="/admin/offers"  // Add this route
+                path="/admin/offers"
                 element={
                   <ProtectedRoute roles={["admin"]}>
-                    <Offers />  {/* Your Offers component */}
+                    <Offers />
                   </ProtectedRoute>
                 }
               />
@@ -160,10 +163,35 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              
+              {/* Settings Route - Option 1: Single route for all settings */}
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Settings Route - Option 2: Individual section routes */}
+              {/* Uncomment this if you want separate URLs for each section */}
+              {/* 
+              <Route
+                path="/admin/settings/:section"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              */}
             </Route>
+            
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
+            
             {/* Single Admin Page with section sub-route */}
             <Route element={<AppLayout />}>
               <Route
@@ -175,9 +203,9 @@ function App() {
                 }
               />
             </Route>
+
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
-            {/* Legacy routes redirects (removed) */}
           </Routes>
         </Layout>
       </SettingsProvider>
