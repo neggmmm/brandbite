@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { firebaseLogin, completeProfile  } from "../redux/slices/authSlice";
-import { Mail, ArrowLeft, ChefHat, Star, Users, Tag, Shield, ArrowRight,User } from "lucide-react";
+import { firebaseLogin, completeProfile } from "../redux/slices/authSlice";
+import { Mail, ArrowLeft, ChefHat, Star, Users, Tag, Shield, ArrowRight, User } from "lucide-react";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "../utils/firebase";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 export default function LoginPage() {
   const { t, i18n } = useTranslation();
@@ -185,6 +186,38 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: "select_account",
+      });
+
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+
+      const idToken = await firebaseUser.getIdToken();
+
+      const resultAction = await dispatch(firebaseLogin(idToken));
+
+      if (firebaseLogin.fulfilled.match(resultAction)) {
+        const user = resultAction.payload?.user || resultAction.payload;
+
+        if (!user.name) {
+          setShowNameInput(true);
+          return;
+        }
+
+        redirectUser(user);
+      }
+    } catch (err) {
+      console.error("Google login error:", err);
+      setErrors({ google: err.message || "Google sign-in failed" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCompletProfile = async (e) => {
     e.preventDefault();
@@ -254,7 +287,7 @@ export default function LoginPage() {
           <div className="mb-6">
             <button
               onClick={() => navigate("/")}
-              className="flex items-center text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors group"
+              className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors group"
             >
               <ArrowLeft className={`w-5 h-5 ${isRtl ? "ml-2 group-hover:translate-x-1" : "mr-2 group-hover:-translate-x-1"} transition-transform`} />
               {t("auth.login.back_to_home") || "Back to Home"}
@@ -263,7 +296,7 @@ export default function LoginPage() {
 
           {/* Login Form Card */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-br from-orange-500/90 to-orange-600 text-center">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-br from-primary via-primary/90 to-secondary text-center">
               <h2 className="text-3xl font-bold text-white mb-1">
                 {showNameInput
                   ? "Complete Your Profile"
@@ -282,20 +315,19 @@ export default function LoginPage() {
               {error && (
                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <p className="text-red-600 dark:text-red-400 text-sm text-center font-medium">
-                    {error}
+                    {t("auth.login.error_prefix")} 
                   </p>
                 </div>
               )}
 
               {!showOtpInput && !showNameInput && (
                 // Phone Number Input
-                <form onSubmit={handleSendOtp} className="space-y-4">
+                <form onSubmit={handleSendOtp} className="space-y-4 ">
                   <div>
                     <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       {t("auth.login.phoneNumber_label")}
                     </label>
                     <div className="relative">
-                      <Mail className={`absolute ${isRtl ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500`} />
                       <input
                         type="tel"
                         id="phoneNumber"
@@ -304,80 +336,96 @@ export default function LoginPage() {
                         onChange={handlePhoneChange}
                         onBlur={handlePhoneBlur}
                         onKeyPress={handleKeyPress}
-                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${errors.phoneNumber && touched.phoneNumber
+                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-4 text-sm bg-gray-50 dark:bg-gray-700/50 border ${errors.phoneNumber && touched.phoneNumber
                           ? "border-red-500"
                           : "border-gray-200 dark:border-gray-600"
                           } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
                         placeholder="01012345678"
                       />
                     </div>
+                   
                     {errors.phoneNumber && touched.phoneNumber && (
                       <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-                        {errors.phoneNumber}
+                        {t("auth.validation.phoneNumber_invalid") || errors.phoneNumber}
+                      </p>
+                    )}
+                  </div>
+                    
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r mt-2 from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-4 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? t("auth.login.sending_otp") : t("auth.login.send_otp")}
+                  </button>
+                  <div class="relative my-10"><div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200 dark:border-gray-700">
+                      </div></div>
+                      <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">{t("auth.login.continue_with")}</span>
+                        </div>
+                        </div>
+                   <button
+                      type="button"
+                      onClick={handleGoogleLogin}
+                      disabled={isLoading}
+                      className="w-full bg-green-600  py-2.5 rounded-lg flex items-center justify-center gap-3 hover:bg-green-700 transition"
+                    >
+                      {t("auth.login.continue_with_google")}
+                    </button>
+                </form>
+              )}
+              {showOtpInput && (
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div>
+                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {t("auth.verification.code_label")}
+                    </label>
+                    <input
+                      type="text"
+                      id="otp"
+                      value={otp}
+                      onChange={handleOtpChange}
+                      onKeyPress={handleKeyPress}
+                      maxLength={6}
+                      className={`w-full px-4 py-2.5 text-center text-2xl tracking-widest bg-gray-50 dark:bg-gray-700/50 border ${errors.otp ? "border-red-500" : "border-gray-200 dark:border-gray-600"
+                        } rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
+                      placeholder="000000"
+                    />
+                    {errors.otp && (
+                      <p className="mt-1 text-xs text-red-500 dark:text-red-400">
+                        {t("auth.verification.otp_invalid") || errors.otp}
                       </p>
                     )}
                   </div>
 
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || otp.length !== 6}
                     className="w-full bg-gradient-to-r from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? "Sending..." : "Send Verification Code"}
+                    {isLoading ? "Verifying..." : "Verify & Login"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOtpInput(false);
+                      setOtp("");
+                      setErrors({});
+                    }}
+                    className="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  >
+                    {t("auth.verification.change_number") || "Change Phone Number"}
                   </button>
                 </form>
-              )}
-               {showOtpInput && (
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div>
-                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Verification Code
-                  </label>
-                  <input
-                    type="text"
-                    id="otp"
-                    value={otp}
-                    onChange={handleOtpChange}
-                    onKeyPress={handleKeyPress}
-                    maxLength={6}
-                    className={`w-full px-4 py-2.5 text-center text-2xl tracking-widest bg-gray-50 dark:bg-gray-700/50 border ${errors.otp ? "border-red-500" : "border-gray-200 dark:border-gray-600"
-                      } rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
-                    placeholder="000000"
-                  />
-                  {errors.otp && (
-                    <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-                      {errors.otp}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading || otp.length !== 6}
-                  className="w-full bg-gradient-to-r from-primary/80 via-primary via-70% to-secondary hover:from-secondary/80 hover:via-primary hover:to-primary/80 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? "Verifying..." : "Verify & Login"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowOtpInput(false);
-                    setOtp("");
-                    setErrors({});
-                  }}
-                  className="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
-                >
-                  Change phone number
-                </button>
-              </form>
               )}
 
               {showNameInput && (
                 <form onSubmit={handleCompletProfile} className="space-y-4">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Your Name
+                      {t("auth.complete_profile.name_label") || "Your Name"}
                     </label>
                     <div className="relative">
                       <User className={`absolute ${isRtl ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500`} />
@@ -389,17 +437,16 @@ export default function LoginPage() {
                         onChange={handleNameChange}
                         onBlur={handleNameBlur}
                         onKeyPress={handleKeyPress}
-                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${
-                          errors.name && touched.name
+                        className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${errors.name && touched.name
                             ? "border-red-500"
                             : "border-gray-200 dark:border-gray-600"
-                        } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
+                          } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
                         placeholder="Enter your name"
                       />
                     </div>
                     {errors.name && touched.name && (
                       <p className="mt-1 text-xs text-red-500 dark:text-red-400">
-                        {errors.name}
+                        {t("auth.complete_profile.name_required") || errors.name}
                       </p>
                     )}
                   </div>
@@ -407,7 +454,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-gradient-to-r from-primary via-primary/90 to-secondary hover:from-secondary hover:to-primary text-white font-medium py-2.5 text-sm rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? "Completing..." : "Complete Profile"}
                   </button>
@@ -419,13 +466,6 @@ export default function LoginPage() {
 
         {/* Desktop: Left Column (Branding & Stats) - Now smaller */}
         <div className="hidden lg:flex lg:w-2/5 flex-col justify-center">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary transition-colors mb-10 group"
-          >
-            <ArrowLeft className={`w-5 h-5 ${isRtl ? "ml-2 group-hover:translate-x-1" : "mr-2 group-hover:-translate-x-1"} transition-transform`} />
-            Back to Home
-          </button>
 
           <div className="bg-gradient-to-br from-primary/80 via-primary via-70% to-secondary rounded-3xl p-10 shadow-2xl relative overflow-hidden">
             <div className={`absolute top-0 ${isRtl ? "left-0 translate-x-12" : "right-0 translate-x-12"} w-24 h-24 bg-white/10 rounded-full -translate-y-12`}></div>
