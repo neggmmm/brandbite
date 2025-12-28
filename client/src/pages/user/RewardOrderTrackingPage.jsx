@@ -19,8 +19,8 @@ export default function RewardOrderTrackingPage() {
   const orderId = order?._id || id;
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
-   const [reviewText, setReviewText] = useState("");
-    const toast = useToast();
+  const [reviewText, setReviewText] = useState("");
+  const toast = useToast();
   // Initialize Socket.IO connection
   useEffect(() => {
     if (!orderId) return; // Don't connect if we don't have an order ID
@@ -37,21 +37,16 @@ export default function RewardOrderTrackingPage() {
       // Join the reward order room
       newSocket.emit('join_reward_order', { orderId });
     });
-    // Listen for reward order updates
-    newSocket.on('reward_order_updated', (updatedOrder) => {
-      setOrder(updatedOrder);
+    newSocket.on("order:created", (createdOrder) => {
+      if (createdOrder?._id === orderId) {
+        setOrder(createdOrder);
+      }
     });
-
-    // Listen for reward order status changes
-    newSocket.on('reward_order_status_changed', (data) => {
-      if (data.order) {
-        setOrder(data.order);
-        // Show notification on status change
-        showStatusNotification(data.order.status);
-      } else if (data.status) {
-        setOrder(prev => ({ ...prev, status: data.status }));
-        // Show notification on status change
-        showStatusNotification(data.status);
+    // Listen for reward order updates
+    newSocket.on('order:updated', (updatedOrder) => {
+      if (updatedOrder?._id === orderId) {
+        setOrder(updatedOrder);
+        showStatusNotification(updatedOrder.status);
       }
     });
 
@@ -96,24 +91,24 @@ export default function RewardOrderTrackingPage() {
     window.location.href = `tel:${restaurantPhone}`;
   };
 
-   const handleSubmitReview = async () => {
-  
-      try {
-        const formData = new FormData();
-        formData.append("rating", String(reviewRating));
-        formData.append("comment", reviewText || "");
-        // Dispatch createReview which expects FormData
-        await dispatch(createReview(formData)).unwrap();
-  
-        toast.showToast({ message: "Thank you for your review!", type: "success" });
-  
-        setShowReviewModal(false);
-        setReviewRating(5);
-        setReviewText("");
-      } catch (err) {
-        toast.showToast({ message: err?.message || "Failed to submit review", type: "error" });
-      }
-    };
+  const handleSubmitReview = async () => {
+
+    try {
+      const formData = new FormData();
+      formData.append("rating", String(reviewRating));
+      formData.append("comment", reviewText || "");
+      // Dispatch createReview which expects FormData
+      await dispatch(createReview(formData)).unwrap();
+
+      toast.showToast({ message: "Thank you for your review!", type: "success" });
+
+      setShowReviewModal(false);
+      setReviewRating(5);
+      setReviewText("");
+    } catch (err) {
+      toast.showToast({ message: err?.message || "Failed to submit review", type: "error" });
+    }
+  };
   // status notifications are handled by shared util (showStatusNotification)
 
   // Get reward title
