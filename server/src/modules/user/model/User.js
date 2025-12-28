@@ -6,10 +6,18 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: "" },
     phoneNumber: {
       type: String,
-      required:true,
-      unique:true,
       trim: true,
+      sparse: true,
       minlength: [11, "Phone number must be 11 characters long"],
+    },
+    email: {
+      type: String,
+      sparse: true,
+    },
+    firebaseUid: {
+      type: String,
+      required: true,
+      unique: true,
     },
     role: {
       type: String,
@@ -26,9 +34,9 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    refreshToken:{
-       type:String,
-       select:false
+    refreshToken: {
+      type: String,
+      select: false
     },
     points: {
       type: Number,
