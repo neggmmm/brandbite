@@ -71,8 +71,12 @@ export function SettingsProvider({ children }) {
         setLoading(true);
         setError(null);
         try {
+            console.log('saveGeneralSettings: Sending payload:', generalSettings);
             const res = await api.put('/api/restaurant', generalSettings);
+            console.log('saveGeneralSettings: Full response:', res.data);
+            
             const returned = res.data?.data ?? res.data;
+            console.log('saveGeneralSettings: Parsed returned data:', returned);
             
             // Update local state with saved data
             setSettings(prev => ({
@@ -85,6 +89,7 @@ export function SettingsProvider({ children }) {
             return returned;
         } catch (err) {
             console.error('Failed to save general settings:', err);
+            console.error('Error response data:', err?.response?.data);
             setError(err?.response?.data?.message || err.message || 'Failed to save settings');
             throw err;
         } finally {
@@ -98,8 +103,16 @@ export function SettingsProvider({ children }) {
         setError(null);
         try {
             const body = categoryPayload;
+            console.log(`Saving ${category} with payload:`, body);
             const res = await api.put(`/api/restaurant/system-settings/${category}`, body);
+            console.log(`Response from ${category} save:`, res.data);
+            
             const returned = res.data?.data ?? null;
+            console.log(`Returned ${category} data:`, returned);
+
+            if (!returned) {
+                console.warn(`No data returned from ${category} save. Response:`, res.data);
+            }
 
             // Merge returned category into local settings.systemSettings
             setSettings((prev) => {
@@ -118,9 +131,10 @@ export function SettingsProvider({ children }) {
                 return newRoot;
             });
 
-            return returned;
+            return returned ?? (categoryPayload[category] ?? categoryPayload);
         } catch (err) {
             console.error(`Failed to save system category ${category}:`, err);
+            console.error('Error response:', err?.response?.data);
             setError(err?.response?.data?.message || err.message || "Failed to save settings");
             throw err;
         } finally {

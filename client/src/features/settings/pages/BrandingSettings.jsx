@@ -625,40 +625,33 @@ export default function BrandingSettings() {
   
   setSaving(true);
   try {
-    // Prepare branding payload for system settings
+    // Prepare branding payload for root restaurant settings
     const brandingPayload = {
-      logoUrl: branding.logoUrl,
-      faviconUrl: branding.faviconUrl,
-      primaryColor: branding.primaryColor,
-      secondaryColor: branding.secondaryColor,
-      accentColor: branding.accentColor,
-      brandName: branding.brandName,
-      brandNameAr: branding.brandNameAr,
-      tagline: branding.tagline,
-      taglineAr: branding.taglineAr,
+      branding: {
+        logoUrl: branding.logoUrl,
+        faviconUrl: branding.faviconUrl,
+        primaryColor: branding.primaryColor,
+        secondaryColor: branding.secondaryColor,
+      },
+      restaurantName: branding.brandName,
+      restaurantNameAr: branding.brandNameAr,
       description: branding.description,
       descriptionAr: branding.descriptionAr,
     };
 
-    // Save branding to system settings
-    const result = await saveSystemCategory('branding', { branding: brandingPayload });
+    console.log('BrandingSettings: Saving to PUT /api/restaurant with payload:', brandingPayload);
+    
+    // Save all branding data to root restaurant settings
+    const result = await saveGeneralSettings(brandingPayload);
+    
+    console.log('BrandingSettings: Result from saveGeneralSettings:', result);
     
     if (result) {
-      // Also update general restaurant info if brand name/description changed
-      // This should match what updateRestaurant endpoint expects
-      const generalUpdate = {
-        restaurantName: branding.brandName,
-        restaurantNameAr: branding.brandNameAr,
-        description: branding.description,
-        descriptionAr: branding.descriptionAr,
-      };
-      
-      // Use saveGeneralSettings (which calls PUT /api/restaurant)
-      await saveGeneralSettings(generalUpdate);
-      
+      console.log('Branding saved successfully');
       setHasChanges(false);
       alert(isRTL ? 'تم حفظ الإعدادات بنجاح!' : 'Settings saved successfully!');
     } else {
+      console.error('BrandingSettings: saveGeneralSettings returned falsy value:', result);
       throw new Error('Failed to save branding');
     }
   } catch (error) {
