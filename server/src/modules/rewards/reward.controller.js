@@ -166,7 +166,7 @@ export const updateRewardOrder = async (req, res) => {
         phone: updatedOrder.phone || updatedOrder.userId?.phone
       },
       user: updatedOrder.userId,
-      userId: updatedOrder.userId,
+      userId: updatedOrder.userId?._id,
       
       pointsUsed: updatedOrder.pointsUsed,
       reward: updatedOrder.rewardId,
@@ -183,7 +183,7 @@ export const updateRewardOrder = async (req, res) => {
       }] : []
     };
 
-    // Emit socket events
+    // 🔥 CRITICAL FIX: Emit socket events with proper room targeting
     if (io) {
       console.log('🔔 Emitting reward order update:', {
         orderId: id,
@@ -192,56 +192,94 @@ export const updateRewardOrder = async (req, res) => {
         userId: updatedOrder.userId?._id
       });
 
-      // Emit to kitchen and cashier rooms
+      // Emit to kitchen and cashier rooms (for staff dashboards)
       io.to('kitchen').emit('order:updated', formattedOrder);
+      io.to('kitchen').emit('order:status-changed', formattedOrder);
+      
       io.to('cashier').emit('order:updated', formattedOrder);
+      io.to('cashier').emit('order:status-changed', formattedOrder);
+      
       io.to('admin').emit('order:updated', formattedOrder);
       
-      // Emit to specific user room (customer)
+      // 🎯 KEY FIX: Emit to USER-SPECIFIC rooms for the customer tracking page
       if (updatedOrder.userId?._id) {
         const userIdStr = updatedOrder.userId._id.toString();
+        
+        console.log(`✅ Emitting to user rooms: ${userIdStr} and user:${userIdStr}`);
+        
+        // Emit to both room formats (legacy + prefixed)
+        io.to(userIdStr).emit('order:updated', formattedOrder);
+        io.to(userIdStr).emit('order:status-changed', formattedOrder);
+        io.to(userIdStr).emit('order:your-status-changed', formattedOrder);
+        
         io.to(`user:${userIdStr}`).emit('order:updated', formattedOrder);
-        io.to(userIdStr).emit('order:updated', formattedOrder); // Legacy support
+        io.to(`user:${userIdStr}`).emit('order:status-changed', formattedOrder);
+        io.to(`user:${userIdStr}`).emit('order:your-status-changed', formattedOrder);
       }
       
       // Status-specific events
       if (dataToUpdate.status) {
-        io.to('kitchen').emit('order:status-changed', formattedOrder);
-        io.to('cashier').emit('order:status-changed', formattedOrder);
+        const statusLower = updatedOrder.status.toLowerCase();
         
-        // Emit to specific user
-        if (updatedOrder.userId?._id) {
-          const userIdStr = updatedOrder.userId._id.toString();
-          io.to(`user:${userIdStr}`).emit('order:status-changed', formattedOrder);
-          io.to(`user:${userIdStr}`).emit('order:your-status-changed', formattedOrder);
-        }
-        
-        // Status-specific events
-        switch(updatedOrder.status.toLowerCase()) {
+        switch(statusLower) {
           case 'confirmed':
             io.to('kitchen').emit('order:confirmed', formattedOrder);
+            if (updatedOrder.userId?._id) {
+              const userIdStr = updatedOrder.userId._id.toString();
+              io.to(userIdStr).emit('order:confirmed', formattedOrder);
+              io.to(`user:${userIdStr}`).emit('order:confirmed', formattedOrder);
+            }
             break;
+            
           case 'preparing':
             io.to('kitchen').emit('order:preparing', formattedOrder);
+            if (updatedOrder.userId?._id) {
+              const userIdStr = updatedOrder.userId._id.toString();
+              io.to(userIdStr).emit('order:preparing', formattedOrder);
+              io.to(`user:${userIdStr}`).emit('order:preparing', formattedOrder);
+            }
             break;
+            
           case 'ready':
             io.to('kitchen').emit('order:ready', formattedOrder);
             io.to('cashier').emit('order:ready-notification', formattedOrder);
+            
             if (updatedOrder.userId?._id) {
               const userIdStr = updatedOrder.userId._id.toString();
+              io.to(userIdStr).emit('order:ready', formattedOrder);
+              io.to(userIdStr).emit('order:ready-notification', formattedOrder);
+              io.to(`user:${userIdStr}`).emit('order:ready', formattedOrder);
               io.to(`user:${userIdStr}`).emit('order:ready-notification', formattedOrder);
+              
+              console.log(`🔔 Sent ready notification to user: ${userIdStr}`);
             }
             break;
+            
           case 'completed':
             io.to('kitchen').emit('order:completed', formattedOrder);
             io.to('cashier').emit('order:completed', formattedOrder);
+            
+            if (updatedOrder.userId?._id) {
+              const userIdStr = updatedOrder.userId._id.toString();
+              io.to(userIdStr).emit('order:completed', formattedOrder);
+              io.to(`user:${userIdStr}`).emit('order:completed', formattedOrder);
+            }
             break;
+            
           case 'cancelled':
             io.to('kitchen').emit('order:cancelled', formattedOrder);
             io.to('cashier').emit('order:cancelled', formattedOrder);
+            
+            if (updatedOrder.userId?._id) {
+              const userIdStr = updatedOrder.userId._id.toString();
+              io.to(userIdStr).emit('order:cancelled', formattedOrder);
+              io.to(`user:${userIdStr}`).emit('order:cancelled', formattedOrder);
+            }
             break;
         }
       }
+    } else {
+      console.error('❌ Socket.io instance not available');
     }
 
     res.json({ 
@@ -250,7 +288,7 @@ export const updateRewardOrder = async (req, res) => {
       data: updatedOrder 
     });
   } catch (err) {
-    console.error('Update reward order error:', err);
+    console.error('❌ Update reward order error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
