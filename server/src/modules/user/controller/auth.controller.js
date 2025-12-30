@@ -22,12 +22,34 @@ const cookieOptions = {
 export const firebaseLoginController = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
+    console.log('firebaseLoginController - received token:', !!token);
+    if (token) {
+      console.log('Token starts with:', token.substring(0, 50) + '...');
+      // Try to decode without verification to see what's inside
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+          console.log('Token payload:', decoded);
+        }
+      } catch (e) {
+        console.log('Could not parse token:', e.message);
+      }
+    }
+    
     if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // Verify Firebase ID token - THIS WAS MISSING!
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    // Verify Firebase ID token
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(token);
+      console.log('Firebase token verified for UID:', decodedToken.uid);
+    } catch (verifyErr) {
+      console.error('Firebase token verification failed:', verifyErr?.message || verifyErr);
+      return res.status(401).json({ message: "Invalid Firebase token: " + (verifyErr?.message || "unknown error") });
+    }
     
     const {
       uid,
@@ -120,6 +142,15 @@ export const firebaseLoginController = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
+    // Debug: log cookie setting confirmation (avoid printing full tokens)
+    try {
+      console.debug('Set accessToken cookie length:', accessToken?.length);
+      console.debug('Set refreshToken cookie length:', refreshToken?.length);
+      console.debug('Cookie options used:', cookieOptions);
+    } catch (e) {
+      // ignore
+    }
+
     // Return user and access token
     res.json({
       user: {
@@ -133,11 +164,12 @@ export const firebaseLoginController = async (req, res) => {
         isVerified: user.isVerified,
       },
       accessToken,
+      refreshToken,
     });
   } catch (err) {
-    console.error("Firebase login error:", err);
-    res.status(401).json({
-      message: err.message || "Invalid Firebase token"
+    console.error("Firebase login error:", err && err.stack ? err.stack : err);
+    res.status(500).json({
+      message: err.message || "Internal server error"
     });
   }
 };
@@ -217,7 +249,11 @@ export const getMeController = async (req, res) => {
 
 export const refreshTokenController = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies.refreshToken || req.headers.authorization?.split(" ")[1];
+
+    // Debugging: log incoming cookies/headers when troubleshooting 401
+    console.debug('Refresh token request cookies:', req.cookies);
+    console.debug('Refresh token request headers Authorization:', req.headers.authorization);
 
     if (!refreshToken) {
       return res.status(401).json({ message: "No refresh token provided" });
@@ -249,8 +285,15 @@ export const refreshTokenController = async (req, res) => {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    // Set new refresh token in cookie
-    res.cookie("refreshToken", newRefreshToken, cookieOptions);
+    // Set new cookies: access (short) and refresh (long)
+    res.cookie('accessToken', newAccessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+    res.cookie('refreshToken', newRefreshToken, {
+      ...cookieOptions,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
 
     res.json({
       accessToken: newAccessToken,

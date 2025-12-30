@@ -10,7 +10,7 @@ export const createAccessToken = (user) =>
 
 export const createRefreshToken = (user) =>
   jwt.sign(
-    { id: user._id },
+    { userId: user._id },
     env.refreshJwtKey,
     { expiresIn: env.refreshExpiry }
   );

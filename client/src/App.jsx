@@ -21,7 +21,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import MenuPage from "./pages/MenuPage";
 import Offers from "./pages/admin/Offers";
-
+import Settings from "./pages/admin/Settings";
 import NotFound from "./pages/NotFoundPage";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
@@ -33,7 +33,20 @@ import AdminDashboard from "./pages/admin/Admin";
 import { requestNotificationPermission } from "./utils/notifications";
 import Support from "./pages/Support";
 import ProfilePage from "./pages/ProfilePage";
-function App() {
+
+// Settings Components
+import SettingsLayout from "./features/settings/components/SettingsLayout";
+import SystemSettings from "./features/settings/pages/SystemSettings";
+import ServiceSettings from "./features/settings/pages/ServiceSettings";
+import PaymentMethodsSettings from "./features/settings/pages/PaymentMethodsSettings";
+import WebsiteDesignSettings from "./features/settings/pages/WebsiteDesignSettings";
+import IntegrationsSettings from "./features/settings/pages/IntegrationsSettings";
+import BrandingSettings from "./features/settings/pages/BrandingSettings";
+import ContentSettings from "./features/settings/pages/ContentSettings";
+import LandingSettings from "./features/settings/pages/LandingSettings";
+import ErrorBoundary from "./components/ErrorBoundary";
+
+ function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
   const dispatch = useDispatch();
@@ -62,8 +75,6 @@ function App() {
   if (loadingGetMe) {
     return <LoadingSpinner />;
   }
-  // Only try to auto-fetch the current user if we know
-  // there was a previous authenticated session.
 
   return (
     <BrowserRouter>
@@ -72,7 +83,8 @@ function App() {
         <SocketProvider />
         <Layout>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            {/* Public Routes */}
+            <Route path="/" element={<ErrorBoundary><LandingPage /></ErrorBoundary>} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/rewards" element={<RewardPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -96,6 +108,7 @@ function App() {
             {/* Order Listing and Tracking */}
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailsPage />} />
+            
             {/* Cashier & Kitchen Dashboards */}
             <Route
               path="/cashier"
@@ -125,10 +138,10 @@ function App() {
                 }
               />
               <Route
-                path="/admin/offers"  // Add this route
+                path="/admin/offers"
                 element={
                   <ProtectedRoute roles={["admin"]}>
-                    <Offers />  {/* Your Offers component */}
+                    <Offers />
                   </ProtectedRoute>
                 }
               />
@@ -148,10 +161,32 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              
+              {/* Settings Route - Main Settings Page */}
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute roles={["admin"]}>
+                    <SettingsLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<SystemSettings />} />
+                <Route path="system" element={<SystemSettings />} />
+                <Route path="services" element={<ServiceSettings />} />
+                <Route path="payments" element={<PaymentMethodsSettings />} />
+                <Route path="website" element={<WebsiteDesignSettings />} />
+                <Route path="integrations" element={<IntegrationsSettings />} />
+                <Route path="branding" element={<BrandingSettings />} />
+                <Route path="landing" element={<LandingSettings />} />
+                <Route path="content" element={<ContentSettings />} />
+              </Route>
             </Route>
+            
             <Route path="/payment" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
+            
             {/* Single Admin Page with section sub-route */}
             <Route element={<AppLayout />}>
               <Route
@@ -163,9 +198,9 @@ function App() {
                 }
               />
             </Route>
+
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
-            {/* Legacy routes redirects (removed) */}
           </Routes>
         </Layout>
       </SettingsProvider>

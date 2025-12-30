@@ -194,15 +194,29 @@ export default function LoginPage() {
         prompt: "select_account",
       });
 
+      console.log("Initiating Google Sign-In popup...");
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
+      console.log("Firebase user authenticated:", {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName
+      });
 
-      const idToken = await firebaseUser.getIdToken();
+      // Wait a moment for the token to be fully issued
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const idToken = await firebaseUser.getIdToken(true); // Force token refresh
+      console.log("Firebase ID token obtained", {
+        length: idToken.length,
+        prefix: idToken.substring(0, 30)
+      });
 
       const resultAction = await dispatch(firebaseLogin(idToken));
 
       if (firebaseLogin.fulfilled.match(resultAction)) {
         const user = resultAction.payload?.user || resultAction.payload;
+        console.log("Firebase login successful, user:", user.email);
 
         if (!user.name) {
           setShowNameInput(true);
@@ -210,10 +224,13 @@ export default function LoginPage() {
         }
 
         redirectUser(user);
+      } else {
+        console.error("Firebase login rejected:", resultAction.payload);
+        setErrors({ google: resultAction.payload || "Login failed. Please try again." });
       }
     } catch (err) {
-      console.error("Google login error:", err);
-      setErrors({ google: err.message || "Google sign-in failed" });
+      console.error("Google login error:", err.message, err.code);
+      setErrors({ google: err.message || "Google sign-in failed. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -358,11 +375,11 @@ export default function LoginPage() {
                   >
                     {isLoading ? t("auth.login.sending_otp") : t("auth.login.send_otp")}
                   </button>
-                  <div class="relative my-10"><div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-200 dark:border-gray-700">
+                  <div className="relative my-10"><div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200 dark:border-gray-700">
                       </div></div>
-                      <div class="relative flex justify-center text-sm">
-                        <span class="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">{t("auth.login.continue_with")}</span>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">{t("auth.login.continue_with")}</span>
                         </div>
                         </div>
                    <button

@@ -16,8 +16,18 @@ export const firebaseLogin = createAsyncThunk(
           },
         }
       );
+      // Store tokens from server (fallback for dev where cookies may not be sent)
+      if (typeof window !== "undefined") {
+        if (res?.data?.refreshToken) {
+          window.localStorage.setItem("refreshToken", res.data.refreshToken);
+        }
+        if (res?.data?.accessToken) {
+          window.localStorage.setItem("accessToken", res.data.accessToken);
+        }
+      }
       return res.data;
     } catch (err) {
+      console.error("Firebase login error:", err.response?.data?.message || err.message);
       return rejectWithValue(err.response?.data?.message);
     }
   }
@@ -27,7 +37,14 @@ export const getMe = createAsyncThunk(
   "auth/getMe",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("api/auth/me");
+      // Don't try to getMe if no access token stored
+      const accessToken = typeof window !== "undefined" ? window.localStorage.getItem("accessToken") : null;
+      if (!accessToken) {
+        console.debug("No access token found, skipping getMe");
+        return null;
+      }
+      
+      const res = await api.get("/api/auth/me");
       return res.data;
     } catch (err) {
       if (err.response?.status === 401) return rejectWithValue("Unauthorized");
@@ -41,7 +58,7 @@ export const completeProfile = createAsyncThunk(
   "auth/complete-profile",
   async ({phoneNumber,name}, { rejectWithValue }) => {
     try {
-      const res = await api.post("api/auth/complete-profile", { phoneNumber,name });
+      const res = await api.post("/api/auth/complete-profile", { phoneNumber,name });
       return res.data;
     } catch (err) {
       return rejectWithValue(
@@ -56,9 +73,27 @@ export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.post("api/auth/refresh");
+      // Try cookie-based refresh first; if not available, fall back to stored refresh token
+      const stored = typeof window !== "undefined" ? window.localStorage.getItem("refreshToken") : null;
+      
+      // If no token stored and no cookies, silently skip refresh (user not logged in yet)
+      if (!stored) {
+        console.debug("No refresh token found in localStorage, skipping refresh");
+        return null;
+      }
+      
+      const headers = stored ? { Authorization: `Bearer ${stored}` } : undefined;
+      const res = await api.post("/api/auth/refresh", {}, { headers });
+      // Save returned tokens to localStorage
+      if (res?.data?.refreshToken) {
+        window.localStorage.setItem("refreshToken", res.data.refreshToken);
+      }
+      if (res?.data?.accessToken) {
+        window.localStorage.setItem("accessToken", res.data.accessToken);
+      }
       return res.data;
     } catch (err) {
+      console.error("Refresh token error:", err.response?.data?.message || err.message);
       return rejectWithValue(
         err.response?.data?.message || "Failed to refresh token"
       );
@@ -70,7 +105,7 @@ export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
     try {
-      await api.post("api/auth/logout");
+      await api.post("/api/auth/logout");
       return true;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -138,6 +173,10 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         if (typeof window !== "undefined") {
           window.localStorage.setItem("hasSession", "true");
+          const access = action.payload?.accessToken;
+          if (access) {
+            window.localStorage.setItem("accessToken", access);
+          }
         }
       })
       .addCase(firebaseLogin.rejected, (state, action) => {
@@ -174,10 +213,13 @@ const authSlice = createSlice({
       })
       .addCase(getMe.fulfilled, (state, action) => {
         state.loadingGetMe = false;
-        state.user = action.payload;
-        state.isAuthenticated = true;
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem("hasSession", "true");
+        // Handle null payload (user not logged in)
+        if (action.payload) {
+          state.user = action.payload;
+          state.isAuthenticated = true;
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem("hasSession", "true");
+          }
         }
       })
       .addCase(getMe.rejected, (state, action) => {
@@ -201,6 +243,8 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         if (typeof window !== "undefined") {
           window.localStorage.removeItem("hasSession");
+          window.localStorage.removeItem("refreshToken");
+          window.localStorage.removeItem("accessToken");
         }
       })
       .addCase(logoutUser.rejected, (state, action) => {
@@ -215,8 +259,11 @@ const authSlice = createSlice({
       })
       .addCase(refreshToken.fulfilled, (state, action) => {
         state.loadingRefresh = false;
-        state.user = action.payload.user;
-        state.isAuthenticated = true;
+        // Handle null payload (no token to refresh)
+        if (action.payload) {
+          state.user = action.payload.user || null;
+          state.isAuthenticated = true;
+        }
       })
       .addCase(refreshToken.rejected, (state, action) => {
         state.loadingRefresh = false;

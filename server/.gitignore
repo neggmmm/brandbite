@@ -8,6 +8,8 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.server.development
+.env.server.production
 
 # Firebase credentials (IMPORTANT!)
 **/firebase-service-account.json
