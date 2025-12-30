@@ -43,6 +43,8 @@ import WebsiteDesignSettings from "./features/settings/pages/WebsiteDesignSettin
 import IntegrationsSettings from "./features/settings/pages/IntegrationsSettings";
 import BrandingSettings from "./features/settings/pages/BrandingSettings";
 import ContentSettings from "./features/settings/pages/ContentSettings";
+import LandingSettings from "./features/settings/pages/LandingSettings";
+import ErrorBoundary from "./components/ErrorBoundary";
 
  function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
@@ -82,7 +84,7 @@ import ContentSettings from "./features/settings/pages/ContentSettings";
         <Layout>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<ErrorBoundary><LandingPage /></ErrorBoundary>} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/rewards" element={<RewardPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -176,6 +178,7 @@ import ContentSettings from "./features/settings/pages/ContentSettings";
                 <Route path="website" element={<WebsiteDesignSettings />} />
                 <Route path="integrations" element={<IntegrationsSettings />} />
                 <Route path="branding" element={<BrandingSettings />} />
+                <Route path="landing" element={<LandingSettings />} />
                 <Route path="content" element={<ContentSettings />} />
               </Route>
             </Route>

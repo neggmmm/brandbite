@@ -8,6 +8,7 @@ import {
   Zap,
   FileText,
   Settings as SettingsIcon,
+  Sparkles,
 } from 'lucide-react';
 
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -85,6 +86,12 @@ export default function SettingsLayout({
       label: i18n.language === 'ar' ? 'المحتوى' : 'Content',
       icon: FileText,
       color: 'bg-orange-500',
+    },
+    {
+      id: 'landing',
+      label: i18n.language === 'ar' ? 'صفحة الهبوط' : 'Landing Page',
+      icon: Sparkles,
+      color: 'bg-teal-500',
     },
   ];
 

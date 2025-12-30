@@ -4,30 +4,30 @@ import { translateRestaurantSettings } from "../../utils/translation.service.js"
 
 class RestaurantService {
   // Basic restaurant operations
-  async getRestaurant() {
-    return await restaurantRepository.findOne();
+  // `selector` can be { restaurantId } or { subdomain } or a mongo filter
+  async getRestaurant(selector = {}) {
+    return await restaurantRepository.findOne(selector);
   }
 
   async getRestaurantBySubdomain(subdomain) {
     return await restaurantRepository.findBySubdomain(subdomain);
   }
 
-  async updateRestaurant(updateData) {
+  async updateRestaurant(updateData, selector = {}) {
     try {
       // Auto-translate settings
       const translatedData = await translateRestaurantSettings(updateData);
       console.log("✅ Settings translated successfully");
       
-      const restaurant = await restaurantRepository.findOne();
+      const restaurant = await restaurantRepository.findOne(selector);
       if (!restaurant) {
         throw new Error("Restaurant not found");
       }
-
       return await restaurantRepository.update(restaurant._id, translatedData);
     } catch (translationError) {
       console.error("⚠️ Translation failed, saving without translation:", translationError.message);
       // Continue with original data
-      const restaurant = await restaurantRepository.findOne();
+      const restaurant = await restaurantRepository.findOne(selector);
       if (!restaurant) {
         throw new Error("Restaurant not found");
       }
@@ -36,81 +36,165 @@ class RestaurantService {
   }
 
   // Branding operations
-  async updateBranding(brandingData) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async updateBranding(brandingData, selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
 
-    const updateData = {
-      branding: {
-        ...restaurant.branding,
-        ...brandingData,
-      },
-    };
-
+    const updateData = { branding: { ...restaurant.branding, ...brandingData } };
     return await restaurantRepository.update(restaurant._id, updateData);
   }
 
   // System settings operations
-  async getSystemSettings() {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async getSystemSettings(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
     return restaurant.systemSettings || {};
   }
 
-  async updateSystemSettings(systemSettings) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
+  async updateSystemSettings(systemSettings, selector = {}) {
+    try {
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
+
+      // Use repository atomic updater for systemSettings
+      return await restaurantRepository.updateSystemSettings(restaurant._id, systemSettings);
+    } catch (err) {
+      console.error('updateSystemSettings error', err);
+      throw err;
     }
-
-    const updateData = {
-      systemSettings: {
-        ...restaurant.systemSettings,
-        ...systemSettings,
-      },
-    };
-
-    return await restaurantRepository.update(restaurant._id, updateData);
   }
 
   // Update specific system category
-  async updateSystemCategory(category, categoryData) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
+  async updateSystemCategory(category, categoryData, selector = {}) {
+    try {
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
+
+      const payloadForCategory = categoryData && Object.prototype.hasOwnProperty.call(categoryData, category)
+        ? categoryData[category]
+        : categoryData;
+
+      // Use repository atomic updater to set systemSettings.<category> fields
+      const updates = { [category]: payloadForCategory };
+      return await restaurantRepository.updateSystemSettings(restaurant._id, updates);
+    } catch (err) {
+      console.error('updateSystemCategory error', err);
+      throw err;
     }
-
-    // Ensure systemSettings object exists
-    const currentSystem = restaurant.systemSettings || {};
-
-    // Support payloads that may be nested (e.g. { branding: { ... } })
-    const payloadForCategory = categoryData && Object.prototype.hasOwnProperty.call(categoryData, category)
-      ? categoryData[category]
-      : categoryData;
-
-    const updateData = {
-      systemSettings: {
-        ...currentSystem,
-        [category]: {
-          ...currentSystem[category],
-          ...payloadForCategory,
-        },
-      },
-    };
-
-    return await restaurantRepository.update(restaurant._id, updateData);
+  }
+  async getLandingSettings(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
+    return restaurant.systemSettings?.landing || {};
   }
 
-  // Export all settings
-  async exportSettings() {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
+  // Update landing settings
+  async updateLandingSettings(landingData, selector = {}) {
+    try {
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
+
+      // Use atomic updater to set landing fields
+      const updates = { landing: { ...(landingData || {}) } };
+      return await restaurantRepository.updateSystemSettings(restaurant._id, updates);
+    } catch (err) {
+      console.error('updateLandingSettings error', err);
+      throw err;
     }
+  }
+
+  // Reset landing page to defaults
+  async resetLandingPage(selector = {}) {
+    try {
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
+
+      const defaultLanding = {
+      hero: {
+        title: "Welcome to Our Restaurant",
+        titleAr: "مرحباً بكم في مطعمنا",
+        subtitle: "Delicious food made with love",
+        subtitleAr: "طعام لذيذ مصنوع بحب",
+        image: "",
+        enabled: true
+      },
+      about: {
+        title: "About Us",
+        titleAr: "من نحن",
+        content: "",
+        contentAr: "",
+        image: "",
+        enabled: true
+      },
+      testimonials: {
+        items: [],
+        featuredIds: [],
+        mode: 'all',
+        enabled: true
+      },
+      services: {
+        enabled: true,
+        items: []
+      },
+      contact: {
+        email: "",
+        phone: "",
+        enabled: true
+      },
+      callUs: {
+        number: "",
+        numberAr: "",
+        label: "Call Us",
+        labelAr: "اتصل بنا",
+        enabled: true
+      },
+      location: {
+        address: "",
+        addressAr: "",
+        latitude: 0,
+        longitude: 0,
+        enabled: true
+      },
+      hours: {
+        monday: { open: "11:00", close: "22:00", enabled: true },
+        tuesday: { open: "11:00", close: "22:00", enabled: true },
+        wednesday: { open: "11:00", close: "22:00", enabled: true },
+        thursday: { open: "11:00", close: "22:00", enabled: true },
+        friday: { open: "11:00", close: "23:00", enabled: true },
+        saturday: { open: "10:00", close: "23:00", enabled: true },
+        sunday: { open: "10:00", close: "22:00", enabled: true }
+      },
+      footer: {
+        text: "",
+        enabled: true
+      },
+      seo: {
+        title: "",
+        description: "",
+        enabled: true
+      },
+      instagram: {
+        enabled: false,
+        posts: []
+      },
+      specialOffer: {
+        enabled: true
+      }
+    };
+
+      const updates = { landing: defaultLanding };
+      return await restaurantRepository.updateSystemSettings(restaurant._id, updates);
+    } catch (err) {
+      console.error('resetLandingPage error', err);
+      throw err;
+    }
+  }
+
+
+  // Export all settings
+  async exportSettings(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
 
     return {
       restaurantName: restaurant.restaurantName,
@@ -130,11 +214,9 @@ class RestaurantService {
   }
 
   // Import settings (merge or overwrite)
-  async importSettings(settings, options = { overwrite: false }) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async importSettings(settings, options = { overwrite: false }, selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
 
     let payload = {};
     if (options.overwrite) {

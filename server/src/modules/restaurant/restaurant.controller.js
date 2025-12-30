@@ -1,4 +1,4 @@
-// restaurant.controller.js
+// restaurant.controller.js - ENHANCED VERSION
 import restaurantService from "./restaurant.service.js";
 import settingsService from "./settings.service.js";
 import fileUploadService from "./fileUpload.service.js";
@@ -112,14 +112,73 @@ export async function updateSystemCategory(req, res) {
     const { category } = req.params;
     const categoryData = req.body;
     
+    console.log('=== UPDATE SYSTEM CATEGORY DEBUG ===');
+    console.log('Category:', category);
+    console.log('Received data:', JSON.stringify(categoryData, null, 2));
+    
     const updated = await restaurantService.updateSystemCategory(category, categoryData);
+    
+    console.log('Updated category data:', JSON.stringify(updated.systemSettings?.[category], null, 2));
+    
     res.status(200).json({
       success: true,
       message: `${category} settings updated successfully`,
-      data: updated.systemSettings[category],
+      data: updated.systemSettings[category],  // ← This returns ONLY the category data
     });
   } catch (error) {
     console.error(`Error updating ${req.params.category} settings:`, error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message || "Failed to save settings"
+    });
+  }
+}
+
+// Landing Page Specific Controllers
+export async function getLandingSettings(req, res) {
+  try {
+    const landingSettings = await restaurantService.getLandingSettings();
+    res.status(200).json({
+      success: true,
+      data: landingSettings,
+    });
+  } catch (error) {
+    console.error("Error fetching landing settings:", error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message || "Internal server error" 
+    });
+  }
+}
+
+export async function updateLandingSettings(req, res) {
+  try {
+    const landingData = req.body;
+    const updated = await restaurantService.updateLandingSettings(landingData);
+    res.status(200).json({
+      success: true,
+      message: "Landing page settings updated successfully",
+      data: updated.systemSettings?.landing,
+    });
+  } catch (error) {
+    console.error("Error updating landing settings:", error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message || "Internal server error" 
+    });
+  }
+}
+
+export async function resetLandingPage(req, res) {
+  try {
+    const updated = await restaurantService.resetLandingPage();
+    res.status(200).json({
+      success: true,
+      message: "Landing page reset to defaults",
+      data: updated.systemSettings?.landing,
+    });
+  } catch (error) {
+    console.error("Error resetting landing page:", error);
     res.status(500).json({ 
       success: false,
       message: error.message || "Internal server error" 
@@ -203,11 +262,8 @@ export async function addPaymentMethod(req, res) {
   try {
     const method = req.body;
     const updated = await settingsService.addPaymentMethod(method);
-    res.status(201).json({
-      success: true,
-      message: "Payment method added successfully",
-      data: updated.paymentMethods,
-    });
+    const paymentMethods = Array.isArray(updated) ? updated : (updated?.paymentMethods || updated);
+    res.status(201).json({ success: true, message: "Payment method added successfully", data: paymentMethods });
   } catch (error) {
     console.error("Error adding payment method:", error);
     res.status(500).json({ 
@@ -223,18 +279,13 @@ export async function updatePaymentMethod(req, res) {
     const updates = req.body;
     
     const updated = await settingsService.updatePaymentMethod(methodId, updates);
-    if (!updated) {
-      return res.status(404).json({ 
-        success: false,
-        message: "Payment method not found" 
-      });
-    }
-    
-    res.status(200).json({
-      success: true,
-      message: "Payment method updated successfully",
-      data: updated.paymentMethods,
-    });
+    if (!updated) return res.status(404).json({ success: false, message: 'Payment method not found' });
+
+    // updated may be the updated item, or the array; return updated item and current list
+    const updatedItem = Array.isArray(updated) ? updated.find(i => String(i._id) === String(methodId)) : updated;
+    const restaurant = await restaurantService.getRestaurant();
+
+    res.status(200).json({ success: true, message: 'Payment method updated successfully', data: { updatedItem, paymentMethods: restaurant.paymentMethods } });
   } catch (error) {
     console.error("Error updating payment method:", error);
     res.status(500).json({ 
@@ -247,20 +298,11 @@ export async function updatePaymentMethod(req, res) {
 export async function removePaymentMethod(req, res) {
   try {
     const { methodId } = req.params;
-    
     const updated = await settingsService.removePaymentMethod(methodId);
-    if (!updated) {
-      return res.status(404).json({ 
-        success: false,
-        message: "Payment method not found" 
-      });
-    }
-    
-    res.status(200).json({
-      success: true,
-      message: "Payment method removed successfully",
-      data: updated.paymentMethods,
-    });
+    if (!updated) return res.status(404).json({ success: false, message: 'Payment method not found' });
+
+    const paymentMethods = Array.isArray(updated) ? updated : (updated?.paymentMethods || updated);
+    res.status(200).json({ success: true, message: 'Payment method removed successfully', data: paymentMethods });
   } catch (error) {
     console.error("Error removing payment method:", error);
     res.status(500).json({ 
@@ -276,18 +318,11 @@ export async function togglePaymentMethod(req, res) {
     const { enabled } = req.body;
     
     const updated = await settingsService.togglePaymentMethod(methodId, enabled);
-    if (!updated) {
-      return res.status(404).json({ 
-        success: false,
-        message: "Payment method not found" 
-      });
-    }
-    
-    res.status(200).json({
-      success: true,
-      message: `Payment method ${enabled ? 'enabled' : 'disabled'} successfully`,
-      data: updated.paymentMethods,
-    });
+    if (!updated) return res.status(404).json({ success: false, message: 'Payment method not found' });
+
+    const updatedItem = Array.isArray(updated) ? updated.find(i => String(i._id) === String(methodId)) : updated;
+    const restaurant = await restaurantService.getRestaurant();
+    res.status(200).json({ success: true, message: `Payment method ${enabled ? 'enabled' : 'disabled'} successfully`, data: { updatedItem, paymentMethods: restaurant.paymentMethods } });
   } catch (error) {
     console.error("Error toggling payment method:", error);
     res.status(500).json({ 
@@ -446,11 +481,10 @@ export async function addFAQ(req, res) {
   try {
     const faq = req.body;
     const updated = await settingsService.addFAQ(faq);
-    res.status(201).json({
-      success: true,
-      message: "FAQ added successfully",
-      data: updated.faqs[updated.faqs.length - 1],
-    });
+    // service returns updated array
+    const faqs = Array.isArray(updated) ? updated : (updated?.faqs || updated);
+    const added = faqs[faqs.length - 1] || null;
+    res.status(201).json({ success: true, message: 'FAQ added successfully', data: added });
   } catch (error) {
     console.error("Error adding FAQ:", error);
     res.status(500).json({ 
@@ -466,11 +500,9 @@ export async function updateFAQ(req, res) {
     const faq = req.body;
     
     const updated = await settingsService.updateFAQ(faqId, faq);
-    res.status(200).json({
-      success: true,
-      message: "FAQ updated successfully",
-      data: updated.faqs.find(f => f._id.toString() === faqId),
-    });
+    // updateFAQ returns the updated item
+    const updatedItem = updated && updated._id ? updated : null;
+    res.status(200).json({ success: true, message: 'FAQ updated successfully', data: updatedItem });
   } catch (error) {
     console.error("Error updating FAQ:", error);
     res.status(500).json({ 
@@ -485,11 +517,8 @@ export async function removeFAQ(req, res) {
     const { faqId } = req.params;
     
     const updated = await settingsService.removeFAQ(faqId);
-    res.status(200).json({
-      success: true,
-      message: "FAQ removed successfully",
-      data: updated.faqs,
-    });
+    const faqs = Array.isArray(updated) ? updated : (updated?.faqs || updated);
+    res.status(200).json({ success: true, message: 'FAQ removed successfully', data: faqs });
   } catch (error) {
     console.error("Error removing FAQ:", error);
     res.status(500).json({ 
@@ -576,16 +605,14 @@ export async function uploadLogo(req, res) {
       });
     }
 
-    const logoUrl = await fileUploadService.uploadLogo(req.file);
-    const restaurant = await restaurantService.getRestaurant();
-    
+    const result = await fileUploadService.uploadLogo(req.file);
+    const logoUrl = result?.url || result;
+    const restaurant = result?.restaurant || await restaurantService.getRestaurant();
+
     res.status(200).json({
       success: true,
       message: "Logo uploaded successfully",
-      data: {
-        logoUrl,
-        restaurant,
-      },
+      data: { logoUrl, restaurant },
     });
   } catch (error) {
     console.error("Error uploading logo:", error);
@@ -605,17 +632,11 @@ export async function uploadMenuImage(req, res) {
       });
     }
 
-    const menuImageUrl = await fileUploadService.uploadMenuImage(req.file);
-    const restaurant = await restaurantService.getRestaurant();
-    
-    res.status(200).json({
-      success: true,
-      message: "Menu image uploaded successfully",
-      data: {
-        menuImageUrl,
-        restaurant,
-      },
-    });
+    const result = await fileUploadService.uploadMenuImage(req.file);
+    const menuImageUrl = result?.url || result;
+    const restaurant = result?.restaurant || await restaurantService.getRestaurant();
+
+    res.status(200).json({ success: true, message: "Menu image uploaded successfully", data: { menuImageUrl, restaurant } });
   } catch (error) {
     console.error("Error uploading menu image:", error);
     res.status(500).json({ 
@@ -655,5 +676,45 @@ export async function generateMenuImage(req, res) {
       success: false,
       message: error.message || "Internal server error" 
     });
+  }
+}
+
+// Landing page image upload
+export async function uploadLandingImage(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        message: "No file uploaded" 
+      });
+    }
+
+    // Accept an optional target path to determine where to place the image
+    const target = req.body?.target || req.query?.target || 'hero.image';
+    const result = await fileUploadService.uploadLandingImage(target, req.file);
+    const imageUrl = result?.url || result;
+
+    res.status(200).json({ success: true, message: "Landing image uploaded successfully", data: { imageUrl } });
+  } catch (error) {
+    console.error("Error uploading landing image:", error);
+    res.status(500).json({ 
+      success: false,
+      message: error.message || "Internal server error" 
+    });
+  }
+}
+
+export async function uploadFavicon(req, res) {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+    const result = await fileUploadService.uploadFavicon(req.file);
+    const faviconUrl = result?.url || result;
+    const restaurant = result?.restaurant || await restaurantService.getRestaurant();
+
+    res.status(200).json({ success: true, message: 'Favicon uploaded successfully', data: { faviconUrl, restaurant } });
+  } catch (error) {
+    console.error('Error uploading favicon:', error);
+    res.status(500).json({ success: false, message: error.message || 'Internal server error' });
   }
 }

@@ -95,7 +95,11 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // --- Connect to Database ---
-await connectDB();
+if (process.env.NODE_ENV !== 'test') {
+  await connectDB();
+} else {
+  console.log('Skipping DB connect in test environment');
+}
 
 // --- API Routes ---
 app.use("/api", couponRoutes);

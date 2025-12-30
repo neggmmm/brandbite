@@ -47,6 +47,134 @@ const restaurantSchema = new mongoose.Schema(
         timeFormat: { type: String, default: "12h" },
       },
 
+      // Landing Page Settings (NEW) - FIXED: Now properly inside systemSettings
+      landing: {
+        hero: {
+          title: { type: String, default: "Welcome to Our Restaurant" },
+          titleAr: { type: String, default: "مرحباً بكم في مطعمنا" },
+          subtitle: { type: String, default: "Delicious food made with love" },
+          subtitleAr: { type: String, default: "طعام لذيذ مصنوع بحب" },
+          image: { type: String, default: "" },
+          enabled: { type: Boolean, default: true }
+        },
+        about: {
+          title: { type: String, default: "About Us" },
+          titleAr: { type: String, default: "من نحن" },
+          content: { type: String, default: "" },
+          contentAr: { type: String, default: "" },
+          image: { type: String, default: "" },
+          enabled: { type: Boolean, default: true }
+        },
+        testimonials: {
+          items: [{
+            name: String,
+            image: String,
+            content: String,
+            rating: { type: Number, default: 5 },
+            _id: false
+          }],
+          featuredIds: [String],
+          mode: { type: String, default: 'all' },
+          enabled: { type: Boolean, default: true }
+        },
+        services: {
+          enabled: { type: Boolean, default: true },
+          items: [{
+            title: String,
+            titleAr: String,
+            description: String,
+            descriptionAr: String,
+            image: String,
+            colorClass: { type: String, default: "text-blue-600 dark:text-blue-400" },
+            bgClass: { type: String, default: "bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900" },
+            imageBgClass: { type: String, default: "bg-blue-100 dark:bg-blue-900/30" },
+            navigate: { type: String, default: "/" },
+            enabled: { type: Boolean, default: true },
+            _id: false
+          }]
+        },
+        contact: {
+          email: String,
+          phone: String,
+          enabled: { type: Boolean, default: true }
+        },
+        callUs: {
+          number: String,
+          numberAr: String,
+          label: { type: String, default: "Call Us" },
+          labelAr: { type: String, default: "اتصل بنا" },
+          enabled: { type: Boolean, default: true }
+        },
+        location: {
+          address: String,
+          addressAr: String,
+          latitude: Number,
+          longitude: Number,
+          enabled: { type: Boolean, default: true }
+        },
+        hours: {
+          monday: { 
+            open: { type: String, default: "11:00" },
+            close: { type: String, default: "22:00" },
+            enabled: { type: Boolean, default: true }
+          },
+          tuesday: { 
+            open: { type: String, default: "11:00" },
+            close: { type: String, default: "22:00" },
+            enabled: { type: Boolean, default: true }
+          },
+          wednesday: { 
+            open: { type: String, default: "11:00" },
+            close: { type: String, default: "22:00" },
+            enabled: { type: Boolean, default: true }
+          },
+          thursday: { 
+            open: { type: String, default: "11:00" },
+            close: { type: String, default: "22:00" },
+            enabled: { type: Boolean, default: true }
+          },
+          friday: { 
+            open: { type: String, default: "11:00" },
+            close: { type: String, default: "23:00" },
+            enabled: { type: Boolean, default: true }
+          },
+          saturday: { 
+            open: { type: String, default: "10:00" },
+            close: { type: String, default: "23:00" },
+            enabled: { type: Boolean, default: true }
+          },
+          sunday: { 
+            open: { type: String, default: "10:00" },
+            close: { type: String, default: "22:00" },
+            enabled: { type: Boolean, default: true }
+          }
+        },
+        footer: {
+          text: String,
+          enabled: { type: Boolean, default: true }
+        },
+        seo: {
+          title: String,
+          description: String,
+          enabled: { type: Boolean, default: true }
+        },
+        instagram: {
+          enabled: { type: Boolean, default: false },
+          posts: [{
+            image: String,
+            caption: String,
+            likes: String,
+            comments: String,
+            date: String,
+            tags: [String],
+            _id: false
+          }]
+        },
+        specialOffer: {
+          enabled: { type: Boolean, default: true }
+        }
+      },
+
       // Location
       location: {
         latitude: { type: Number, default: 0 },
@@ -249,6 +377,12 @@ const restaurantSchema = new mongoose.Schema(
       faviconUrl: { type: String, default: "" },
     },
 
+    // Unique identifier for multi-tenant setups or external references
+    restaurantId: { type: String, index: true, unique: true, sparse: true },
+
+    // Public contact email
+    email: { type: String, match: /.+\@.+\..+/, default: "" },
+
     notifications: {
       newOrder: { type: Boolean, default: true },
       review: { type: Boolean, default: true },
@@ -277,9 +411,7 @@ const restaurantSchema = new mongoose.Schema(
           answerAr: { type: String, default: "" },
         },
       ],
-      default: [
-        // Your existing FAQs
-      ],
+      default: [],
     },
 
     policies: {
@@ -307,6 +439,7 @@ const restaurantSchema = new mongoose.Schema(
 
 // Indexes for performance
 restaurantSchema.index({ "websiteDesign.domain.subdomain": 1 });
+restaurantSchema.index({ restaurantId: 1 });
 restaurantSchema.index({ status: 1 });
 restaurantSchema.index({ subscriptionPlan: 1 });
 
@@ -335,6 +468,19 @@ restaurantSchema.pre('save', function(next) {
 
   next();
 });
+
+// Helper to get localized field values with fallback (e.g., 'restaurantName' / 'restaurantNameAr')
+restaurantSchema.methods.getFieldByLang = function(fieldBase, lang = 'en') {
+  if (!fieldBase) return undefined;
+  const enKey = fieldBase;
+  const arKey = `${fieldBase}Ar`;
+
+  if (lang === 'ar') {
+    return (this[arKey] && this[arKey].length) ? this[arKey] : this[enKey];
+  }
+
+  return (this[enKey] && this[enKey].length) ? this[enKey] : this[arKey];
+};
 
 // Method to get public config (for customer-facing website)
 restaurantSchema.methods.getPublicConfig = function() {
@@ -371,6 +517,20 @@ restaurantSchema.methods.getPublicConfig = function() {
       general: this.systemSettings.general,
       ordering: this.systemSettings.ordering,
       functionality: this.systemSettings.functionality,
+      landing: {
+        hero: this.systemSettings.landing?.hero || {},
+        about: this.systemSettings.landing?.about || {},
+        testimonials: this.systemSettings.landing?.testimonials || {},
+        services: this.systemSettings.landing?.services || {},
+        contact: this.systemSettings.landing?.contact || {},
+        callUs: this.systemSettings.landing?.callUs || {},
+        location: this.systemSettings.landing?.location || {},
+        hours: this.systemSettings.landing?.hours || {},
+        footer: this.systemSettings.landing?.footer || {},
+        seo: this.systemSettings.landing?.seo || {},
+        instagram: this.systemSettings.landing?.instagram || {},
+        specialOffer: this.systemSettings.landing?.specialOffer || {}
+      }
     },
   };
 };

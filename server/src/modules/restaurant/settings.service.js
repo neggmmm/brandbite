@@ -1,91 +1,74 @@
-// settings.service.js
+// settings.service.js - ENHANCED VERSION
 import restaurantRepository from "./restaurant.repository.js";
 
 class SettingsService {
   // ========== SERVICE SETTINGS ==========
-  async getServiceSettings() {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async getServiceSettings(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
     return restaurant.services || {};
   }
 
-  async updateServices(services) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
+  async updateServices(services, selector = {}) {
+    try {
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
+
+      const updateData = { services: { ...restaurant.services, ...services } };
+      return await restaurantRepository.update(restaurant._id, updateData);
+    } catch (err) {
+      console.error('updateServices error', err);
+      throw err;
     }
-
-    const updateData = {
-      services: {
-        ...restaurant.services,
-        ...services,
-      },
-    };
-
-    return await restaurantRepository.update(restaurant._id, updateData);
   }
 
-  async toggleService(service, enabled) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
+  async toggleService(service, enabled, selector = {}) {
+    try {
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
+
+      if (!restaurant.services[service]) throw new Error(`Invalid service: ${service}`);
+
+      const updateData = { services: { ...restaurant.services, [service]: { ...restaurant.services[service], enabled } } };
+
+      return await restaurantRepository.update(restaurant._id, updateData);
+    } catch (err) {
+      console.error('toggleService error', err);
+      throw err;
     }
-
-    if (!restaurant.services[service]) {
-      throw new Error(`Invalid service: ${service}`);
-    }
-
-    const updateData = {
-      services: {
-        ...restaurant.services,
-        [service]: {
-          ...restaurant.services[service],
-          enabled,
-        },
-      },
-    };
-
-    return await restaurantRepository.update(restaurant._id, updateData);
   }
 
   // ========== PAYMENT SETTINGS ==========
-  async getPaymentSettings() {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async getPaymentSettings(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
     return restaurant.paymentMethods || [];
   }
 
-  async addPaymentMethod(method) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async addPaymentMethod(method, selector = {}) {
+    try {
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
 
-    // Check if exists (case insensitive)
-    const exists = restaurant.paymentMethods.find(
-      pm => pm.name.toLowerCase() === method.name.toLowerCase()
-    );
-    
-    if (exists) {
-      throw new Error("Payment method already exists");
-    }
+      const exists = restaurant.paymentMethods.find(pm => pm.name.toLowerCase() === method.name.toLowerCase());
+      if (exists) throw new Error('Payment method already exists');
 
-    return await restaurantRepository.addToArray("paymentMethods", method);
+      return await restaurantRepository.addToArray('paymentMethods', method, selector);
+    } catch (err) {
+      console.error('addPaymentMethod error', err);
+      throw err;
+    }
   }
 
-  async updatePaymentMethod(methodId, updates) {
+  async updatePaymentMethod(methodId, updates, selector = {}) {
     // Support both numeric index IDs (legacy) and Mongo _id strings
     const maybeIndex = parseInt(methodId);
     if (!isNaN(maybeIndex)) {
-      return await restaurantRepository.updateInArrayByIndex("paymentMethods", maybeIndex, updates);
+      return await restaurantRepository.updateInArrayByIndex("paymentMethods", maybeIndex, updates, selector);
     }
 
     // Treat as _id
-    return await restaurantRepository.updateInArrayById("paymentMethods", methodId, updates);
+    return await restaurantRepository.updateInArrayById("paymentMethods", methodId, updates, selector);
   }
 
   async removePaymentMethod(methodId) {
@@ -103,78 +86,42 @@ class SettingsService {
   }
 
   // ========== WEBSITE DESIGN ==========
-  async getWebsiteDesign() {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async getWebsiteDesign(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
     return restaurant.websiteDesign || {};
   }
 
-  async updateWebsiteDesign(design) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async updateWebsiteDesign(design, selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
 
-    const updateData = {
-      websiteDesign: {
-        ...restaurant.websiteDesign,
-        ...design,
-      },
-    };
-
+    const updateData = { websiteDesign: { ...restaurant.websiteDesign, ...design } };
     return await restaurantRepository.update(restaurant._id, updateData);
   }
 
-  async updateWebsiteColors(colors) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async updateWebsiteColors(colors, selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
 
-    const updateData = {
-      websiteDesign: {
-        ...restaurant.websiteDesign,
-        colors: {
-          ...restaurant.websiteDesign.colors,
-          ...colors,
-        },
-      },
-    };
-
+    const updateData = { websiteDesign: { ...restaurant.websiteDesign, colors: { ...restaurant.websiteDesign.colors, ...colors } } };
     return await restaurantRepository.update(restaurant._id, updateData);
   }
 
   // ========== INTEGRATIONS ==========
-  async getIntegrations() {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async getIntegrations(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
     return restaurant.integrations || {};
   }
 
-  async updateIntegration(integration, settings) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async updateIntegration(integration, settings, selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
 
-    if (!restaurant.integrations[integration]) {
-      throw new Error(`Invalid integration: ${integration}`);
-    }
+    if (!restaurant.integrations[integration]) throw new Error(`Invalid integration: ${integration}`);
 
-    const updateData = {
-      integrations: {
-        ...restaurant.integrations,
-        [integration]: {
-          ...restaurant.integrations[integration],
-          ...settings,
-        },
-      },
-    };
-
+    const updateData = { integrations: { ...restaurant.integrations, [integration]: { ...restaurant.integrations[integration], ...settings } } };
     return await restaurantRepository.update(restaurant._id, updateData);
   }
 
@@ -183,82 +130,61 @@ class SettingsService {
   }
 
   // ========== CONTENT MANAGEMENT ==========
-  async getFAQs() {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async getFAQs(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
     return restaurant.faqs || [];
   }
 
-  async updateFAQs(faqs) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
-
+  async updateFAQs(faqs, selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
     const updateData = { faqs };
     return await restaurantRepository.update(restaurant._id, updateData);
   }
 
-  async addFAQ(faq) {
-    return await restaurantRepository.addToArray("faqs", faq);
+  async addFAQ(faq, selector = {}) {
+    return await restaurantRepository.addToArray("faqs", faq, selector);
   }
 
-  async updateFAQ(faqId, faqUpdates) {
-    // FAQs have _id, so we can use a different approach
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
+  async updateFAQ(faqId, faqUpdates, selector = {}) {
+    try {
+      return await restaurantRepository.updateInArrayById('faqs', faqId, faqUpdates, selector);
+    } catch (err) {
+      console.error('updateFAQ error', err);
+      throw err;
     }
-
-    const faqIndex = restaurant.faqs.findIndex(f => f._id.toString() === faqId);
-    if (faqIndex === -1) {
-      throw new Error("FAQ not found");
-    }
-
-    restaurant.faqs[faqIndex] = {
-      ...restaurant.faqs[faqIndex].toObject(),
-      ...faqUpdates,
-    };
-
-    restaurant.markModified('faqs');
-    return await restaurant.save();
   }
 
-  async removeFAQ(faqId) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
+  async removeFAQ(faqId, selector = {}) {
+    try {
+      return await restaurantRepository.removeFromArrayById('faqs', faqId, selector);
+    } catch (err) {
+      console.error('removeFAQ error', err);
+      throw err;
     }
-
-    restaurant.faqs = restaurant.faqs.filter(f => f._id.toString() !== faqId);
-    return await restaurant.save();
   }
 
-  async getPolicies() {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
-    }
+  async getPolicies(selector = {}) {
+    const restaurant = await restaurantRepository.findOne(selector);
+    if (!restaurant) throw new Error('Restaurant not found');
     return restaurant.policies || {};
   }
 
-  async updatePolicies(policies) {
-    const restaurant = await restaurantRepository.findOne();
-    if (!restaurant) {
-      throw new Error("Restaurant not found");
+  async updatePolicies(policies, selector = {}) {
+    try {
+      const restaurant = await restaurantRepository.findOne(selector);
+      if (!restaurant) throw new Error('Restaurant not found');
+
+      const updateData = { policies: { ...restaurant.policies, ...policies } };
+      return await restaurantRepository.update(restaurant._id, updateData);
+    } catch (err) {
+      console.error('updatePolicies error', err);
+      throw err;
     }
-
-    const updateData = {
-      policies: {
-        ...restaurant.policies,
-        ...policies,
-      },
-    };
-
-    return await restaurantRepository.update(restaurant._id, updateData);
   }
+
+  
 }
 
 export default new SettingsService();

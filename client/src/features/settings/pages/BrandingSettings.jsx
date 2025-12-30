@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useSettings } from '../../../context/SettingContext';
-import { Save, AlertCircle, Upload, X } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useSettings } from "../../../context/SettingContext";
+import { useSettingsAPI } from "../../settings/hooks/useSettingsAPI";
+import { Save, AlertCircle, Upload, X } from "lucide-react";
 
 export default function BrandingSettings() {
   const { i18n } = useTranslation();

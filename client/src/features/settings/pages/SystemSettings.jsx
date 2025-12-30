@@ -1,3 +1,4 @@
+// UPDATED SystemSettings.jsx - Remove fields that conflict with landing settings
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../context/SettingContext';
@@ -11,7 +12,7 @@ export default function SystemSettings() {
   const [settings, setSettings] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
 
-  const { rawSettings, saveSystemCategory, loading: contextLoading } = useSettings();
+  const { rawSettings, saveSystemCategory, saveGeneralSettings, loading: contextLoading } = useSettings();
 
   useEffect(() => {
     if (rawSettings?.systemSettings) {
@@ -55,39 +56,9 @@ export default function SystemSettings() {
     }
   };
 
+  // REMOVED: restaurantName, description, phone, address from here
+  // These should be in general settings, not system settings
   const categories = [
-    {
-      id: 'general',
-      label: isRTL ? 'إعدادات عامة' : 'General Settings',
-      fields: [
-        { key: 'restaurantName', label: isRTL ? 'اسم المتجر' : 'Restaurant Name', type: 'text' },
-        {
-          key: 'restaurantNameAr',
-          label: isRTL ? 'اسم المتجر (عربي)' : 'Restaurant Name (Arabic)',
-          type: 'text',
-        },
-        { key: 'description', label: isRTL ? 'الوصف' : 'Description', type: 'textarea' },
-        {
-          key: 'descriptionAr',
-          label: isRTL ? 'الوصف (عربي)' : 'Description (Arabic)',
-          type: 'textarea',
-        },
-        { key: 'phone', label: isRTL ? 'رقم الهاتف' : 'Phone', type: 'tel' },
-        { key: 'email', label: isRTL ? 'البريد الإلكتروني' : 'Email', type: 'email' },
-      ],
-    },
-    {
-      id: 'location',
-      label: isRTL ? 'الموقع' : 'Location',
-      fields: [
-        { key: 'address', label: isRTL ? 'العنوان' : 'Address', type: 'text' },
-        { key: 'addressAr', label: isRTL ? 'العنوان (عربي)' : 'Address (Arabic)', type: 'text' },
-        { key: 'city', label: isRTL ? 'المدينة' : 'City', type: 'text' },
-        { key: 'country', label: isRTL ? 'الدولة' : 'Country', type: 'text' },
-        { key: 'latitude', label: isRTL ? 'خط العرض' : 'Latitude', type: 'number' },
-        { key: 'longitude', label: isRTL ? 'خط الطول' : 'Longitude', type: 'number' },
-      ],
-    },
     {
       id: 'functionality',
       label: isRTL ? 'الميزات' : 'Features',
@@ -148,8 +119,8 @@ export default function SystemSettings() {
         <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-blue-800 dark:text-blue-300">
           {isRTL
-            ? 'تحديث الإعدادات العامة لمتجرك. جميع التغييرات سيتم حفظها تلقائياً.'
-            : 'Update general settings for your restaurant. All changes will be saved automatically.'}
+            ? 'إعدادات النظام والتطبيق. هذه الإعدادات تؤثر على وظائف الموقع.'
+            : 'System and application settings. These affect website functionality.'}
         </p>
       </div>
 
@@ -201,25 +172,6 @@ export default function SystemSettings() {
                               }`}
                             />
                           </button>
-                        </div>
-                      );
-                    }
-
-                    if (field.type === 'textarea') {
-                      return (
-                        <div key={field.key} className="col-span-1 md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {field.label}
-                          </label>
-                          <textarea
-                            value={value}
-                            onChange={(e) =>
-                              handleInputChange(category.id, field.key, e.target.value)
-                            }
-                            rows={4}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder={field.label}
-                          />
                         </div>
                       );
                     }
