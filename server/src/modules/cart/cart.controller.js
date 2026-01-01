@@ -6,26 +6,14 @@ import { v4 as uuidv4 } from "uuid";
 // Helper function to populate cart with product details including productPoints
 async function populateCartWithProductPoints(cart) {
   if (!cart || !cart.products || cart.products.length === 0) return cart;
-  
+
   const populatedCart = await cart.populate('products.productId');
   return populatedCart;
 }
 
-//getCartUserId for both guest and registered users
-// function getCartUserId(req, res) {
-//     if (req.user?._id) return req.user._id.toString(); // مستخدم مسجل
-//     // guest user
-//     if (!req.cookies.guestCartId) {
-//         const guestId = uuidv4();
-//         const isProduction = process.env.NODE_ENV === "production";
-//         res.cookie('guestCartId', guestId, { httpOnly: false, maxAge: 7*24*60*60*1000 ,sameSite: isProduction ? "none" : "lax",secure: isProduction ? true : false}); // أسبوع
-//         return guestId;
-//     }
-//     return req.cookies.guestCartId;
-// }
 
 function getCartUserId(req, res) {
-//   console.log(" Incoming cookies:", req.cookies);
+  //   console.log(" Incoming cookies:", req.cookies);
 
   if (req.user?._id) {
     return req.user._id.toString();
@@ -42,7 +30,7 @@ function getCartUserId(req, res) {
     res.cookie("guestCartId", guestId, {
       httpOnly: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: isProduction ? "none" : "lax", 
+      sameSite: isProduction ? "none" : "lax",
       secure: isProduction, // ← works on both
       path: "/",
     });
@@ -53,16 +41,13 @@ function getCartUserId(req, res) {
   return guestId;
 }
 
+
 //getCartForUser
 export const getCartForUser = async (req, res) => {
   try {
     const userId = getCartUserId(req, res);
     let cart = await getCartForUserService(userId);
-    // if (!cart) {
-    //     return res.status(404).json({ message: 'Cart not found' });
-    // }
-    // لو الكارت مش موجود → ننشئ واحدة فارغة
-    if (!cart) {
+     if (!cart) {
       cart = new Cart({
         userId,
         products: [],
@@ -70,10 +55,33 @@ export const getCartForUser = async (req, res) => {
       });
       await cart.save();
     }
-    
+    if (req.cookies.guestCartId && req.user?._id) {
+      const guestCart = await getCartForUserService(req.cookies.guestCartId);
+      if (guestCart) {
+        guestCart.products.forEach(guestProduct => {
+          const existingProductIndex = cart.products.findIndex(
+            p => p.productId.toString() === guestProduct.productId.toString() &&
+                 JSON.stringify(p.selectedOptions) === JSON.stringify(guestProduct.selectedOptions)
+          );
+
+          // If product exists in user cart, just increase quantity
+          if (existingProductIndex > -1) {
+            cart.products[existingProductIndex].quantity += guestProduct.quantity;
+          } else {
+            cart.products.push(guestProduct);
+          }
+        });
+        cart.totalPrice = cart.products.reduce(
+          (sum, p) => sum + p.price * p.quantity,
+          0
+        );
+        await cart.save();
+        await Cart.findByIdAndDelete(guestCart._id);
+      }
+    }
     // Populate with product details to include productPoints
     cart = await populateCartWithProductPoints(cart);
-        cart.products = cart.products.map(product => ({
+    cart.products = cart.products.map(product => ({
       ...product.toObject(),
       selectedOptions: product.selectedOptions || {}
     }));
@@ -182,7 +190,7 @@ export const addToCart = async (req, res) => {
         (p) =>
           p.productId.toString() === productId &&
           JSON.stringify(p.selectedOptions) ===
-            JSON.stringify(selectedOptions || {})
+          JSON.stringify(selectedOptions || {})
       );
 
       if (productInCart) {
@@ -242,14 +250,14 @@ export const addToCart = async (req, res) => {
 
     await product.save();
     await cart.save();
-    
+
     // Populate with product details to include productPoints
     const populatedCart = await populateCartWithProductPoints(cart);
-      populatedCart.products = populatedCart.products.map(product => ({
+    populatedCart.products = populatedCart.products.map(product => ({
       ...product.toObject(),
       selectedOptions: product.selectedOptions || {}
     }));
-    
+
     res.status(201).json(populatedCart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -335,7 +343,7 @@ export const deleteProductFromCart = async (req, res) => {
 
     // Populate with product details to include productPoints
     const populatedCart = await populateCartWithProductPoints(cart);
-  populatedCart.products = populatedCart.products.map(product => ({
+    populatedCart.products = populatedCart.products.map(product => ({
       ...product.toObject(),
       selectedOptions: product.selectedOptions || {}
     }));
@@ -461,7 +469,7 @@ export const updateCartQuantity = async (req, res) => {
 
     // Populate with product details to include productPoints
     const populatedCart = await populateCartWithProductPoints(cart);
-      populatedCart.products = populatedCart.products.map(product => ({
+    populatedCart.products = populatedCart.products.map(product => ({
       ...product.toObject(),
       selectedOptions: product.selectedOptions || {}
     }));
@@ -539,7 +547,7 @@ export const clearCart = async (req, res) => {
 
     // Populate with product details to include productPoints
     const populatedCart = await populateCartWithProductPoints(cart);
-      populatedCart.products = populatedCart.products.map(product => ({
+    populatedCart.products = populatedCart.products.map(product => ({
       ...product.toObject(),
       selectedOptions: product.selectedOptions || {}
     }));
