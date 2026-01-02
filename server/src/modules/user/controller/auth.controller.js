@@ -4,13 +4,12 @@ import { createAccessToken, createRefreshToken } from "../../../utils/jwt.js";
 import jwt from "jsonwebtoken";
 import { env } from "../../../config/env.js";
 
-const isProduction = env.nodeEnv === "production";
 
 // Base cookie options
 const cookieOptionsBase = {
   httpOnly: true,
-  sameSite: isProduction ? "None" : "Lax",
-  secure: isProduction,
+  sameSite:"Lax",
+  secure: true,
   maxAge: 15 * 60 * 1000,
   path: "/",
 };
