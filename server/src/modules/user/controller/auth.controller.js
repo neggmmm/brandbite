@@ -8,8 +8,8 @@ import { env } from "../../../config/env.js";
 const isProduction = env.nodeEnv === "production";
 // Base cookie options
 const cookieOptionsBase = {
-  httpOnly: isProduction,
-  secure: isProduction,
+  httpOnly: true,
+  secure: true,
   sameSite:  "Lax",
   maxAge: 15 * 60 * 1000,
   path: "/",
@@ -17,7 +17,7 @@ const cookieOptionsBase = {
 
 const cookieOptions = {
   ...cookieOptionsBase,
-  ...(isProduction && process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
 };
 export const firebaseLoginController = async (req, res) => {
   try {
