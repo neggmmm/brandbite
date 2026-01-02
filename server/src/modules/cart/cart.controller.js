@@ -2,7 +2,9 @@ import Cart from "./Cart.js";
 import { getCartForUserService, addToCartService } from "./cart.service.js";
 import { getProductByIdService } from "../product/product.service.js";
 import { v4 as uuidv4 } from "uuid";
+import { env } from "../../config/env.js";
 
+const isProduction = env.nodeEnv === "production";
 // Helper function to populate cart with product details including productPoints
 async function populateCartWithProductPoints(cart) {
   if (!cart || !cart.products || cart.products.length === 0) return cart;
@@ -13,15 +15,10 @@ async function populateCartWithProductPoints(cart) {
 
 
 function getCartUserId(req, res) {
-  //   console.log(" Incoming cookies:", req.cookies);
-
   if (req.user?._id) {
     return req.user._id.toString();
   }
-
   let guestId = req.cookies.guestCartId;
-
-  const isProduction = env.nodeEnv === "production";
 
   if (!guestId) {
     guestId = uuidv4();
@@ -37,7 +34,6 @@ function getCartUserId(req, res) {
   } else {
     console.log("Existing guestCartId found:", guestId);
   }
-
   return guestId;
 }
 
@@ -47,7 +43,7 @@ export const getCartForUser = async (req, res) => {
   try {
     const userId = getCartUserId(req, res);
     let cart = await getCartForUserService(userId);
-     if (!cart) {
+    if (!cart) {
       cart = new Cart({
         userId,
         products: [],
@@ -61,7 +57,7 @@ export const getCartForUser = async (req, res) => {
         guestCart.products.forEach(guestProduct => {
           const existingProductIndex = cart.products.findIndex(
             p => p.productId.toString() === guestProduct.productId.toString() &&
-                 JSON.stringify(p.selectedOptions) === JSON.stringify(guestProduct.selectedOptions)
+              JSON.stringify(p.selectedOptions) === JSON.stringify(guestProduct.selectedOptions)
           );
 
           // If product exists in user cart, just increase quantity
