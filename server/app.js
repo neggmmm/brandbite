@@ -36,7 +36,6 @@ import searchRoutes from "./src/modules/search/search.routes.js"; // AI Smart Se
 import staffChatRoutes from "./src/modules/staffChat/staffChat.routes.js"; // Staff Chat
 // import offerRoutes from "./src/modules/offer/offer.routes.js";
 import offerRoutes from "./src/modules/offer/offer.route.js";
-
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
 
@@ -85,6 +84,13 @@ app.post(
 
 // Now apply regular JSON parsing for other routes
 app.use(express.json({ limit: '10mb' }));
+app.use(
+  morgan('combined', {
+    stream: {
+      write: (message) => logger.info(message.trim())
+    }
+  })
+);
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 app.use(requestIdMiddleware);
@@ -147,5 +153,14 @@ app.use(errorHandler);
 
 // --- Startup Log ---
 // logger.info("server_initialized", { env: process.env.NODE_ENV || "development" });
+app.use((err, req, res, next) => {
+  logger.error('Unhandled error', {
+    message: err.message,
+    stack: err.stack,
+    path: req.originalUrl
+  });
+
+  res.status(500).json({ message: 'Something went wrong' });
+});
 
 export default app;
