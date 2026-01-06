@@ -18,7 +18,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../context/SettingContext";
 import LocationMap from "../components/home/LocationMap";
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchReviews } from '../redux/slices/reviewSlice';
 
 // Error Boundary for safety
 class ErrorBoundary extends React.Component {
@@ -127,6 +128,16 @@ function LandingPageContent() {
 
   // Get testimonials items
   const reduxReviews = useSelector(s => s.reviews?.list || []);
+  const dispatch = useDispatch();
+
+  // Ensure public landing page loads approved reviews so featuredIds map correctly
+  useEffect(() => {
+    try {
+      dispatch(fetchReviews());
+    } catch (err) {
+      console.warn('Failed to fetch reviews for landing page', err);
+    }
+  }, [dispatch]);
   let testimonialItems = useMemo(() => {
     const items = testimonials.items || [];
     if ((testimonials.mode || 'all') === 'all') {
@@ -447,7 +458,37 @@ function LandingPageContent() {
             </div>
           ))}
 
-          {/* SPECIAL OFFER - Only if enabled */}
+          {/* ABOUT SECTION - Moved: Shows between Services and Special Offer */}
+          {renderSection(aboutEnabled, (
+            <div className={`mb-12 transition-all duration-700 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
+              <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="w-full h-56 md:h-80 bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden flex items-center justify-center">
+                  {about.image ? (
+                    <img src={about.image} alt={about.title || settings.restaurantName} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="p-6 text-center">
+                      <ChefHat className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-sm text-gray-500">{t('about_placeholder') || 'About image placeholder'}</p>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                    {isRTL ? (about.titleAr || about.title || t('about_us')) : (about.title || t('about_us'))}
+                  </h2>
+                  <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line mb-6">
+                    {isRTL ? (about.contentAr || about.content || t('about_description')) : (about.content || t('about_description'))}
+                  </p>
+                  <div className="flex gap-3">
+                    <button onClick={() => navigate('/support')} className="px-5 py-3 bg-primary text-white rounded-lg">{t('Learn more') || 'Learn more'}</button>
+                    <button onClick={() => navigate('/menu')} className="px-5 py-3 bg-secondary text-white rounded-lg">{t('View Menu') || 'View Menu'}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* SPECIAL OFFER - Only if enabled (moved after About) */}
           {renderSection(specialOfferEnabled, (
             <div
               className={`relative overflow-hidden rounded-3xl mb-12 transition-all duration-700 ${
@@ -511,20 +552,6 @@ function LandingPageContent() {
                     }`}
                   />
                 </button>
-              </div>
-            </div>
-          ))}
-
-          {/* ABOUT SECTION - Only if enabled */}
-          {renderSection(aboutEnabled, (
-            <div className={`mb-12 transition-all duration-700 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
-              <div className="max-w-4xl mx-auto text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                  {isRTL ? (about.titleAr || about.title || t('about_us')) : (about.title || t('about_us'))}
-                </h2>
-                <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                  {isRTL ? (about.contentAr || about.content || t('about_description')) : (about.content || t('about_description'))}
-                </p>
               </div>
             </div>
           ))}
@@ -713,13 +740,64 @@ function LandingPageContent() {
             </div>
           ))}
 
-          {/* FOOTER - Only if enabled */}
+          {/* FOOTER - Modern multi-column footer */}
           {renderSection(footer.enabled !== false, (
-            <div className="text-center mt-12 text-gray-600 dark:text-gray-400">
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                {footer.text || `© ${new Date().getFullYear()} ${settings.restaurantName || "Restaurant"}. All rights reserved.`}
-              </p>
-            </div>
+            <footer className="mt-12 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-2xl p-8">
+              <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      {settings.branding?.logoUrl ? (
+                        <img src={settings.branding.logoUrl} alt={settings.restaurantName} className="w-10 h-10 object-contain" />
+                      ) : (
+                        <ChefHat className="w-6 h-6 text-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-bold">{settings.restaurantName || t('Restaurant')}</div>
+                      <div className="text-sm text-gray-500">{settings.description || ''}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <Instagram className="w-5 h-5 text-pink-500" />
+                    <a href={`https://instagram.com/${settings.restaurantName?.replace(/\s+/g, '') || 'restaurant'}`} target="_blank" rel="noreferrer" className="underline">@{settings.restaurantName?.replace(/\s+/g, '') || 'restaurant'}</a>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-3">Quick Links</h4>
+                  <ul className="space-y-2 text-sm">
+                    <li className="cursor-pointer hover:underline" onClick={()=>navigate('/menu')}>Menu</li>
+                    <li className="cursor-pointer hover:underline" onClick={()=>navigate('/orders')}>Orders</li>
+                    <li className="cursor-pointer hover:underline" onClick={()=>navigate('/reviews')}>Reviews</li>
+                    <li className="cursor-pointer hover:underline" onClick={()=>navigate('/contact')}>Contact</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-3">Contact</h4>
+                  <div className="text-sm space-y-2">
+                    <div className="flex items-center gap-2"><MapPin className="w-4 h-4" /> <span>{location.address || settings.address || t('address_not_set')}</span></div>
+                    <div className="flex items-center gap-2"><Phone className="w-4 h-4" /> <span>{callUs.number || contact.phone || settings.phone || t('phone_not_set')}</span></div>
+                    <div className="text-xs text-gray-500">{footer.text || `© ${new Date().getFullYear()} ${settings.restaurantName || 'Restaurant'}.`}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-3">Newsletter</h4>
+                  <form onSubmit={(e)=>{ e.preventDefault(); const f = new FormData(e.target); console.log('Subscribe', f.get('email')); }} className="flex gap-2">
+                    <input name="email" type="email" placeholder={t('your_email') || 'you@example.com'} className="flex-1 p-2 rounded border bg-white dark:bg-gray-800 text-sm" />
+                    <button type="submit" className="px-3 py-2 bg-primary text-white rounded">Join</button>
+                  </form>
+                  <div className="mt-4 text-sm">Payment methods</div>
+                  <div className="flex items-center gap-2 mt-2 text-sm">
+                    <div className="px-2 py-1 bg-white rounded shadow">Visa</div>
+                    <div className="px-2 py-1 bg-white rounded shadow">Mastercard</div>
+                    <div className="px-2 py-1 bg-white rounded shadow">Cash</div>
+                  </div>
+                </div>
+              </div>
+            </footer>
           ))}
         </div>
       </div>
