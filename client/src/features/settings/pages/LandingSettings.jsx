@@ -488,7 +488,7 @@ export default function LandingSettings() {
           />
           <input
             className="w-full p-2 border rounded bg-white dark:bg-gray-700"
-            placeholder="عنوان البطل (عربي)"
+            placeholder="العنوان الاساسي (عربي)"
             value={landing.hero.titleAr || ''}
             onChange={(e) => setLanding(l => ({ 
               ...l, 
@@ -525,7 +525,7 @@ export default function LandingSettings() {
             }))}
           />
           <input
-            className="w-full p-2 border rounded bg-white dark:bg-gray-700"
+  className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain rounded-full bg-white dark:bg-gray-700 p-1" 
             placeholder="Hero Image URL"
             value={landing.hero.image || ''}
             onChange={(e) => setLanding(l => ({ 
@@ -740,7 +740,7 @@ export default function LandingSettings() {
       {/* Location & Address */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">📍 Location & Address</h3>
+          <h3 className="text-xl font-semibold"> Location & Address</h3>
           <label className="flex items-center gap-2 text-sm">
             <input 
               type="checkbox" 
@@ -817,7 +817,7 @@ export default function LandingSettings() {
       {/* Opening Hours */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">⏰ Opening Hours</h3>
+          <h3 className="text-xl font-semibold"> Opening Hours</h3>
           <label className="flex items-center gap-2 text-sm">
             <input 
               type="checkbox" 
@@ -858,7 +858,7 @@ export default function LandingSettings() {
       {/* Contact Info */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">📧 Contact Information</h3>
+          <h3 className="text-xl font-semibold"> Contact Information</h3>
           <label className="flex items-center gap-2 text-sm">
             <input 
               type="checkbox" 
@@ -906,7 +906,7 @@ export default function LandingSettings() {
       {/* Call Us Number */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">☎️ Call Us Number (Hotline)</h3>
+          <h3 className="text-xl font-semibold"> Call Us Number (Hotline)</h3>
           <label className="flex items-center gap-2 text-sm">
             <input 
               type="checkbox" 
@@ -977,7 +977,7 @@ export default function LandingSettings() {
       {/* Testimonials */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">⭐ Testimonials</h3>
+          <h3 className="text-xl font-semibold"> Testimonials</h3>
           <label className="flex items-center gap-2 text-sm">
             <input 
               type="checkbox" 
@@ -1031,7 +1031,7 @@ export default function LandingSettings() {
                   onChange={(e) => handleTestimonialChange(idx, 'rating', Number(e.target.value))}
                 >
                   {[1, 2, 3, 4, 5].map(n => (
-                    <option key={n} value={n}>{n} ⭐</option>
+                    <option key={n} value={n}>{n} </option>
                   ))}
                 </select>
                 <button
@@ -1227,7 +1227,7 @@ export default function LandingSettings() {
       {/* SEO */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">🔍 SEO Settings</h3>
+          <h3 className="text-xl font-semibold"> SEO Settings</h3>
           <label className="flex items-center gap-2 text-sm">
             <input 
               type="checkbox" 
