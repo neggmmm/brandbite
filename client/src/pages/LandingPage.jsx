@@ -783,7 +783,7 @@ function LandingPageContent() {
                   </div>
                 </div>
 
-                <div>
+                {/* <div>
                   <h4 className="font-semibold mb-3">Newsletter</h4>
                   <form onSubmit={(e)=>{ e.preventDefault(); const f = new FormData(e.target); console.log('Subscribe', f.get('email')); }} className="flex gap-2">
                     <input name="email" type="email" placeholder={t('your_email') || 'you@example.com'} className="flex-1 p-2 rounded border bg-white dark:bg-gray-800 text-sm" />
@@ -795,7 +795,7 @@ function LandingPageContent() {
                     <div className="px-2 py-1 bg-white rounded shadow">Mastercard</div>
                     <div className="px-2 py-1 bg-white rounded shadow">Cash</div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </footer>
           ))}

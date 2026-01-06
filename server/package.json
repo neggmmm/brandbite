@@ -57,7 +57,8 @@
     "uuid": "^9.0.0",
     "web-push": "^3.6.7",
     "winston": "^3.9.0",
-    "zod": "^4.1.13"
+    "zod": "^4.1.13",
+    "node-fetch": "^3.4.0"
   },
   "overrides": {
     "multer-storage-cloudinary": {
