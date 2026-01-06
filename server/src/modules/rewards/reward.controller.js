@@ -126,55 +126,126 @@ export const updateRewardOrder = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const allowedUpdates = ["status", "notes", "address", "phone"];
-    const dataToUpdate = {};
+    const allowedUpdates = [
+      "status",
+      "notes",
+      "address",
+      "phone",
+      "estimatedTime",
+      "serviceType"
+    ];
 
+    const dataToUpdate = {};
     allowedUpdates.forEach(key => {
-      if (req.body[key] !== undefined) dataToUpdate[key] = req.body[key];
+      if (req.body[key] !== undefined) {
+        dataToUpdate[key] = req.body[key];
+      }
     });
 
     const updatedOrder = await RewardOrder.findByIdAndUpdate(
       id,
       { $set: dataToUpdate },
       { new: true }
-    ).populate({
-      path: 'rewardId',
-      populate: { path: 'productId' }
-    }).populate('userId');
+    )
+      .populate({
+        path: "rewardId",
+        populate: { path: "productId" }
+      })
+      .populate("userId", "name email phone");
 
     if (!updatedOrder) {
       return res.status(404).json({ message: "Reward order not found" });
     }
 
-    // Emit socket event to notify user of status update
+    // ✅ Single formatted payload
+    const formattedOrder = {
+      _id: updatedOrder._id,
+      type: "reward",
+      status: updatedOrder.status,
+      serviceType: updatedOrder.serviceType || "instore",
+      estimatedTime: updatedOrder.estimatedTime,
+      notes: updatedOrder.notes,
+      pointsUsed: updatedOrder.pointsUsed,
+      createdAt: updatedOrder.redeemedAt || updatedOrder.createdAt,
+
+      userId: updatedOrder.userId?._id,
+      user: updatedOrder.userId,
+
+      rewardId: updatedOrder.rewardId,
+      reward: updatedOrder.rewardId,
+
+      items: updatedOrder.rewardId
+        ? [
+            {
+              _id: "reward",
+              productId:
+                updatedOrder.rewardId.productId?._id ||
+                updatedOrder.rewardId._id,
+              name:
+                updatedOrder.rewardId.name ||
+                updatedOrder.rewardId.productId?.name ||
+                "Reward Item",
+              quantity: 1,
+              price: 0,
+              image:
+                updatedOrder.rewardId.productId?.image ||
+                updatedOrder.rewardId.image
+            }
+          ]
+        : []
+    };
+
+    // 🔥 ONLY reward socket emit
     if (io) {
-      // Notify the specific user
-      io.to(updatedOrder.userId._id.toString()).emit('reward_order_updated', updatedOrder);
-      // Also emit status change event
-      io.to(`reward_order_${id}`).emit('reward_order_status_changed', {
-        orderId: id,
-        status: updatedOrder.status,
-        order: updatedOrder
+      const room = `reward_order_${id}`;
+
+      console.log("🔔 Emitting reward order update:", {
+        room,
+        status: updatedOrder.status
       });
-      // Notify admins
-      io.to('admin').emit('reward_order_updated_admin', updatedOrder);
+
+      io.to(room).emit("reward:order-updated", formattedOrder);
     }
 
-    res.json({ message: "Reward order updated", order: updatedOrder });
+    res.json({
+      success: true,
+      message: "Reward order updated",
+      data: updatedOrder
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("❌ Update reward order error:", err);
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 };
 
+
 export const deleteRewardOrder = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const deleted = await RewardOrder.findByIdAndDelete(id);
-        if (!deleted) return res.status(404).json({ message: 'Reward order not found' });
-        res.json({ message: 'Reward order deleted', order: deleted });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+  try {
+    const { id } = req.params;
+    const deleted = await RewardOrder.findByIdAndDelete(id);
+    
+    if (!deleted) {
+      return res.status(404).json({ message: 'Reward order not found' });
     }
+    
+    // Emit socket event for deletion
+    if (io) {
+      io.to('kitchen').emit('order:deleted', { orderId: id });
+      io.to('cashier').emit('order:deleted', { orderId: id });
+      io.to('admin').emit('order:deleted', { orderId: id });
+    }
+    
+    res.json({ 
+      success: true,
+      message: 'Reward order deleted', 
+      data: deleted 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 export async function getUserRedemptions(req, res) {

@@ -1,64 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaClock } from 'react-icons/fa';
-import { io } from 'socket.io-client';
-import { showStatusNotification } from '../../utils/notifications';
 import { Phone, Star } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { createReview } from "../../redux/slices/reviewSlice";
+import socketClient from "../../utils/socket";
+import { useRef } from "react";
 
 export default function RewardOrderTrackingPage() {
   const dispatch = useDispatch();
+  const user = useSelector(state => state.auth.user);
   const { id } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
   const [order, setOrder] = useState(state?.order || null);
   const [timeRemaining, setTimeRemaining] = useState(329); // 5:49 in seconds
-  const [socket, setSocket] = useState(null);
   const orderId = order?._id || id;
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
-   const [reviewText, setReviewText] = useState("");
-    const toast = useToast();
-  // Initialize Socket.IO connection
+  const [reviewText, setReviewText] = useState("");
+  const toast = useToast();
+  const socketRef = useRef(null);
+
+  if (!socketRef.current) {
+    socketRef.current =
+      socketClient.getSocket() || socketClient.initSocket();
+  }
+  const socket = socketRef.current;
+
   useEffect(() => {
-    if (!orderId) return; // Don't connect if we don't have an order ID
+    if (!socket || !orderId) return;
 
-    const apiUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    socket.emit("join_reward_order", { orderId });
 
-    const newSocket = io(apiUrl, {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 10,
-    });
-
-    newSocket.on('connect', () => {
-      // Join the reward order room
-      newSocket.emit('join_reward_order', { orderId });
-    });
-    // Listen for reward order updates
-    newSocket.on('reward_order_updated', (updatedOrder) => {
-      setOrder(updatedOrder);
-    });
-
-    // Listen for reward order status changes
-    newSocket.on('reward_order_status_changed', (data) => {
-      if (data.order) {
-        setOrder(data.order);
-        // Show notification on status change
-        showStatusNotification(data.order.status);
-      } else if (data.status) {
-        setOrder(prev => ({ ...prev, status: data.status }));
-        // Show notification on status change
-        showStatusNotification(data.status);
+    const handleRewardUpdate = (updatedOrder) => {
+      if (updatedOrder._id === orderId) {
+        console.log("📦 Reward order updated:", updatedOrder.status);
+        setOrder(updatedOrder);
       }
-    });
+    };
 
-    setSocket(newSocket);
+    socket.on("reward:order-updated", handleRewardUpdate);
 
     return () => {
-      newSocket.disconnect();
+      socket.off("reward:order-updated", handleRewardUpdate);
     };
   }, [orderId]);
 
@@ -91,39 +77,41 @@ export default function RewardOrderTrackingPage() {
   };
 
   const handleCallRestaurant = () => {
-    // Replace with actual restaurant phone number
     const restaurantPhone = "+201234567890";
     window.location.href = `tel:${restaurantPhone}`;
   };
 
-   const handleSubmitReview = async () => {
-  
-      try {
-        const formData = new FormData();
-        formData.append("rating", String(reviewRating));
-        formData.append("comment", reviewText || "");
-        // Dispatch createReview which expects FormData
-        await dispatch(createReview(formData)).unwrap();
-  
-        toast.showToast({ message: "Thank you for your review!", type: "success" });
-  
-        setShowReviewModal(false);
-        setReviewRating(5);
-        setReviewText("");
-      } catch (err) {
-        toast.showToast({ message: err?.message || "Failed to submit review", type: "error" });
-      }
-    };
-  // status notifications are handled by shared util (showStatusNotification)
+  const handleSubmitReview = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("rating", String(reviewRating));
+      formData.append("comment", reviewText || "");
+
+      await dispatch(createReview(formData)).unwrap();
+
+      toast.showToast({ message: "Thank you for your review!", type: "success" });
+
+      setShowReviewModal(false);
+      setReviewRating(5);
+      setReviewText("");
+    } catch (err) {
+      toast.showToast({ message: err?.message || "Failed to submit review", type: "error" });
+    }
+  };
 
   // Get reward title
   const rewardTitle = order?.rewardId?.title || order?.rewardId?.productId?.name || 'Reward Item';
 
-  // Determine status display - 3 step progression
+  // Normalize status to match your progression: Confirmed -> Preparing -> Ready
+  const normalizedStatus = order?.status?.toLowerCase();
+
+  console.log('Current order status:', order?.status, 'Normalized:', normalizedStatus);
+
+  // Determine status display - 3 step progression: Confirmed -> Preparing -> Ready
   const statusSteps = [
-    { label: 'Preparing', completed: order?.status === 'Preparing' || order?.status === 'Confirmed' || order?.status === 'Ready' },
-    { label: 'Confirmed', completed: order?.status === 'Confirmed' || order?.status === 'Ready' },
-    { label: 'Ready', completed: order?.status === 'Ready' }
+    { label: 'Confirmed', completed: ['confirmed', 'preparing', 'ready'].includes(normalizedStatus) },
+    { label: 'Preparing', completed: ['preparing', 'ready'].includes(normalizedStatus) },
+    { label: 'Ready', completed: normalizedStatus === 'ready' }
   ];
 
   return (
@@ -131,7 +119,7 @@ export default function RewardOrderTrackingPage() {
       <div className="max-w-6xl mx-auto">
         {!order ? (
           // No order state - show basic info
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm text-center ">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm text-center">
             <FaCheckCircle className="w-16 h-16 text-secondary mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Reward Order Confirmed!</h1>
             <p className="text-gray-600 mb-6">Your reward redemption has been processed.</p>
@@ -174,22 +162,23 @@ export default function RewardOrderTrackingPage() {
                 <p className="text-gray-400 text-sm mt-1">{order?.address || 'Main Branch'}</p>
               </div>
 
-              {/* Progress Timeline */}
+              {/* Progress Timeline - Now reactive to socket updates */}
               <div className="mb-8">
                 <div className="flex items-center justify-between gap-2 mb-8">
                   {statusSteps.map((step, idx) => (
                     <React.Fragment key={idx}>
                       <div className="flex flex-col items-center flex-1">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-colors ${step.completed ? 'bg-secondary text-white' : 'bg-gray-300 text-gray-600'
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${step.completed ? 'bg-secondary text-white scale-110' : 'bg-gray-300 text-gray-600'
                           }`}>
                           <FaCheckCircle className="w-5 h-5" />
                         </div>
-                        <p className={`text-sm font-medium transition-colors text-center ${step.completed ? 'text-secondary' : 'text-gray-600'}`}>
+                        <p className={`text-sm font-medium transition-colors text-center ${step.completed ? 'text-secondary' : 'text-gray-600 dark:text-gray-400'
+                          }`}>
                           {step.label}
                         </p>
                       </div>
                       {idx < statusSteps.length - 1 && (
-                        <div className={`flex-1 h-1 transition-colors mb-6 ${step.completed ? 'bg-secondary' : 'bg-gray-300'
+                        <div className={`flex-1 h-1 transition-all duration-500 mb-6 ${step.completed ? 'bg-secondary' : 'bg-gray-300'
                           }`} />
                       )}
                     </React.Fragment>
@@ -199,12 +188,12 @@ export default function RewardOrderTrackingPage() {
 
               {/* Estimated Time */}
               <div className="text-center mb-6">
-                <div className="flex items-center justify-center gap-2 text-gray-700 mb-2">
+                <div className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 mb-2">
                   <FaClock className="w-5 h-5" />
                   <span className="font-semibold text-2xl text-secondary">{formatTime(timeRemaining)}</span>
-                  <span className="text-gray-600">Estimated ready time</span>
+                  <span className="text-gray-600 dark:text-gray-400">Estimated ready time</span>
                 </div>
-                <p className="text-sm text-gray-600">We will let you know when your reward is ready.</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">We will let you know when your reward is ready.</p>
               </div>
 
               {/* Action Buttons */}
@@ -229,7 +218,6 @@ export default function RewardOrderTrackingPage() {
             {showReviewModal && (
               <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-                  {/* Title */}
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                     Rate Your Experience
                   </h3>
@@ -282,8 +270,9 @@ export default function RewardOrderTrackingPage() {
                 </div>
               </div>
             )}
+
             {/* Order Details Card */}
-            <div className="bg-white   dark:border dark:bg-gray-900 dark:border-gray-700 rounded-3xl p-6 md:p-8 shadow-sm">
+            <div className="bg-white dark:border dark:bg-gray-900 dark:border-gray-700 rounded-3xl p-6 md:p-8 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                 Order #{order._id?.substring(order._id.length - 10).toUpperCase() || id?.substring(id.length - 10).toUpperCase()}
               </h2>
@@ -292,9 +281,9 @@ export default function RewardOrderTrackingPage() {
               <div className="border-b border-gray-500 pb-6 mb-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="text-gray-700 font-semibold">{rewardTitle}</p>
+                    <p className="text-gray-700 dark:text-gray-300 font-semibold">{rewardTitle}</p>
                     {order?.rewardId?.productId?.basePrice && (
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         Regular price: EGP {order.rewardId.productId.basePrice}
                       </p>
                     )}
@@ -312,25 +301,25 @@ export default function RewardOrderTrackingPage() {
 
                 <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
                   <span>Status</span>
-                  <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${order.status === 'Ready' ? 'bg-green-100 text-green-700' :
-                    order.status === 'Confirmed' ? 'bg-blue-100 text-blue-700' :
-                      'bg-yellow-100 text-yellow-700'
+                  <span className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${normalizedStatus === 'ready' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                    normalizedStatus === 'preparing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                      'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                     }`}>
-                    {order.status || 'Preparing'}
+                    {normalizedStatus}
                   </span>
                 </div>
 
                 {order.redeemedAt && (
                   <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
-                    <span >Redeemed Date</span>
+                    <span>Redeemed Date</span>
                     <span className="font-semibold text-gray-900 dark:text-white">{formatDate(order.redeemedAt)}</span>
                   </div>
                 )}
 
                 {order.notes && (
-                  <div className="flex justify-between items-start text-gray-600 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between items-start text-gray-600 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <span>Notes</span>
-                    <p className="text-gray-900 font-semibold text-right max-w-xs">{order.notes}</p>
+                    <p className="text-gray-900 dark:text-white font-semibold text-right max-w-xs">{order.notes}</p>
                   </div>
                 )}
 
@@ -344,7 +333,7 @@ export default function RewardOrderTrackingPage() {
               <div className="flex gap-3 mt-8 flex-col md:flex-row">
                 <button
                   onClick={() => navigate('/orders')}
-                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   My Orders
                 </button>
@@ -362,4 +351,3 @@ export default function RewardOrderTrackingPage() {
     </div>
   );
 }
-

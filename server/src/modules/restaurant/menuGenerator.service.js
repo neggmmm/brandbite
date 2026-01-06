@@ -1,5 +1,9 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium-min";
 import { v2 as cloudinary } from "cloudinary";
+
+// Remote Chromium URL for serverless environments (official Sparticuz release matching v143)
+const CHROMIUM_REMOTE_URL = "https://github.com/Sparticuz/chromium/releases/download/v143.0.0/chromium-v143.0.0-pack.tar";
 
 /**
  * Generates HTML template for the restaurant menu - Exact replica of the flyer design
@@ -821,14 +825,29 @@ export function generateMenuHTML(products, categories, restaurant, options = {})
  * @returns {Promise<Buffer>} PNG image buffer
  */
 export async function htmlToImage(html) {
+  // In production: use remote Chromium binary for serverless
+  // In development: use local Chrome/Chromium
+  // Render sets RENDER=true automatically, so we check for that too
+  const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
+  
+  let executablePath;
+  if (isProduction) {
+    executablePath = await chromium.executablePath(CHROMIUM_REMOTE_URL);
+  } else {
+    // For local development - use local Chrome
+    executablePath = process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+  }
+
   const browser = await puppeteer.launch({
-    headless: true,
-    args: [
+    args: isProduction ? chromium.args : [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu"
-    ]
+    ],
+    defaultViewport: chromium.defaultViewport,
+    executablePath,
+    headless: isProduction ? chromium.headless : true,
   });
 
   try {
