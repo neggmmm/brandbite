@@ -26,6 +26,8 @@ export const reorderOrder = createAsyncThunk(
       const res = await api.post(`/api/orders/reorder/${orderId}`);
       return res.data.order; // The new order returned from backend
     } catch (err) {
+            console.error("REORDER ERROR:", err.response?.data);
+
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
@@ -227,7 +229,7 @@ const ordersSlice = createSlice({
         state.historyLoading = false;
         state.historyError = action.payload;
       });
-//reorder 
+
 // Reorder
 builder
   .addCase(reorderOrder.pending, (state) => {
