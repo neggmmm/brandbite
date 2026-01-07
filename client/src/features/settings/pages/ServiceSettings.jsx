@@ -27,13 +27,16 @@ export default function ServiceSettings() {
   };
 
   const handleToggle = (serviceKey) => {
-    setServices((prev) => ({
-      ...prev,
-      [serviceKey]: {
-        ...prev[serviceKey],
-        enabled: !prev[serviceKey].enabled,
-      },
-    }));
+    setServices((prev) => {
+      const prevService = prev[serviceKey] || {};
+      return {
+        ...prev,
+        [serviceKey]: {
+          ...prevService,
+          enabled: !prevService.enabled,
+        },
+      };
+    });
     setHasChanges(true);
   };
 

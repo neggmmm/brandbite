@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ReviewsPage from "./pages/ReviewsPage";
+import TableBookingPage from "./pages/TableBookingPage";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./components/Layout";
 import RewardPage from "./pages/RewardPage";
@@ -87,8 +88,10 @@ function App() {
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/rewards" element={<RewardPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/table-booking" element={<TableBookingPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/menu" element={<MenuPage />} />
+            <Route path="/table-booking" element={<TableBookingPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route
               path="/reward-order/:id"
