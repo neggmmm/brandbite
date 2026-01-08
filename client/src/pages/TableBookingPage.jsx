@@ -4,6 +4,7 @@ import api from "../api/axios";
 import { useTheme } from "../context/ThemeContext";
 import { useSettings } from "../context/SettingContext";
 import { Calendar, Clock, Users, User, Phone, Mail, CheckCircle } from "lucide-react";
+import BookingConfirmation from "../components/bookings/BookingConfirmation";
 
 export default function TableBookingPage() {
   const [loading, setLoading] = useState(false);
@@ -18,11 +19,13 @@ export default function TableBookingPage() {
     email: "" 
   });
   const [message, setMessage] = useState(null);
+  const [available, setAvailable] = useState(null);
+  const [confirmedBooking, setConfirmedBooking] = useState(null);
   const [restaurantId, setRestaurantId] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { theme } = useTheme();
 
-  const { getServices } = useSettings();
+  const { getServices, settings } = useSettings();
 
   useEffect(() => {
     const load = async () => {
@@ -30,7 +33,8 @@ export default function TableBookingPage() {
         // fetch restaurant info for id
         const res = await api.get("/api/restaurant");
         const data = res.data?.data || res.data;
-        setRestaurantId(data.restaurantId || data._id || null);
+        const rid = data.restaurantId || data._id || null;
+        setRestaurantId(rid);
 
         // fetch services from services endpoint (keeps in sync with admin toggles)
         let servicesData = {};
@@ -41,14 +45,44 @@ export default function TableBookingPage() {
           servicesData = data.services || {};
         }
 
-        const enabled = servicesData?.tableBooking?.enabled ?? servicesData?.tableBookings?.enabled ?? false;
+        const enabled = servicesData?.tableBookings?.enabled ?? servicesData?.tableBooking?.enabled ?? false;
         setDisabled(!enabled);
+        // initial availability check if enabled and we have a restaurant id
+        if (enabled && rid) {
+          try {
+            const q = new URLSearchParams({ restaurantId: rid, date: form.date || new Date().toISOString().split('T')[0], time: form.startTime || '18:00', guests: String(form.guests || 2) });
+            const avRes = await api.get(`/api/tables/availability?${q.toString()}`);
+            setAvailable(avRes.data || avRes.data?.data || null);
+          } catch (e) {
+            console.warn('Availability check failed', e?.response?.data || e.message || e);
+            setAvailable(null);
+          }
+        }
       } catch (err) {
         console.error(err);
       }
     };
     load();
   }, [getServices]);
+
+  // Re-check availability when date/time/guests change
+  useEffect(() => {
+    let mounted = true;
+    const check = async () => {
+      if (!restaurantId) return;
+      try {
+        const q = new URLSearchParams({ restaurantId, date: form.date || new Date().toISOString().split('T')[0], time: form.startTime || '18:00', guests: String(form.guests || 2) });
+        const res = await api.get(`/api/tables/availability?${q.toString()}`);
+        if (!mounted) return;
+        setAvailable(res.data || res.data?.data || null);
+      } catch (e) {
+        if (!mounted) return;
+        setAvailable(null);
+      }
+    };
+    const timer = setTimeout(check, 250);
+    return () => { mounted = false; clearTimeout(timer); };
+  }, [restaurantId, form.date, form.startTime, form.guests]);
 
   const handleChange = (e) => {
     setForm((s) => ({ ...s, [e.target.name]: e.target.value }));
@@ -59,7 +93,21 @@ export default function TableBookingPage() {
     e.preventDefault();
     if (disabled) return setMessage("Table booking is not available");
     // client-side validation
-    if (!restaurantId) return setMessage("Restaurant data not loaded yet. Please try again shortly.");
+    if (!restaurantId) {
+      // try to re-fetch restaurant info once before failing
+      try {
+        const r = await api.get("/api/restaurant");
+        const d = r.data?.data || r.data || {};
+        const rid = d.restaurantId || d._id || null;
+        if (rid) {
+          setRestaurantId(rid);
+        } else {
+          return setMessage("Restaurant data not loaded yet. Please try again shortly.");
+        }
+      } catch (err) {
+        return setMessage("Restaurant data not loaded yet. Please try again shortly.");
+      }
+    }
     if (!form.date) return setMessage("Please select a date for your reservation.");
     if (!form.name) return setMessage("Please provide your name.");
     if (!form.phone) return setMessage("Please provide a phone number.");
@@ -79,10 +127,12 @@ export default function TableBookingPage() {
       };
 
       const res = await api.post("/api/bookings", payload);
-      const status = res?.data?.data?.status || res?.data?.status || "pending";
-      setMessage(`Booking created — status: ${status}`);
+      const booking = res?.data?.data ?? res?.data ?? null;
+      const status = booking?.status || "pending";
       setIsSubmitted(true);
+      setMessage(null);
       setForm({ date: "", startTime: "18:00", endTime: "19:00", guests: 2, name: "", phone: "", email: "" });
+      setConfirmedBooking(booking || { status });
     } catch (err) {
       let msg = err?.response?.data?.message ?? err.message ?? "Failed";
       if (typeof msg !== "string") {
@@ -99,12 +149,26 @@ export default function TableBookingPage() {
   };
 
   // Predefined time slots for better UX
-  const timeSlots = [
-    "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", 
-    "20:00", "20:30", "21:00", "21:30"
-  ];
+  // derive booking settings from restaurant settings
+  const bookingSettings = settings?.systemSettings?.bookingSettings || { maxPartySize: 10, maxAdvanceDays: 30, timeSlotInterval: 30 };
+  const maxParty = bookingSettings.maxPartySize || 10;
+  const maxAdvance = bookingSettings.maxAdvanceDays || 30;
 
-  const guestOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  // generate time slots based on interval and default hours
+  const defaultStart = "17:00";
+  const defaultEnd = "21:30";
+  const interval = bookingSettings.timeSlotInterval || 30;
+  const generateSlots = (start = defaultStart, end = defaultEnd, step = interval) => {
+    const slots = [];
+    const toMinutes = (t) => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+    const fromMinutes = (m) => { const hh = String(Math.floor(m/60)).padStart(2,'0'); const mm = String(m%60).padStart(2,'0'); return `${hh}:${mm}`; };
+    let s = toMinutes(start); const e = toMinutes(end);
+    while (s <= e) { slots.push(fromMinutes(s)); s += step; }
+    return slots;
+  };
+  const timeSlots = generateSlots();
+
+  const guestOptions = Array.from({ length: maxParty }, (_, i) => i+1);
 
   if (disabled) {
     return (
@@ -126,6 +190,9 @@ export default function TableBookingPage() {
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 via-white to-primary-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {confirmedBooking && (
+        <BookingConfirmation booking={confirmedBooking} onClose={() => setConfirmedBooking(null)} />
+      )}
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -167,6 +234,7 @@ export default function TableBookingPage() {
                           required
                           className="w-full px-4 py-3 pl-12 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                           min={new Date().toISOString().split('T')[0]}
+                          max={new Date(Date.now() + maxAdvance*24*60*60*1000).toISOString().split('T')[0]}
                         />
                         <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                       </div>

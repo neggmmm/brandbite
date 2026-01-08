@@ -21,8 +21,21 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["customer", "cashier", "kitchen", "admin"],
-      default: "customer",
+      enum: [
+        "super_admin",
+        "restaurant_owner",
+        "restaurant_staff",
+        "customer",
+        "cashier",
+        "kitchen",
+        "admin",
+      ],
+      default: "restaurant_staff",
+    },
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      default: null,
     },
     address: {
       country: { type: String, default: "" },
@@ -95,6 +108,14 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ phoneNumber: 1 });
+
+// Validation: Super admins must not be associated with a restaurant
+userSchema.pre("validate", function (next) {
+  if (this.role === "super_admin" && this.restaurantId) {
+    return next(new Error("super_admin must not have a restaurantId"));
+  }
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 export default User;

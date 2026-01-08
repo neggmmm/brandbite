@@ -121,7 +121,7 @@ export default function ServiceSettings() {
       ],
     },
     {
-      id: 'tableBooking',
+      id: 'tableBookings',
       label: isRTL ? 'حجز الطاولات' : 'Table Booking',
       description: isRTL ? 'السماح بحجز الطاولات مسبقاً' : 'Allow advance table reservations',
       fields: [

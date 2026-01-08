@@ -6,6 +6,7 @@ import Layout from "./components/Layout";
 import RewardPage from "./pages/RewardPage";
 import Admin from "./pages/admin/Admin";
 import Coupons from "./pages/admin/Coupons";
+import TablesAdmin from "./pages/admin/TablesAdmin";
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,13 +28,21 @@ import NotFound from "./pages/NotFoundPage";
 import RewardOrderTrackingPage from "./pages/user/RewardOrderTrackingPage";
 import { SettingsProvider } from "./context/SettingContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+// SupAdmin
+import SupAdminLayout from "./components/SupAdminLayout";
+import RestaurantView from "./pages/supadmin/RestaurantView";
+import Dashboard from "./pages/supadmin/Dashboard";
+import Restaurants from "./pages/supadmin/Restaurants";
+import RestaurantForm from "./pages/supadmin/RestaurantForm";
 import CashierDashboard from "./pages/cashier/CashierDashboard";
 import KitchenOrders from "./pages/kitchen/KitchenOrders";
 import SocketProvider from "./components/socket/SocketProvider";
 import AdminDashboard from "./pages/admin/Admin";
+import BookingsManager from "./pages/cashier/BookingsManager";
 import { requestNotificationPermission } from "./utils/notifications";
 import Support from "./pages/Support";
 import ProfilePage from "./pages/ProfilePage";
+import InviteAccept from "./pages/invite/InviteAccept";
 
 // Settings Components
 import SettingsLayout from "./features/settings/components/SettingsLayout";
@@ -89,6 +98,8 @@ function App() {
             <Route path="/rewards" element={<RewardPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/table-booking" element={<TableBookingPage />} />
+            <Route path="/book" element={<TableBookingPage />} />
+            <Route path="/book-table/:restaurantSlug" element={<TableBookingPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/table-booking" element={<TableBookingPage />} />
@@ -125,6 +136,22 @@ function App() {
               }
             />
             <Route
+              path="/cashier/bookings"
+              element={
+                <ProtectedRoute roles={["cashier", "admin"]}>
+                  <BookingsManager />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tables"
+              element={
+                <ProtectedRoute roles={["cashier", "admin"]}>
+                  <Navigate to="/admin/tables" replace={false} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/kitchen"
               element={
                 <ProtectedRoute roles={["kitchen", "admin"]}>
@@ -133,12 +160,12 @@ function App() {
               }
             />
 
-            {/* Admin Dashboard with nested routes */}
+            {/* Admin Dashboard with nested routes - accessible to both admin and restaurant_owner */}
             <Route element={<AppLayout />}>
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  <ProtectedRoute roles={["admin", "restaurant_owner"]}>
                     <AdminDashboard />
                   </ProtectedRoute>
                 }
@@ -146,7 +173,7 @@ function App() {
               <Route
                 path="/admin/offers"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  <ProtectedRoute roles={["admin", "restaurant_owner"]}>
                     <Offers />
                   </ProtectedRoute>
                 }
@@ -154,15 +181,23 @@ function App() {
               <Route
                 path="/admin/kitchen"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  <ProtectedRoute roles={["admin", "restaurant_owner"]}>
                     <KitchenOrders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/tables"
+                element={
+                  <ProtectedRoute roles={["admin", "restaurant_owner"]}>
+                    <TablesAdmin />
                   </ProtectedRoute>
                 }
               />
               <Route
                 path="/admin/coupons"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  <ProtectedRoute roles={["admin", "restaurant_owner"]}>
                     <Coupons />
                   </ProtectedRoute>
                 }
@@ -172,7 +207,7 @@ function App() {
               <Route
                 path="/admin/settings"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  <ProtectedRoute roles={["admin", "restaurant_owner"]}>
                     <SettingsLayout />
                   </ProtectedRoute>
                 }
@@ -198,13 +233,33 @@ function App() {
               <Route
                 path="/admin/:section?"
                 element={
-                  <ProtectedRoute roles={["admin"]}>
+                  <ProtectedRoute roles={["admin", "restaurant_owner"]}>
                     <Admin />
                   </ProtectedRoute>
                 }
               />
             </Route>
 
+            {/* SupAdmin routes - protected for super_admin */}
+            <Route
+              element={
+                <ProtectedRoute roles={["super_admin"]}>
+                  <SupAdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/supadmin" element={<Dashboard />} />
+              <Route path="/supadmin/dashboard" element={<Dashboard />} />
+              <Route path="/supadmin/restaurants" element={<Restaurants />} />
+              <Route path="/supadmin/restaurants/new" element={<RestaurantForm />} />
+              <Route path="/supadmin/restaurants/:id" element={<RestaurantView />} />
+              <Route path="/supadmin/restaurants/:id/edit" element={<RestaurantForm />} />
+              <Route path="/supadmin/subscriptions" element={<div className="p-8"><h1 className="text-2xl font-bold">Subscriptions (Coming Soon)</h1></div>} />
+              <Route path="/supadmin/analytics" element={<div className="p-8"><h1 className="text-2xl font-bold">Analytics (Coming Soon)</h1></div>} />
+              <Route path="/supadmin/users" element={<div className="p-8"><h1 className="text-2xl font-bold">Users (Coming Soon)</h1></div>} />
+            </Route>
+
+            <Route path="/invite/:token" element={<InviteAccept />} />
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
           </Routes>

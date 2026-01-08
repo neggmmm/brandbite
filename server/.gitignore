@@ -19,6 +19,7 @@ server/src/config/firebase-service-account.json
 # IDE
 .vscode/
 .idea/
+logs/
 *.swp
 *.swo
 *~

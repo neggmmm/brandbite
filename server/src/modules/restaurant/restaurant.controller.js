@@ -55,6 +55,20 @@ export async function getRestaurant(req, res) {
   }
 }
 
+export async function getBookingStatus(req, res) {
+  try {
+    const { restaurantId } = req.query;
+    const restaurant = restaurantId ? await restaurantService.getRestaurantById(restaurantId) : await restaurantService.getRestaurant();
+    if (!restaurant) return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    const enabled = restaurant.services?.tableBookings?.enabled ?? false;
+    const bookingSettings = restaurant.systemSettings?.bookingSettings || { maxPartySize: 10, maxAdvanceDays: 30, timeSlotInterval: 30 };
+    res.status(200).json({ success: true, data: { enabled, bookingSettings } });
+  } catch (err) {
+    console.error('getBookingStatus failed', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed' });
+  }
+}
+
 export async function updateRestaurant(req, res) {
   try {
     const updateData = req.body;

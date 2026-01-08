@@ -15,11 +15,21 @@ class BookingService {
       throw new Error("Table booking is disabled for this restaurant");
     }
 
-    // Check table
-    const table = await tableRepository.findById(tableId);
+    // If no tableId provided, try to auto-assign an available table
+    let assignedTableId = tableId;
+    if (!assignedTableId) {
+      const tableService = await import("./table.service.js");
+      const available = await tableService.default.checkAvailability({ restaurantId, date, time: startTime, guests });
+      if (!available || available.length === 0) throw new Error("No available table for selected time");
+      assignedTableId = available[0]._id;
+      data.tableId = assignedTableId;
+    }
+
+    // Check table exists and capacity
+    const table = await tableRepository.findById(assignedTableId);
     if (!table) throw new Error("Table not found");
     if (!table.isActive) throw new Error("Table is not active");
-    if (table.restaurantId !== restaurantId) throw new Error("Table does not belong to this restaurant");
+    if (String(table.restaurantId) !== String(restaurantId)) throw new Error("Table does not belong to this restaurant");
     if (guests > table.capacity) throw new Error("Number of guests exceeds table capacity");
 
     // Respect opening hours (systemSettings.landing.hours)
@@ -45,6 +55,14 @@ class BookingService {
       }
     }
 
+    // generate a bookingId if not provided
+    if (!data.bookingId) {
+      const now = new Date();
+      const seq = Math.floor(Math.random() * 90000) + 10000;
+      data.bookingId = `RES-${now.getFullYear()}-${seq}`;
+    }
+    if (!data.status) data.status = "confirmed";
+
     // All good, create
     const created = await bookingRepository.create(data);
     try {
@@ -56,6 +74,21 @@ class BookingService {
     } catch (e) {
       console.warn("Booking emit failed", e.message);
     }
+    // Send notifications/email if service is available
+    try {
+      if (global.notificationService) {
+        await global.notificationService.sendToRole('cashier', { title: 'New booking', body: `${created.customerName || 'Guest'} booked ${created.date} ${created.startTime}`, data: created });
+      }
+      // send email if available
+      const mailer = await import('../../utils/Mailer.js');
+      try {
+        if (created.customerEmail) {
+          await mailer.sendEmail(created.customerEmail, 'Booking confirmed', `Your booking ${created.bookingId} is confirmed.`);
+        }
+      } catch (e) {
+        // non-fatal
+      }
+    } catch (e) {}
     return created;
   }
 

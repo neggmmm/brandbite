@@ -491,7 +491,9 @@ function LandingPageContent() {
           ))}
 
           {/* TABLE BOOKING AD - Only if table booking service is enabled */}
-          {renderSection((services.items && services.items.some(s => s.id === 'tableBooking' && s.enabled !== false)) || (globalServices && ((globalServices.tableBooking && globalServices.tableBooking.enabled) || (globalServices.tableBookings && globalServices.tableBookings.enabled))), (
+          {renderSection(
+            (globalServices && (globalServices.tableBookings?.enabled === true || globalServices.tableBooking?.enabled === true)) ||
+            (services.items && services.items.some(s => (s.id === 'tableBookings' || s.id === 'tableBooking' || s.navigate === '/table-booking') && s.enabled !== false)), (
             <div className={`relative overflow-hidden rounded-3xl mb-12 transition-all duration-700 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
               <button
                 onClick={() => navigate('/table-booking')}

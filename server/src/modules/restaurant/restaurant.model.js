@@ -46,6 +46,13 @@ const restaurantSchema = new mongoose.Schema(
         dateFormat: { type: String, default: "MM/DD/YYYY" },
         timeFormat: { type: String, default: "12h" },
       },
+      // Booking settings for public consumption
+      bookingSettings: {
+        maxPartySize: { type: Number, default: 10 },
+        maxAdvanceDays: { type: Number, default: 30 },
+        timeSlotInterval: { type: Number, default: 30 }, // minutes
+        enabled: { type: Boolean, default: true }
+      },
 
       // Landing Page Settings (NEW) - FIXED: Now properly inside systemSettings
       landing: {
@@ -423,16 +430,18 @@ const restaurantSchema = new mongoose.Schema(
 
     // System fields
     isActive: { type: Boolean, default: true },
-    status: { 
-      type: String, 
-      enum: ["active", "suspended", "pending"], 
-      default: "pending" 
+    status: {
+      type: String,
+      enum: ["active", "suspended", "pending", "trial"],
+      default: "pending",
     },
-    subscriptionPlan: { 
-      type: String, 
-      enum: ["free", "basic", "premium", "enterprise"], 
-      default: "free" 
+    subscription: {
+      plan: { type: String, enum: ["trial", "basic", "premium"], default: "trial" },
+      status: { type: String, enum: ["active", "inactive", "expired"], default: "active" },
+      expiresAt: { type: Date, default: null },
     },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    slug: { type: String, unique: true, sparse: true },
   },
   { timestamps: true }
 );
@@ -487,6 +496,7 @@ restaurantSchema.methods.getPublicConfig = function() {
   return {
     // Basic info
     restaurantName: this.restaurantName,
+    restaurantId: this.restaurantId,
     restaurantNameAr: this.restaurantNameAr,
     description: this.description,
     descriptionAr: this.descriptionAr,
@@ -531,6 +541,8 @@ restaurantSchema.methods.getPublicConfig = function() {
         instagram: this.systemSettings.landing?.instagram || {},
         specialOffer: this.systemSettings.landing?.specialOffer || {}
       }
+      ,
+      bookingSettings: this.systemSettings?.bookingSettings || { maxPartySize: 10, maxAdvanceDays: 30, timeSlotInterval: 30 }
     },
   };
 };

@@ -30,10 +30,14 @@ import chatRoutes from "./src/modules/chat/chat.routes.js"; // AI
 import recommendationRoutes from "./src/modules/recommendation/recommendation.routes.js"; // AI
 import aiProductRoutes from "./src/modules/ai_product/aiProduct.routes.js"; // AI Vision
 import restaurantRoutes from "./src/modules/restaurant/restaurant.route.js";
+import tableRoutes from "./src/modules/tableBooking/table.routes.js";
+import bookingRoutes from "./src/modules/tableBooking/booking.routes.js";
 import supportRoutes from "./src/modules/support/support.routes.js";
 import adminProfileRoutes from "./src/modules/adminProfile/adminProfile.route.js";
 import searchRoutes from "./src/modules/search/search.routes.js"; // AI Smart Search
 import staffChatRoutes from "./src/modules/staffChat/staffChat.routes.js"; // Staff Chat
+import supadminRoutes from "./src/modules/supadmin/supadmin.routes.js";
+import invitationRoutes from "./src/routes/invitation.routes.js";
 // import offerRoutes from "./src/modules/offer/offer.routes.js";
 import offerRoutes from "./src/modules/offer/offer.route.js";
 // Import PaymentController if needed
@@ -122,6 +126,8 @@ app.use("/api/cart", optionalAuthMiddleware, cartRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/restaurant", restaurantRoutes);
+app.use("/api/tables", tableRoutes);
+app.use("/api/bookings", bookingRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/user-profile", adminProfileRoutes);
 app.use("/api", offerRoutes);
@@ -132,6 +138,9 @@ app.use("/api/checkout", paymentRoutes);
 app.use("/api/search", searchRoutes);
 // Staff Chat routes
 app.use("/api/staff-chat", staffChatRoutes);
+app.use("/api/supadmin", supadminRoutes);
+// Invitation / onboarding routes
+app.use("/api/invite", invitationRoutes);
 
 // Serve uploaded files from /uploads
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

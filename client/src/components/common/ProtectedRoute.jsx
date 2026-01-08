@@ -6,7 +6,7 @@ import { useRole } from "../../hooks/useRole";
 export default function ProtectedRoute({ children, roles = [] }) {
   const authState = useSelector((state) => state.auth || {});
   const { user, loadingGetMe } = authState;
-  const { isAdmin, isCashier, isKitchen } = useRole();
+  const { isAdmin, isSuperAdmin, isCashier, isKitchen } = useRole();
   const location = useLocation(); 
 
   if (!user) {
@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children, roles = [] }) {
   if (roles.length === 0) return children;
 
   // Admins have full access
-  if (isAdmin) {
+  if (isAdmin || (typeof isSuperAdmin !== 'undefined' && isSuperAdmin)) {
     return children;
   }
 

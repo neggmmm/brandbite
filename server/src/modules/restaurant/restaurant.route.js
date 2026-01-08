@@ -3,6 +3,7 @@ import express from "express";
 import {
   // Public routes
   getRestaurant,
+  getBookingStatus,
   
   // System White-label
   getSystemSettings,
@@ -124,6 +125,9 @@ app.post('/landing-settings/import-instagram', importInstagramPosts);
 app.get("/services", getServices); // Get all service settings
 app.put("/services", updateServices); // Update all services
 app.put("/services/:service/toggle", toggleService); // Toggle specific service
+
+// Public booking status (allow query restaurantId)
+app.get('/booking-status', getBookingStatus);
 
 // ======================
 // 5. PAYMENT WHITE-LABEL
