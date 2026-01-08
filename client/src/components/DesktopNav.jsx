@@ -68,7 +68,7 @@ export default function CombinedNavbar() {
           </button>
           
           {/* Language + Dark Mode - Side by Side */}
-          <div className="flex items-center justify-center gap-1 px-2">
+          <div className="flex items-center justify-around w-full gap-1 px-2">
             {/* Language Button */}
             <button
               onClick={() => i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")}
