@@ -41,28 +41,46 @@ export default function InviteAccept() {
     e.preventDefault();
     setError(null);
     try {
+      const payload = { token, name: form.name, email: form.email, password: form.password };
+      console.log('Submitting invite accept:', payload);
+      
       const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8000'}/api/invite/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, name: form.name, email: form.email, password: form.password })
+        body: JSON.stringify(payload)
       });
+      
+      console.log('Response status:', res.status);
       const body = await res.json();
-      if (!res.ok) throw new Error(body.message || 'Failed to accept invitation');
+      console.log('Response body:', body);
+      
+      if (!res.ok) {
+        const errorMsg = body.message || body.error || 'Failed to accept invitation';
+        console.error('Server error:', errorMsg);
+        throw new Error(errorMsg);
+      }
 
+      console.log('Accept successful:', body);
+      
       // Store tokens
       if (body.accessToken) {
         window.localStorage.setItem('accessToken', body.accessToken);
+        console.log('Stored accessToken');
       }
       if (body.refreshToken) {
         window.localStorage.setItem('refreshToken', body.refreshToken);
+        console.log('Stored refreshToken');
       }
       
       // Small delay to ensure localStorage is synced, then redirect to admin dashboard
+      console.log('Redirecting to /admin');
       setTimeout(() => {
         navigate('/admin');
       }, 300);
     } catch (err) {
-      setError(err.message || 'Submit failed');
+      const errorMsg = err.message || 'Submit failed';
+      console.error('Catch block error:', err);
+      setError(errorMsg);
     }
   };
 
