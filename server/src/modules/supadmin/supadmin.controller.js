@@ -5,6 +5,8 @@ import MenuCategory from "./models/MenuCategory.js";
 import Invitation from "./models/Invitation.js";
 import AuditLog from "./models/AuditLog.js";
 import crypto from "crypto";
+import { sendEmail } from "../../utils/Mailer.js";
+import { env } from "../../config/env.js";
 
 export const getDashboard = async (req, res) => {
   try {
@@ -193,9 +195,27 @@ export const createRestaurant = async (req, res) => {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
-    // 5. Send invitation email (mock)
-    console.log(`Invitation sent to ${contactEmail}`);
-    console.log(`Invitation link: https://yourapp.com/invite/accept?token=${token}`);
+    // 5. Send invitation email
+    try {
+      const clientBase = env.frontendUrl || process.env.FRONTEND_URL || 'http://localhost:5173';
+      const inviteUrl = `${clientBase.replace(/\/+$/,'')}/invite/${token}`;
+      const subject = `You're invited to manage ${name} on BrandBite`;
+      const text = `You have been invited to manage the restaurant ${name}. Visit ${inviteUrl} to accept the invitation.`;
+      const html = `
+        <p>Hello ${contactName || ''},</p>
+        <p>You have been invited to manage the restaurant <strong>${name}</strong>.</p>
+        <p><a href="${inviteUrl}" style="display:inline-block;padding:10px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">Accept Invitation</a></p>
+        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+        <p><a href="${inviteUrl}">${inviteUrl}</a></p>
+        <p>This link expires in 7 days.</p>
+      `;
+
+      await sendEmail(contactEmail, subject, text, html);
+      logger.info('invitation_email_sent', { email: contactEmail, restaurantId, invitationId: invite._id });
+    } catch (emailErr) {
+      logger.error('invitation_email_failed', { message: emailErr.message, email: contactEmail, restaurantId });
+      console.error('Failed to send invitation email:', emailErr);
+    }
 
     // 6. Log the action in audit_logs
     await AuditLog.create({

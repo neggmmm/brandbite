@@ -379,12 +379,12 @@ function LandingPageContent() {
       )}
 
       {/* Data Status Indicator (for debugging) */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 right-4 z-10 bg-black/80 text-white text-xs p-2 rounded">
           <div>Landing Data: {landing ? 'Loaded' : 'Missing'}</div>
           <div>Services: {actionCards.length} items</div>
         </div>
-      )}
+      )} */}
 
       <div className="relative z-10 flex items-center justify-center px-4 py-8 md:py-12">
         <div className="max-w-6xl w-full">

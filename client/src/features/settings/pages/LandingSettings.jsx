@@ -479,16 +479,6 @@ export default function LandingSettings() {
             Configure every visible element on your public landing page
           </p>
         </div>
-        <button
-          onClick={logCurrentState}
-          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-sm hover:bg-gray-300"
-        >
-          Debug State
-        </button>
-        <div className="ml-4 text-sm text-gray-600 dark:text-gray-300">
-          <div>Network: <strong className={`ml-1 ${isOnline ? 'text-green-600' : 'text-red-600'}`}>{isOnline ? 'Online' : 'Offline'}</strong></div>
-          <div>Queued: <strong>{(() => { try { return JSON.parse(localStorage.getItem('settings_offline_queue_v1')||'[]').length } catch { return 0 } })()}</strong></div>
-        </div>
       </div>
 
       {error && (
@@ -503,16 +493,7 @@ export default function LandingSettings() {
         </div>
       )}
 
-      {/* Debug Info */}
-      <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded text-sm">
-        <div className="font-semibold mb-1">Debug Info:</div>
-        <div>Loaded from backend: {existing ? 'Yes' : 'No'}</div>
-        <div>Hero title: "{landing.hero.title}"</div>
-        <div>Hero title (Arabic): "{landing.hero.titleAr}"</div>
-        <div>Total testimonials: {(landing.testimonials.items || []).length}</div>
-        <div>Total services: {(landing.services.items || []).length}</div>
-        <div>Total Instagram posts: {(landing.instagram.posts || []).length}</div>
-      </div>
+  
 
       {/* Hero Section */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
