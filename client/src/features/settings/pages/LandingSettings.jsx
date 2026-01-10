@@ -44,6 +44,9 @@ hours: {
   const [importPreviewPosts, setImportPreviewPosts] = useState([]);
   const [importMode, setImportMode] = useState('merge'); // 'merge' or 'replace'
 
+  // Generate truly unique IDs to prevent key collisions in arrays
+  const generateUniqueId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
   // Load existing settings into local state - FIXED with deep merge
   useEffect(() => {
     if (existing) {
@@ -212,7 +215,7 @@ const copyDayToAll = (dayToCopy) => {
       testimonials: {
         ...prev.testimonials,
         items: [...(prev.testimonials.items || []), { 
-          id: Date.now(), // Add unique ID
+          id: generateUniqueId(),
           name: '', 
           content: '', 
           rating: 5,
@@ -347,7 +350,7 @@ const copyDayToAll = (dayToCopy) => {
       services: {
         ...prev.services,
         items: [...(prev.services.items || []), {
-          id: Date.now(),
+          id: generateUniqueId(),
           title: 'New Service',
           titleAr: 'خدمة جديدة',
           description: 'Service description',
@@ -392,7 +395,7 @@ const copyDayToAll = (dayToCopy) => {
       instagram: {
         ...prev.instagram,
         posts: [...(prev.instagram.posts || []), {
-          id: Date.now(),
+          id: generateUniqueId(),
           image: '',
           caption: '',
           likes: '',
