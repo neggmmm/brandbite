@@ -16,7 +16,7 @@ export default function LandingSettings() {
   const [landing, setLanding] = useState({
     hero: { title: '', titleAr: '', subtitle: '', subtitleAr: '', image: '', enabled: true },
     about: { title: '', titleAr: '', content: '', contentAr: '', image: '', enabled: true },
-    testimonials: { items: [], featuredIds: [], mode: 'all', enabled: true },
+    testimonials: { items: [], featuredIds: [], mode: 'all', title: 'What People Say', titleAr: 'ما يقوله الناس', enabled: true },
     contact: { email: '', phone: '', enabled: true },
     callUs: { number: '', numberAr: '', label: 'Call Us', labelAr: 'اتصل بنا', enabled: true },
     location: { address: '', addressAr: '', latitude: '', longitude: '', enabled: true },
@@ -1099,54 +1099,109 @@ const copyDayToAll = (dayToCopy) => {
         </div>
       </section>
 
-      
       {/* Featured Reviews selection (uses Redux reviews) */}
-      <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">Featured Reviews</h3>
+      <section className="border rounded-lg p-4 sm:p-6 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">Featured Reviews & Testimonials</h3>
+          <label className="flex items-center gap-2 text-sm bg-gray-50 dark:bg-gray-700 p-2 rounded">
+            <input 
+              type="checkbox" 
+              checked={landing.testimonials.enabled !== false} 
+              onChange={(e)=>setLanding(l=>({
+                ...l, 
+                testimonials: {
+                  ...l.testimonials, 
+                  enabled: e.target.checked
+                }
+              }))} 
+            />
+            Enabled
+          </label>
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2">
-              <input 
-                type="radio" 
-                name="reviewsMode" 
-                checked={(landing.testimonials.mode || 'all') === 'all'} 
-                onChange={() => setTestimonialsMode('all')} 
-              />
-              <span className="text-sm">Show All Approved Reviews</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input 
-                type="radio" 
-                name="reviewsMode" 
-                checked={(landing.testimonials.mode || 'all') === 'selected'} 
-                onChange={() => setTestimonialsMode('selected')} 
-              />
-              <span className="text-sm">Select Reviews To Feature</span>
-            </label>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              className="w-full p-2 border rounded bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 text-sm"
+              placeholder="Reviews Section Title (English)"
+              value={landing.testimonials.title || ''}
+              onChange={(e) => setLanding(l => ({ 
+                ...l, 
+                testimonials: { 
+                  ...l.testimonials, 
+                  title: e.target.value 
+                } 
+              }))}
+            />
+            <input
+              className="w-full p-2 border rounded bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 text-sm"
+              placeholder="عنوان المراجعات (عربي)"
+              value={landing.testimonials.titleAr || ''}
+              onChange={(e) => setLanding(l => ({ 
+                ...l, 
+                testimonials: { 
+                  ...l.testimonials, 
+                  titleAr: e.target.value 
+                } 
+              }))}
+            />
           </div>
 
-          <div className="p-2 bg-white dark:bg-gray-700 rounded">
-            <div className="text-sm font-medium mb-2">Available Reviews</div>
-            {reviewsState.loading && <div className="text-xs">Loading reviews...</div>}
-            {(reviewsState.list || []).slice(0, 50).map(r => (
-              <label key={r._id} className="flex items-center gap-2 text-sm py-1">
-                <input 
-                  type="checkbox" 
-                  checked={(landing.testimonials.featuredIds || []).includes(r._id)} 
-                  onChange={() => toggleFeaturedReview(r._id)} 
-                />
-                <div className="flex-1">
-                  <div className="font-semibold">{r.name || r.userName || 'Reviewer'}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-300">
-                    {(r.comment || r.content || '').slice(0, 80)}
-                  </div>
-                </div>
-                <div className="text-xs opacity-80">{r.rating} ⭐</div>
-              </label>
-            ))}
-            {!(reviewsState.list || []).length && <div className="text-xs text-gray-500">No reviews found.</div>}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div className="flex-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Display Mode:</label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="reviewsMode" 
+                    checked={(landing.testimonials.mode || 'all') === 'all'} 
+                    onChange={() => setTestimonialsMode('all')} 
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show All Approved Reviews</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="reviewsMode" 
+                    checked={(landing.testimonials.mode || 'all') === 'selected'} 
+                    onChange={() => setTestimonialsMode('selected')} 
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Select Specific Reviews</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div className="text-sm font-semibold mb-3 text-gray-900 dark:text-white">Available Reviews ({(reviewsState.list || []).length})</div>
+            {reviewsState.loading && <div className="text-sm text-gray-600 dark:text-gray-400 py-4">Loading reviews...</div>}
+            {(reviewsState.list || []).length > 0 ? (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {(reviewsState.list || []).slice(0, 50).map(r => (
+                  <label key={r._id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      checked={(landing.testimonials.featuredIds || []).includes(r._id)} 
+                      onChange={() => toggleFeaturedReview(r._id)} 
+                      className="w-4 h-4 mt-1 flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-gray-900 dark:text-white">{r.name || r.userName || 'Reviewer'}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mt-1">
+                        {r.comment || r.content || 'No comment'}
+                      </div>
+                    </div>
+                    <div className="text-xs font-medium text-amber-500 flex-shrink-0 whitespace-nowrap">
+                      {Array.from({length: (r.rating || 5)}).map((_,k)=>("★")).join('')}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 dark:text-gray-400 py-4">No reviews available. Check back after customers leave reviews.</div>
+            )}
           </div>
         </div>
       </section>
@@ -1366,7 +1421,7 @@ const copyDayToAll = (dayToCopy) => {
       setLanding({
         hero: { title: '', titleAr: '', subtitle: '', subtitleAr: '', image: '', enabled: true },
         about: { title: '', titleAr: '', content: '', contentAr: '', image: '', enabled: true },
-        testimonials: { items: [], featuredIds: [], mode: 'all', enabled: true },
+        testimonials: { items: [], featuredIds: [], mode: 'all', title: 'What People Say', titleAr: 'ما يقوله الناس', enabled: true },
         contact: { email: '', phone: '', enabled: true },
         callUs: { number: '', numberAr: '', label: 'Call Us', labelAr: 'اتصل بنا', enabled: true },
         location: { address: '', addressAr: '', latitude: '', longitude: '', enabled: true },
