@@ -379,12 +379,12 @@ function LandingPageContent() {
       )}
 
       {/* Data Status Indicator (for debugging) */}
-      {/* {process.env.NODE_ENV === 'development' && (
+      {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 right-4 z-10 bg-black/80 text-white text-xs p-2 rounded">
           <div>Landing Data: {landing ? 'Loaded' : 'Missing'}</div>
           <div>Services: {actionCards.length} items</div>
         </div>
-      )} */}
+      )}
 
       <div className="relative z-10 flex items-center justify-center px-4 py-8 md:py-12">
         <div className="max-w-6xl w-full">
@@ -452,13 +452,13 @@ function LandingPageContent() {
                   key={index}
                   aria-label={`Open ${card.title || 'service'}`}
                   onClick={() => card.navigate && navigate(card.navigate)}
-                  className={`${card.bgColor || 'bg-white dark:bg-gray-800'} rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 border border-white/50 dark:border-gray-700/50 group text-left backdrop-blur-sm hover:-translate-y-2 active:scale-[0.98] overflow-hidden ${
+                  className={`${card.bgClass || 'bg-white dark:bg-gray-800'} rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 border border-white/50 dark:border-gray-700/50 group text-left backdrop-blur-sm hover:-translate-y-2 active:scale-[0.98] overflow-hidden ${
                     isRTL ? "text-right" : ""
                   } ${isLoaded ? `animate-slide-up` : "opacity-0"}`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className={`flex items-start justify-between mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
-                    <div className={`w-16 h-16 md:w-20 md:h-20 ${card.imageBg || 'bg-gray-100 dark:bg-gray-700'} rounded-2xl overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md relative flex-shrink-0`}> 
+                    <div className={`w-16 h-16 md:w-20 md:h-20 ${card.imageBgClass || 'bg-gray-100 dark:bg-gray-700'} rounded-2xl overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md relative flex-shrink-0`}> 
                       <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent z-10" />
                       {card.image ? (
                         <img
@@ -468,7 +468,7 @@ function LandingPageContent() {
                           loading="lazy"
                         />
                       ) : (
-                        <Sparkles className="w-6 h-6 text-gray-400" />
+                        <Sparkles className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                       )}
                     </div>
                     <ArrowRight
@@ -482,7 +482,7 @@ function LandingPageContent() {
                   <h3 className={`text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-2`}>
                     {card.title || 'Service Title'}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                     {card.description || 'Service description goes here...'}
                   </p>
                 </button>
