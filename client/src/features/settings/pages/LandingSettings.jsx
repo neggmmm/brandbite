@@ -20,15 +20,16 @@ export default function LandingSettings() {
     contact: { email: '', phone: '', enabled: true },
     callUs: { number: '', numberAr: '', label: 'Call Us', labelAr: 'اتصل بنا', enabled: true },
     location: { address: '', addressAr: '', latitude: '', longitude: '', enabled: true },
-    hours: {
-      monday: { open: '11:00', close: '22:00', enabled: true },
-      tuesday: { open: '11:00', close: '22:00', enabled: true },
-      wednesday: { open: '11:00', close: '22:00', enabled: true },
-      thursday: { open: '11:00', close: '22:00', enabled: true },
-      friday: { open: '11:00', close: '23:00', enabled: true },
-      saturday: { open: '10:00', close: '23:00', enabled: true },
-      sunday: { open: '10:00', close: '22:00', enabled: true },
-    },
+hours: {
+    monday: { open: '11:00', close: '22:00', enabled: true },
+    tuesday: { open: '11:00', close: '22:00', enabled: true },
+    wednesday: { open: '11:00', close: '22:00', enabled: true },
+    thursday: { open: '11:00', close: '22:00', enabled: true },
+    friday: { open: '11:00', close: '23:00', enabled: true },
+    saturday: { open: '10:00', close: '23:00', enabled: true },
+    sunday: { open: '10:00', close: '22:00', enabled: true },
+  }
+,
     footer: { text: '', enabled: true },
     seo: { title: '', description: '', enabled: true },
     services: { enabled: true, items: [] },
@@ -167,18 +168,43 @@ export default function LandingSettings() {
     }
   };
 
-  const handleHourChange = (day, field, value) => {
-    setLanding(prev => ({
-      ...prev,
-      hours: {
-        ...prev.hours,
-        [day]: {
-          ...prev.hours[day],
-          [field]: value,
-        },
-      },
-    }));
-  };
+// Update open/close time or enabled status for a single day
+const handleHourChange = (day, field, value) => {
+  setLanding(prev => ({
+    ...prev,
+    hours: {
+      ...prev.hours,
+      [day]: { ...prev.hours[day], [field]: value }
+    }
+  }));
+};
+
+
+// Toggle enabled for all days
+const toggleAllDays = (enabled) => {
+  setLanding(prev => {
+    const newHours = {};
+    for (let day in prev.hours) {
+      newHours[day] = { ...prev.hours[day], enabled };
+    }
+    return { ...prev, hours: newHours };
+  });
+};
+
+// Copy open/close of one day to all days
+
+const copyDayToAll = (dayToCopy) => {
+  setLanding(prev => {
+    const copy = prev.hours[dayToCopy];
+    const newHours = {};
+    for (let day in prev.hours) {
+      newHours[day] = { ...prev.hours[day], open: copy.open, close: copy.close };
+    }
+    return { ...prev, hours: newHours };
+  });
+};
+
+
 
   const handleTestimonialAdd = () => {
     setLanding(prev => ({
@@ -889,46 +915,58 @@ export default function LandingSettings() {
         </div>
       </section>
 
-      {/* Opening Hours */}
-      <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold"> Opening Hours</h3>
-          <label className="flex items-center gap-2 text-sm">
-            <input 
-              type="checkbox" 
-              checked={Object.values(landing.hours || {}).some(d=>d.enabled !== false)} 
-              onChange={(e)=>{
-                const enabled = e.target.checked;
-                setLanding(prev=>({
-                  ...prev,
-                  hours: Object.fromEntries(Object.entries(prev.hours||{}).map(([k,v])=>[k,{...v, enabled}]))
-                }))
-              }} 
-            />
-            Enabled
-          </label>
-        </div>
-        <div className="space-y-2">
-          {Object.entries(landing.hours).map(([day, times]) => (
-            <div key={day} className="flex items-center gap-3">
-              <label className="w-24 font-medium capitalize">{day}</label>
-              <input
-                type="time"
-                className="p-2 border rounded bg-white dark:bg-gray-700 w-24"
-                value={times.open || '11:00'}
-                onChange={(e) => handleHourChange(day, 'open', e.target.value)}
-              />
-              <span>-</span>
-              <input
-                type="time"
-                className="p-2 border rounded bg-white dark:bg-gray-700 w-24"
-                value={times.close || '22:00'}
-                onChange={(e) => handleHourChange(day, 'close', e.target.value)}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
+<section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-xl font-semibold">Opening Hours</h3>
+    <label className="flex items-center gap-2 text-sm">
+      <input 
+        type="checkbox" 
+        checked={Object.values(landing.hours).every(d => d.enabled)} 
+        onChange={(e) => toggleAllDays(e.target.checked)} 
+      />
+      Enabled All
+    </label>
+  </div>
+
+  <div className="space-y-2">
+    {Object.entries(landing.hours).map(([day, data]) => (
+      <div key={day} className="flex items-center gap-3">
+        <label className="w-24 font-medium capitalize">{day}</label>
+
+        <input
+          type="time"
+          className="p-2 border rounded bg-white dark:bg-gray-700 w-24"
+          value={data.open}
+          onChange={(e) => handleHourChange(day, 'open', e.target.value)}
+        />
+        <span>-</span>
+        <input
+          type="time"
+          className="p-2 border rounded bg-white dark:bg-gray-700 w-24"
+          value={data.close}
+          onChange={(e) => handleHourChange(day, 'close', e.target.value)}
+        />
+
+        <input
+          type="checkbox"
+          checked={data.enabled}
+          onChange={(e) => handleHourChange(day, 'enabled', e.target.checked)}
+          className="ml-2"
+        />
+
+        <button
+          type="button"
+          className="ml-auto text-sm text-blue-500"
+          onClick={() => copyDayToAll(day)}
+        >
+          Copy to All
+        </button>
+      </div>
+    ))}
+  </div>
+</section>
+
+
 
       {/* Contact Info */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
@@ -1049,84 +1087,7 @@ export default function LandingSettings() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold"> Testimonials</h3>
-          <label className="flex items-center gap-2 text-sm">
-            <input 
-              type="checkbox" 
-              checked={landing.testimonials.enabled !== false} 
-              onChange={(e)=>setLanding(l=>({
-                ...l, 
-                testimonials: {
-                  ...l.testimonials, 
-                  enabled: e.target.checked
-                }
-              }))} 
-            />
-            Enabled
-          </label>
-        </div>
-        <div className="space-y-4">
-          {(landing.testimonials.items || []).map((tst, idx) => (
-            <div key={tst.id || idx} className="border rounded p-3 bg-white dark:bg-gray-700 space-y-2">
-              <input
-                className="w-full p-2 border rounded text-sm"
-                placeholder="Customer Name"
-                value={tst.name || ''}
-                onChange={(e) => handleTestimonialChange(idx, 'name', e.target.value)}
-              />
-              <input
-                className="w-full p-2 border rounded text-sm"
-                placeholder="Customer Image URL (optional)"
-                value={tst.image || ''}
-                onChange={(e) => handleTestimonialChange(idx, 'image', e.target.value)}
-              />
-              <div className="flex items-center gap-3">
-                <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, `landing.testimonials.items[${idx}].image`); }} />
-                {tst.image && <img src={tst.image} alt="testi" className="h-12 object-contain rounded" />}
-                <div className="ml-auto flex gap-2">
-                  <button type="button" className="px-2 py-1 bg-gray-200 rounded" onClick={()=>reorderArray('testimonials.items', idx, idx-1)}>&uarr;</button>
-                  <button type="button" className="px-2 py-1 bg-gray-200 rounded" onClick={()=>reorderArray('testimonials.items', idx, idx+1)}>&darr;</button>
-                </div>
-              </div>
-              <textarea
-                className="w-full p-2 border rounded text-sm"
-                placeholder="Testimonial Content"
-                rows="2"
-                value={tst.content || ''}
-                onChange={(e) => handleTestimonialChange(idx, 'content', e.target.value)}
-              />
-              <div className="flex gap-2 items-center">
-                <label className="text-sm">Rating:</label>
-                <select
-                  className="p-2 border rounded text-sm"
-                  value={tst.rating || 5}
-                  onChange={(e) => handleTestimonialChange(idx, 'rating', Number(e.target.value))}
-                >
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <option key={n} value={n}>{n} </option>
-                  ))}
-                </select>
-                <button
-                  className="ml-auto px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                  onClick={() => handleTestimonialRemove(idx)}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
-          <button
-            className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            onClick={handleTestimonialAdd}
-          >
-            + Add Testimonial
-          </button>
-        </div>
-      </section>
-
+      
       {/* Featured Reviews selection (uses Redux reviews) */}
       <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
