@@ -500,24 +500,24 @@ const copyDayToAll = (dayToCopy) => {
   };
 
   return (
-    <div className={`p-6 space-y-6 ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="flex justify-between items-center">
+    <div className={`min-h-screen p-4 sm:p-6 space-y-6 bg-gray-50 dark:bg-gray-900 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Landing Page Settings</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-gray-900 dark:text-white">Landing Page Settings</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Configure every visible element on your public landing page
           </p>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+        <div className="p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300 rounded-lg">
           ✓ {success}
         </div>
       )}
@@ -595,7 +595,7 @@ const copyDayToAll = (dayToCopy) => {
             }))}
           />
           <input
-  className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain rounded-full bg-white dark:bg-gray-700 p-1" 
+            className="w-full p-2 border rounded bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600" 
             placeholder="Hero Image URL"
             value={landing.hero.image || ''}
             onChange={(e) => setLanding(l => ({ 
@@ -606,17 +606,22 @@ const copyDayToAll = (dayToCopy) => {
               } 
             }))}
           />
-          <div className="flex items-center gap-3">
-            <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, 'landing.hero.image'); }} />
-            {landing.hero.image && <img src={landing.hero.image} alt="hero" className="h-16 object-contain rounded" />}
-            <label className="flex items-center gap-2">
-              <div className="text-xs">Hero BG</div>
-              <input type="color" value={landing.hero.bgColor || '#ffffff'} onChange={(e)=>setLanding(l=>({...l, hero:{...l.hero, bgColor: e.target.value}}))} />
-            </label>
-            <label className="flex items-center gap-2">
-              <div className="text-xs">Text Color</div>
-              <input type="color" value={landing.hero.textColor || '#000000'} onChange={(e)=>setLanding(l=>({...l, hero:{...l.hero, textColor: e.target.value}}))} />
-            </label>
+          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Upload Image:</label>
+              <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, 'landing.hero.image'); }} className="text-sm" />
+            </div>
+            {landing.hero.image && <img src={landing.hero.image} alt="hero" className="h-16 object-contain rounded border border-gray-300 dark:border-gray-600" />}
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              <label className="flex items-center gap-2 bg-white dark:bg-gray-700 p-2 rounded border border-gray-300 dark:border-gray-600">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">BG Color:</span>
+                <input type="color" value={landing.hero.bgColor || '#ffffff'} onChange={(e)=>setLanding(l=>({...l, hero:{...l.hero, bgColor: e.target.value}}))} className="h-8 w-12 cursor-pointer" />
+              </label>
+              <label className="flex items-center gap-2 bg-white dark:bg-gray-700 p-2 rounded border border-gray-300 dark:border-gray-600">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Text Color:</span>
+                <input type="color" value={landing.hero.textColor || '#000000'} onChange={(e)=>setLanding(l=>({...l, hero:{...l.hero, textColor: e.target.value}}))} className="h-8 w-12 cursor-pointer" />
+              </label>
+            </div>
           </div>
         </div>
       </section>
@@ -656,10 +661,10 @@ const copyDayToAll = (dayToCopy) => {
       )}
 
       {/* Services Section */}
-      <section className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">Service Cards</h3>
-          <label className="flex items-center gap-2 text-sm">
+      <section className="border rounded-lg p-4 sm:p-6 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">Service Cards</h3>
+          <label className="flex items-center gap-2 text-sm bg-gray-50 dark:bg-gray-700 p-2 rounded">
             <input 
               type="checkbox" 
               checked={landing.services.enabled !== false} 
@@ -676,66 +681,70 @@ const copyDayToAll = (dayToCopy) => {
         </div>
         <div className="space-y-4">
           {(landing.services.items || []).map((service, idx) => (
-            <div key={service.id || idx} className="border rounded p-3 bg-white dark:bg-gray-700 space-y-2">
-              <div className="flex gap-2">
+            <div key={service.id || idx} className="border rounded-lg p-4 sm:p-5 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
-                  className="flex-1 p-2 border rounded text-sm"
+                  className="p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                   placeholder="Service Title (English)"
                   value={service.title || ''}
                   onChange={(e) => handleServiceChange(service.id, 'title', e.target.value)}
                 />
                 <input
-                  className="flex-1 p-2 border rounded text-sm"
+                  className="p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                   placeholder="Service Title (Arabic)"
                   value={service.titleAr || ''}
                   onChange={(e) => handleServiceChange(service.id, 'titleAr', e.target.value)}
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
-                  className="flex-1 p-2 border rounded text-sm"
+                  className="p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                   placeholder="Description (English)"
                   value={service.description || ''}
                   onChange={(e) => handleServiceChange(service.id, 'description', e.target.value)}
                 />
                 <input
-                  className="flex-1 p-2 border rounded text-sm"
+                  className="p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                   placeholder="Description (Arabic)"
                   value={service.descriptionAr || ''}
                   onChange={(e) => handleServiceChange(service.id, 'descriptionAr', e.target.value)}
                 />
               </div>
               <input
-                className="w-full p-2 border rounded text-sm"
+                className="w-full p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                 placeholder="Image URL"
                 value={service.image || ''}
                 onChange={(e) => handleServiceChange(service.id, 'image', e.target.value)}
               />
-              <div className="flex items-center gap-3">
-                <input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, `landing.services.items[${idx}].image`); }} />
-                {service.image && <img src={service.image} alt="service" className="h-12 object-contain rounded" />}
-                <div className="ml-auto flex gap-2">
-                  <button type="button" className="px-2 py-1 bg-gray-200 rounded" onClick={()=>reorderArray('services.items', idx, idx-1)}>&uarr;</button>
-                  <button type="button" className="px-2 py-1 bg-gray-200 rounded" onClick={()=>reorderArray('services.items', idx, idx+1)}>&darr;</button>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Upload Image:</label>
+                  <input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, `landing.services.items[${idx}].image`); }} className="text-sm w-full" />
+                </div>
+                {service.image && <img src={service.image} alt="service" className="h-12 object-contain rounded border border-gray-300 dark:border-gray-600" />}
+                <div className="flex gap-2 self-end sm:self-center">
+                  <button type="button" className="px-3 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-sm font-medium" title="Move Up" onClick={()=>reorderArray('services.items', idx, idx-1)}>↑</button>
+                  <button type="button" className="px-3 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-sm font-medium" title="Move Down" onClick={()=>reorderArray('services.items', idx, idx+1)}>↓</button>
                 </div>
               </div>
               <input
-                className="w-full p-2 border rounded text-sm"
+                className="w-full p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                 placeholder="Navigation Link (e.g., /menu)"
                 value={service.navigate || ''}
                 onChange={(e) => handleServiceChange(service.id, 'navigate', e.target.value)}
               />
-              <div className="flex justify-between items-center">
-                <label className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-gray-200 dark:border-gray-600">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={service.enabled !== false}
                     onChange={(e) => handleServiceChange(service.id, 'enabled', e.target.checked)}
+                    className="w-4 h-4"
                   />
-                  <span className="text-sm">Enabled</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Enabled</span>
                 </label>
                 <button
-                  className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                  className="px-4 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
                   onClick={() => handleRemoveService(service.id)}
                 >
                   Remove
@@ -744,7 +753,7 @@ const copyDayToAll = (dayToCopy) => {
             </div>
           ))}
           <button
-            className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600"
+            className="w-full p-3 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
             onClick={handleAddService}
           >
             + Add Service Card
@@ -1197,56 +1206,59 @@ const copyDayToAll = (dayToCopy) => {
         </div>
         <div className="space-y-4">
           {(landing.instagram.posts || []).map((post, idx) => (
-            <div key={post.id || idx} className="border rounded p-3 bg-white dark:bg-gray-700 space-y-2">
+            <div key={post.id || idx} className="border rounded-lg p-4 sm:p-5 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 space-y-3">
               <input
-                className="w-full p-2 border rounded text-sm"
+                className="w-full p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                 placeholder="Image URL"
                 value={post.image || ''}
                 onChange={(e) => handleInstagramChange(post.id, 'image', e.target.value)}
               />
-              <div className="flex items-center gap-3">
-                <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, `landing.instagram.posts[${idx}].image`); }} />
-                {post.image && <img src={post.image} alt="insta" className="h-12 object-contain rounded" />}
-                <div className="ml-auto flex gap-2">
-                  <button type="button" className="px-2 py-1 bg-gray-200 rounded" onClick={()=>reorderArray('instagram.posts', idx, idx-1)}>&uarr;</button>
-                  <button type="button" className="px-2 py-1 bg-gray-200 rounded" onClick={()=>reorderArray('instagram.posts', idx, idx+1)}>&darr;</button>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Upload Image:</label>
+                  <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, `landing.instagram.posts[${idx}].image`); }} className="text-sm w-full" />
+                </div>
+                {post.image && <img src={post.image} alt="insta" className="h-12 object-contain rounded border border-gray-300 dark:border-gray-600" />}
+                <div className="flex gap-2 self-end sm:self-center">
+                  <button type="button" className="px-3 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-sm font-medium" title="Move Up" onClick={()=>reorderArray('instagram.posts', idx, idx-1)}>↑</button>
+                  <button type="button" className="px-3 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-sm font-medium" title="Move Down" onClick={()=>reorderArray('instagram.posts', idx, idx+1)}>↓</button>
                 </div>
               </div>
               <input
-                className="w-full p-2 border rounded text-sm"
+                className="w-full p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                 placeholder="Caption"
                 value={post.caption || ''}
                 onChange={(e) => handleInstagramChange(post.id, 'caption', e.target.value)}
               />
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <input
-                  className="p-2 border rounded text-sm"
+                  className="p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                   placeholder="Likes"
                   value={post.likes || ''}
                   onChange={(e) => handleInstagramChange(post.id, 'likes', e.target.value)}
                 />
                 <input
-                  className="p-2 border rounded text-sm"
+                  className="p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                   placeholder="Comments"
                   value={post.comments || ''}
                   onChange={(e) => handleInstagramChange(post.id, 'comments', e.target.value)}
                 />
                 <input
-                  className="p-2 border rounded text-sm"
+                  className="p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                   placeholder="Date (e.g., '2 days ago')"
                   value={post.date || ''}
                   onChange={(e) => handleInstagramChange(post.id, 'date', e.target.value)}
                 />
               </div>
               <input
-                className="w-full p-2 border rounded text-sm"
+                className="w-full p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
                 placeholder="Tags (comma separated)"
                 value={(post.tags || []).join(', ')}
                 onChange={(e) => handleInstagramChange(post.id, 'tags', e.target.value)}
               />
               <div className="flex justify-end">
                 <button 
-                  className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600" 
+                  className="px-4 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors" 
                   onClick={() => handleRemoveInstagramPost(post.id)}
                 >
                   Remove
@@ -1255,7 +1267,7 @@ const copyDayToAll = (dayToCopy) => {
             </div>
           ))}
           <button 
-            className="w-full p-2 bg-pink-500 text-white rounded hover:bg-pink-600" 
+            className="w-full p-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors" 
             onClick={handleAddInstagramPost}
           >
             + Add Instagram Post
@@ -1346,9 +1358,9 @@ const copyDayToAll = (dayToCopy) => {
       </section>
 
       {/* Save Button */}
-<div className="flex gap-3 justify-end pt-6 border-t">
+<div className="flex flex-col-reverse sm:flex-row gap-3 justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
   <button
-    className="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+    className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
     onClick={() => {
       // Reset to default structure
       setLanding({
@@ -1379,7 +1391,7 @@ const copyDayToAll = (dayToCopy) => {
     Reset Form
   </button>
   <button
-    className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
     onClick={handleSave}
     disabled={saving || loading}
   >
