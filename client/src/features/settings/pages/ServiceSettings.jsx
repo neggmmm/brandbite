@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsAPI } from '../hooks/useSettingsAPI';
-import { Save, AlertCircle, Clock } from 'lucide-react';
+import { Save, AlertCircle, Clock, Info } from 'lucide-react';
 
 export default function ServiceSettings() {
   const { i18n } = useTranslation();
@@ -20,20 +20,28 @@ export default function ServiceSettings() {
   const loadServices = async () => {
     setLoading(true);
     const data = await getServices();
+    console.log('=== LOAD SERVICES IN COMPONENT ===');
+    console.log('Received data:', JSON.stringify(data, null, 2));
     if (data) {
       setServices(data);
+      console.log('✅ Services loaded:', JSON.stringify(data, null, 2));
+    } else {
+      console.log('⚠️ getServices returned null or undefined');
     }
     setLoading(false);
   };
 
   const handleToggle = (serviceKey) => {
-    setServices((prev) => ({
-      ...prev,
-      [serviceKey]: {
-        ...prev[serviceKey],
-        enabled: !prev[serviceKey].enabled,
-      },
-    }));
+    setServices((prev) => {
+      const prevService = prev[serviceKey] || {};
+      return {
+        ...prev,
+        [serviceKey]: {
+          ...prevService,
+          enabled: !prevService.enabled,
+        },
+      };
+    });
     setHasChanges(true);
   };
 
@@ -50,9 +58,14 @@ export default function ServiceSettings() {
 
   const handleSave = async () => {
     setSaving(true);
+    console.log('=== SERVICE SETTINGS SAVE ===');
+    console.log('Services to save:', JSON.stringify(services, null, 2));
     const success = await updateServices(services);
     if (success) {
+      console.log('✅ Services saved successfully');
       setHasChanges(false);
+    } else {
+      console.log('❌ Failed to save services');
     }
     setSaving(false);
   };
@@ -93,11 +106,7 @@ export default function ServiceSettings() {
           label: isRTL ? 'رسوم التوصيل' : 'Delivery Fee',
           type: 'number',
         },
-        {
-          key: 'deliveryRadius',
-          label: isRTL ? 'نطاق التوصيل (كم)' : 'Delivery Radius (km)',
-          type: 'number',
-        },
+       
       ],
     },
     {
@@ -110,15 +119,11 @@ export default function ServiceSettings() {
           label: isRTL ? 'الوقت المتوقع (دقيقة)' : 'Estimated Time (minutes)',
           type: 'number',
         },
-        {
-          key: 'tableCapacity',
-          label: isRTL ? 'سعة الطاولات' : 'Total Table Capacity',
-          type: 'number',
-        },
+      ,
       ],
     },
     {
-      id: 'tableBooking',
+      id: 'tableBookings',
       label: isRTL ? 'حجز الطاولات' : 'Table Booking',
       description: isRTL ? 'السماح بحجز الطاولات مسبقاً' : 'Allow advance table reservations',
       fields: [
@@ -145,12 +150,14 @@ export default function ServiceSettings() {
     <div className="space-y-6">
       <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
         <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-blue-800 dark:text-blue-300">
+        <p className="text-m text-black-800 dark:text-white-300">
           {isRTL
             ? 'تفعيل أو تعطيل الخدمات وتعديل إعداداتها حسب احتياجاتك'
             : 'Enable or disable services and configure their settings'}
         </p>
       </div>
+
+    
 
       <div className="space-y-4">
         {serviceConfigs.map((service) => {

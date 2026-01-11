@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, Minus, Trash2, MapPin, MessageSquare, ChevronDown, Gif
 import PointsModal from "../components/PointsModal";
 import OrderRecommendations from "../components/recommendations/OrderRecommendations";
 import api from "../api/axios";
+import { useServices } from "../hooks/useServices";
 
 // Leaflet imports (same as before)
 import L from "leaflet";
@@ -31,6 +32,11 @@ export default function CheckoutPage() {
   );
   const authUser = useSelector((state) => state.auth?.user || null);
   const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated || false);
+  
+  // Fetch enabled services from backend
+  const { getEnabledServiceTypes, isServiceEnabled, loading: servicesLoading } = useServices();
+  const enabledServices = getEnabledServiceTypes();
+  
   const [serviceType, setServiceType] = useState("pickup");
   const [tableNumber, setTableNumber] = useState("");
   const [notes, setNotes] = useState("");
@@ -54,6 +60,17 @@ export default function CheckoutPage() {
   useEffect(() => {
     dispatch(getCartForUser());
   }, [dispatch]);
+
+  // Set initial service type based on enabled services
+  useEffect(() => {
+    if (enabledServices.length > 0) {
+      // Set to first enabled service, or pickup if available
+      const defaultService = enabledServices.includes('pickup') 
+        ? 'pickup' 
+        : enabledServices[0];
+      setServiceType(defaultService);
+    }
+  }, [enabledServices]);
 
   // Auto-fill contact info from auth user
   useEffect(() => {
@@ -238,6 +255,12 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Validate service is still enabled
+    if (!isServiceEnabled(serviceType)) {
+      setOrderError("Selected service is no longer available. Please select another service.");
+      return;
+    }
+
     // Validate service type requirements
     if (serviceType === "delivery") {
       if (!deliveryLocation) {
@@ -342,6 +365,29 @@ export default function CheckoutPage() {
         <div className="text-center">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">{t("loading")}...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no services are available
+  if (!servicesLoading && enabledServices.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="h-16 w-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <X className="h-8 w-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Services Unavailable</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            All services are currently disabled. Please contact the restaurant for assistance.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="text-primary dark:text-primary/90 hover:text-primary/110 font-medium"
+          >
+            {t("checkout.back")}
+          </button>
         </div>
       </div>
     );
@@ -478,19 +524,38 @@ export default function CheckoutPage() {
           {/* Right Column - Order Summary */}
           <div className="lg:col-span-5">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 lg:sticky lg:top-4">
-              {/* Service Type Dropdown */}
+              {/* Service Type Dropdown - Only show enabled services */}
               <div className="mb-6">
                 <div className="relative">
-                  <select
-                    value={serviceType}
-                    onChange={(e) => setServiceType(e.target.value)}
-                    className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-medium text-gray-900 dark:text-white transition-colors"
-                  >
-                    <option value="pickup" className="bg-white dark:bg-gray-700">{t("checkout.pickup")}</option>
-                    <option value="dine-in" className="bg-white dark:bg-gray-700">{t("checkout.dine_in")}</option>
-                    <option value="delivery" className="bg-white dark:bg-gray-700">{t("checkout.delivery")}</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                  {servicesLoading ? (
+                    <div className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 font-medium text-gray-900 dark:text-white flex items-center">
+                      <div className="h-4 w-4 border-2 border-gray-400 border-t-primary rounded-full animate-spin mr-2"></div>
+                      {t("loading")}...
+                    </div>
+                  ) : enabledServices.length > 0 ? (
+                    <>
+                      <select
+                        value={serviceType}
+                        onChange={(e) => setServiceType(e.target.value)}
+                        className="w-full appearance-none bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-medium text-gray-900 dark:text-white transition-colors"
+                      >
+                        {enabledServices.includes('pickup') && (
+                          <option value="pickup" className="bg-white dark:bg-gray-700">{t("checkout.pickup")}</option>
+                        )}
+                        {enabledServices.includes('dine-in') && (
+                          <option value="dine-in" className="bg-white dark:bg-gray-700">{t("checkout.dine_in")}</option>
+                        )}
+                        {enabledServices.includes('delivery') && (
+                          <option value="delivery" className="bg-white dark:bg-gray-700">{t("checkout.delivery")}</option>
+                        )}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                    </>
+                  ) : (
+                    <div className="w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 font-medium">
+                      {t("checkout.no_services_available")}
+                    </div>
+                  )}
                 </div>
               </div>
 

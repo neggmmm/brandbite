@@ -1,22 +1,19 @@
 // src/pages/admin/Settings.jsx
 import { useState } from 'react';
 import SettingsLayout from '../../features/settings/components/SettingsLayout';
-import SystemSettings from '../../features/settings/pages/SystemSettings';
 import ServiceSettings from '../../features/settings/pages/ServiceSettings';
 import PaymentMethodsSettings from '../../features/settings/pages/PaymentMethodsSettings';
 import WebsiteDesignSettings from '../../features/settings/pages/WebsiteDesignSettings';
 import IntegrationsSettings from '../../features/settings/pages/IntegrationsSettings';
 import BrandingSettings from '../../features/settings/pages/BrandingSettings';
 import ContentSettings from '../../features/settings/pages/ContentSettings';
-import LandingSettings from '../../features/settings/pages/LandingSettings';
 
 export default function Settings() {
-  const [activeSection, setActiveSection] = useState('system');
+  const [activeSection, setActiveSection] = useState('landing');
 
   const renderSection = () => {
     switch (activeSection) {
-      case 'system':
-        return <SystemSettings />;
+      
       case 'services':
         return <ServiceSettings />;
       case 'payments':
@@ -32,7 +29,7 @@ export default function Settings() {
       case 'content':
         return <ContentSettings />;
       default:
-        return <SystemSettings />;
+        return <LandingSettings />;
     }
   };
 

@@ -96,6 +96,7 @@ export function SettingsProvider({ children }) {
     const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
     async function fetchWithRetry(config, { retries = 3, backoff = 300 } = {}) {
+        console.log('[SettingsContext] fetchWithRetry called', { config, isOnline });
         // config: { method, url, data, headers }
         if (!isOnline) {
             // queue and persist
@@ -111,9 +112,11 @@ export function SettingsProvider({ children }) {
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
                 const res = await api.request(config);
+                console.log('[SettingsContext] fetchWithRetry success', { url: config.url, status: res.status });
                 retryAttemptsRef.current[key] = 0;
                 return res;
             } catch (err) {
+                console.warn('[SettingsContext] fetchWithRetry error', { url: config.url, err: err?.message || err });
                 const status = err?.response?.status;
                 // Do not retry on 4xx (client) errors except 429
                 if (status && status >= 400 && status < 500 && status !== 429) throw err;
@@ -157,9 +160,11 @@ export function SettingsProvider({ children }) {
 
     // Fetch settings
     const fetchSettings = async () => {
+        console.log('[SettingsContext] fetchSettings start');
         setLoading(true);
         try {
             const res = await fetchWithRetry({ method: 'get', url: '/api/restaurant' }, { retries: 2 });
+            console.log('[SettingsContext] fetchSettings response', res?.status, res?.data);
             const payload = res?.data?.data ?? res?.data ?? {};
             const normalized = normalizePayload(payload);
             setSettings(normalized);

@@ -61,28 +61,33 @@ class SettingsService {
   }
 
   async updatePaymentMethod(methodId, updates, selector = {}) {
-    // Support both numeric index IDs (legacy) and Mongo _id strings
+    // Only treat as numeric index if it's a small number (0-99)
+    // MongoDB ObjectIds starting with digits will be large numbers
     const maybeIndex = parseInt(methodId);
-    if (!isNaN(maybeIndex)) {
+    if (!isNaN(maybeIndex) && maybeIndex >= 0 && maybeIndex < 100 && methodId === String(maybeIndex)) {
+      // It's a true numeric index
       return await restaurantRepository.updateInArrayByIndex("paymentMethods", maybeIndex, updates, selector);
     }
 
-    // Treat as _id
+    // Treat as MongoDB ObjectId
     return await restaurantRepository.updateInArrayById("paymentMethods", methodId, updates, selector);
   }
 
-  async removePaymentMethod(methodId) {
+  async removePaymentMethod(methodId, selector = {}) {
+    // Only treat as numeric index if it's a small number (0-99)
+    // MongoDB ObjectIds starting with digits will be large numbers
     const maybeIndex = parseInt(methodId);
-    if (!isNaN(maybeIndex)) {
-      return await restaurantRepository.removeFromArrayByIndex("paymentMethods", maybeIndex);
+    if (!isNaN(maybeIndex) && maybeIndex >= 0 && maybeIndex < 100 && methodId === String(maybeIndex)) {
+      // It's a true numeric index
+      return await restaurantRepository.removeFromArrayByIndex("paymentMethods", maybeIndex, selector);
     }
 
-    // Treat as _id
-    return await restaurantRepository.removeFromArrayById("paymentMethods", methodId);
+    // Treat as MongoDB ObjectId
+    return await restaurantRepository.removeFromArrayById("paymentMethods", methodId, selector);
   }
 
-  async togglePaymentMethod(methodId, enabled) {
-    return await this.updatePaymentMethod(methodId, { enabled });
+  async togglePaymentMethod(methodId, enabled, selector = {}) {
+    return await this.updatePaymentMethod(methodId, { enabled }, selector);
   }
 
   // ========== WEBSITE DESIGN ==========
@@ -125,8 +130,8 @@ class SettingsService {
     return await restaurantRepository.update(restaurant._id, updateData);
   }
 
-  async toggleIntegration(integration, enabled) {
-    return await this.updateIntegration(integration, { enabled });
+  async toggleIntegration(integration, enabled, selector = {}) {
+    return await this.updateIntegration(integration, { enabled }, selector);
   }
 
   // ========== CONTENT MANAGEMENT ==========

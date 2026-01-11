@@ -81,7 +81,7 @@ export default function SettingsExportImport() {
   // Validate import data structure
   const validateImportData = (data) => {
     const requiredKeys = [
-      'systemSettings',
+     
       'services',
       'paymentMethods',
       'websiteDesign',

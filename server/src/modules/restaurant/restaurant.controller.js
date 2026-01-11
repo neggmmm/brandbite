@@ -55,6 +55,20 @@ export async function getRestaurant(req, res) {
   }
 }
 
+export async function getBookingStatus(req, res) {
+  try {
+    const { restaurantId } = req.query;
+    const restaurant = restaurantId ? await restaurantService.getRestaurantById(restaurantId) : await restaurantService.getRestaurant();
+    if (!restaurant) return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    const enabled = restaurant.services?.tableBookings?.enabled ?? false;
+    const bookingSettings = restaurant.systemSettings?.bookingSettings || { maxPartySize: 10, maxAdvanceDays: 30, timeSlotInterval: 30 };
+    res.status(200).json({ success: true, data: { enabled, bookingSettings } });
+  } catch (err) {
+    console.error('getBookingStatus failed', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed' });
+  }
+}
+
 export async function updateRestaurant(req, res) {
   try {
     const updateData = req.body;
@@ -75,7 +89,8 @@ export async function updateRestaurant(req, res) {
 // System White-label Controllers
 export async function getSystemSettings(req, res) {
   try {
-    const settings = await restaurantService.getSystemSettings();
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const settings = await restaurantService.getSystemSettings(selector);
     res.status(200).json({
       success: true,
       data: settings,
@@ -92,7 +107,8 @@ export async function getSystemSettings(req, res) {
 export async function updateSystemSettings(req, res) {
   try {
     const { systemSettings } = req.body;
-    const updated = await restaurantService.updateSystemSettings(systemSettings);
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const updated = await restaurantService.updateSystemSettings(systemSettings, selector);
     res.status(200).json({
       success: true,
       message: "System settings updated successfully",
@@ -111,12 +127,13 @@ export async function updateSystemCategory(req, res) {
   try {
     const { category } = req.params;
     const categoryData = req.body;
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
     
     console.log('=== UPDATE SYSTEM CATEGORY DEBUG ===');
     console.log('Category:', category);
     console.log('Received data:', JSON.stringify(categoryData, null, 2));
     
-    const updated = await restaurantService.updateSystemCategory(category, categoryData);
+    const updated = await restaurantService.updateSystemCategory(category, categoryData, selector);
     
     console.log('Updated category data:', JSON.stringify(updated.systemSettings?.[category], null, 2));
     
@@ -186,13 +203,63 @@ export async function resetLandingPage(req, res) {
   }
 }
 
+// Helper: Transform frontend format to backend format
+function transformFrontendToBackend(frontendServices) {
+  const backendServices = {};
+  
+  // Map frontend keys to backend keys
+  if (frontendServices.pickup !== undefined) {
+    backendServices.pickups = frontendServices.pickup;
+  }
+  if (frontendServices.delivery !== undefined) {
+    backendServices.deliveries = frontendServices.delivery;
+  }
+  if (frontendServices.dineIn !== undefined) {
+    backendServices.dineIns = frontendServices.dineIn;
+  }
+  if (frontendServices.tableBookings !== undefined) {
+    backendServices.tableBookings = frontendServices.tableBookings;
+  }
+  
+  return backendServices;
+}
+
+// Helper: Transform backend format to frontend format
+function transformBackendToFrontend(backendServices) {
+  const frontendServices = {};
+  
+  // Map backend keys to frontend keys
+  if (backendServices.pickups !== undefined) {
+    frontendServices.pickup = backendServices.pickups;
+  }
+  if (backendServices.deliveries !== undefined) {
+    frontendServices.delivery = backendServices.deliveries;
+  }
+  if (backendServices.dineIns !== undefined) {
+    frontendServices.dineIn = backendServices.dineIns;
+  }
+  if (backendServices.tableBookings !== undefined) {
+    frontendServices.tableBookings = backendServices.tableBookings;
+  }
+  
+  return frontendServices;
+}
+
 // Service White-label Controllers
 export async function getServices(req, res) {
   try {
-    const services = await settingsService.getServiceSettings();
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const services = await settingsService.getServiceSettings(selector);
+    console.log('=== GET SERVICES DEBUG ===');
+    console.log('Backend services format:', JSON.stringify(services, null, 2));
+    
+    // Transform backend format to frontend format
+    const frontendServices = transformBackendToFrontend(services);
+    console.log('Transformed to frontend format:', JSON.stringify(frontendServices, null, 2));
+    
     res.status(200).json({
       success: true,
-      data: services,
+      data: frontendServices,
     });
   } catch (error) {
     console.error("Error fetching services:", error);
@@ -205,12 +272,25 @@ export async function getServices(req, res) {
 
 export async function updateServices(req, res) {
   try {
-    const services = req.body; // This should be the entire services object
-    const updated = await settingsService.updateServices(services);
+    const frontendServices = req.body; // Frontend format
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    console.log('=== UPDATE SERVICES DEBUG ===');
+    console.log('Received frontend services:', JSON.stringify(frontendServices, null, 2));
+    
+    // Transform frontend format to backend format
+    const backendServices = transformFrontendToBackend(frontendServices);
+    console.log('Transformed to backend format:', JSON.stringify(backendServices, null, 2));
+    
+    const updated = await settingsService.updateServices(backendServices, selector);
+    console.log('Updated restaurant services:', JSON.stringify(updated.services, null, 2));
+    
+    // Transform response back to frontend format
+    const responseData = transformBackendToFrontend(updated.services);
+    
     res.status(200).json({
       success: true,
       message: "Services updated successfully",
-      data: updated.services,
+      data: responseData,
     });
   } catch (error) {
     console.error("Error updating services:", error);
@@ -225,8 +305,9 @@ export async function toggleService(req, res) {
   try {
     const { service } = req.params;
     const { enabled } = req.body;
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
     
-    const updated = await settingsService.toggleService(service, enabled);
+    const updated = await settingsService.toggleService(service, enabled, selector);
     res.status(200).json({
       success: true,
       message: `Service ${service} ${enabled ? 'enabled' : 'disabled'} successfully`,
@@ -244,7 +325,8 @@ export async function toggleService(req, res) {
 // Payment White-label Controllers
 export async function getPaymentMethods(req, res) {
   try {
-    const paymentMethods = await settingsService.getPaymentSettings();
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const paymentMethods = await settingsService.getPaymentSettings(selector);
     res.status(200).json({
       success: true,
       data: paymentMethods,
@@ -261,7 +343,8 @@ export async function getPaymentMethods(req, res) {
 export async function addPaymentMethod(req, res) {
   try {
     const method = req.body;
-    const updated = await settingsService.addPaymentMethod(method);
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const updated = await settingsService.addPaymentMethod(method, selector);
     const paymentMethods = Array.isArray(updated) ? updated : (updated?.paymentMethods || updated);
     res.status(201).json({ success: true, message: "Payment method added successfully", data: paymentMethods });
   } catch (error) {
@@ -277,13 +360,16 @@ export async function updatePaymentMethod(req, res) {
   try {
     const { methodId } = req.params;
     const updates = req.body;
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
     
-    const updated = await settingsService.updatePaymentMethod(methodId, updates);
+    console.log(`[DEBUG] updatePaymentMethod - methodId: ${methodId}, selector:`, selector, `updates:`, updates);
+    
+    const updated = await settingsService.updatePaymentMethod(methodId, updates, selector);
     if (!updated) return res.status(404).json({ success: false, message: 'Payment method not found' });
 
     // updated may be the updated item, or the array; return updated item and current list
     const updatedItem = Array.isArray(updated) ? updated.find(i => String(i._id) === String(methodId)) : updated;
-    const restaurant = await restaurantService.getRestaurant();
+    const restaurant = await restaurantService.getRestaurant(selector);
 
     res.status(200).json({ success: true, message: 'Payment method updated successfully', data: { updatedItem, paymentMethods: restaurant.paymentMethods } });
   } catch (error) {
@@ -298,7 +384,8 @@ export async function updatePaymentMethod(req, res) {
 export async function removePaymentMethod(req, res) {
   try {
     const { methodId } = req.params;
-    const updated = await settingsService.removePaymentMethod(methodId);
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const updated = await settingsService.removePaymentMethod(methodId, selector);
     if (!updated) return res.status(404).json({ success: false, message: 'Payment method not found' });
 
     const paymentMethods = Array.isArray(updated) ? updated : (updated?.paymentMethods || updated);
@@ -316,12 +403,13 @@ export async function togglePaymentMethod(req, res) {
   try {
     const { methodId } = req.params;
     const { enabled } = req.body;
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
     
-    const updated = await settingsService.togglePaymentMethod(methodId, enabled);
+    const updated = await settingsService.togglePaymentMethod(methodId, enabled, selector);
     if (!updated) return res.status(404).json({ success: false, message: 'Payment method not found' });
 
     const updatedItem = Array.isArray(updated) ? updated.find(i => String(i._id) === String(methodId)) : updated;
-    const restaurant = await restaurantService.getRestaurant();
+    const restaurant = await restaurantService.getRestaurant(selector);
     res.status(200).json({ success: true, message: `Payment method ${enabled ? 'enabled' : 'disabled'} successfully`, data: { updatedItem, paymentMethods: restaurant.paymentMethods } });
   } catch (error) {
     console.error("Error toggling payment method:", error);
@@ -335,7 +423,8 @@ export async function togglePaymentMethod(req, res) {
 // Website White-label Controllers
 export async function getWebsiteDesign(req, res) {
   try {
-    const design = await settingsService.getWebsiteDesign();
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const design = await settingsService.getWebsiteDesign(selector);
     res.status(200).json({
       success: true,
       data: design,
@@ -352,7 +441,8 @@ export async function getWebsiteDesign(req, res) {
 export async function updateWebsiteDesign(req, res) {
   try {
     const design = req.body;
-    const updated = await settingsService.updateWebsiteDesign(design);
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const updated = await settingsService.updateWebsiteDesign(design, selector);
     res.status(200).json({
       success: true,
       message: "Website design updated successfully",
@@ -370,7 +460,8 @@ export async function updateWebsiteDesign(req, res) {
 export async function updateWebsiteColors(req, res) {
   try {
     const { colors } = req.body;
-    const updated = await settingsService.updateWebsiteColors(colors);
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const updated = await settingsService.updateWebsiteColors(colors, selector);
     res.status(200).json({
       success: true,
       message: "Website colors updated successfully",
@@ -388,7 +479,8 @@ export async function updateWebsiteColors(req, res) {
 // Integration White-label Controllers
 export async function getIntegrations(req, res) {
   try {
-    const integrations = await settingsService.getIntegrations();
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const integrations = await settingsService.getIntegrations(selector);
     res.status(200).json({
       success: true,
       data: integrations,
@@ -406,8 +498,9 @@ export async function updateIntegration(req, res) {
   try {
     const { integration } = req.params;
     const settings = req.body;
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
     
-    const updated = await settingsService.updateIntegration(integration, settings);
+    const updated = await settingsService.updateIntegration(integration, settings, selector);
     res.status(200).json({
       success: true,
       message: `${integration} integration updated successfully`,
@@ -426,8 +519,9 @@ export async function toggleIntegration(req, res) {
   try {
     const { integration } = req.params;
     const { enabled } = req.body;
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
     
-    const updated = await settingsService.toggleIntegration(integration, enabled);
+    const updated = await settingsService.toggleIntegration(integration, enabled, selector);
     res.status(200).json({
       success: true,
       message: `${integration} integration ${enabled ? 'enabled' : 'disabled'} successfully`,
@@ -445,7 +539,8 @@ export async function toggleIntegration(req, res) {
 // Content Controllers
 export async function getFAQs(req, res) {
   try {
-    const faqs = await settingsService.getFAQs();
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const faqs = await settingsService.getFAQs(selector);
     res.status(200).json({
       success: true,
       data: faqs,
@@ -462,7 +557,8 @@ export async function getFAQs(req, res) {
 export async function updateFAQs(req, res) {
   try {
     const { faqs } = req.body;
-    const updated = await settingsService.updateFAQs(faqs);
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const updated = await settingsService.updateFAQs(faqs, selector);
     res.status(200).json({
       success: true,
       message: "FAQs updated successfully",
@@ -480,7 +576,8 @@ export async function updateFAQs(req, res) {
 export async function addFAQ(req, res) {
   try {
     const faq = req.body;
-    const updated = await settingsService.addFAQ(faq);
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const updated = await settingsService.addFAQ(faq, selector);
     // service returns updated array
     const faqs = Array.isArray(updated) ? updated : (updated?.faqs || updated);
     const added = faqs[faqs.length - 1] || null;
@@ -498,8 +595,9 @@ export async function updateFAQ(req, res) {
   try {
     const { faqId } = req.params;
     const faq = req.body;
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
     
-    const updated = await settingsService.updateFAQ(faqId, faq);
+    const updated = await settingsService.updateFAQ(faqId, faq, selector);
     // updateFAQ returns the updated item
     const updatedItem = updated && updated._id ? updated : null;
     res.status(200).json({ success: true, message: 'FAQ updated successfully', data: updatedItem });
@@ -515,8 +613,9 @@ export async function updateFAQ(req, res) {
 export async function removeFAQ(req, res) {
   try {
     const { faqId } = req.params;
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
     
-    const updated = await settingsService.removeFAQ(faqId);
+    const updated = await settingsService.removeFAQ(faqId, selector);
     const faqs = Array.isArray(updated) ? updated : (updated?.faqs || updated);
     res.status(200).json({ success: true, message: 'FAQ removed successfully', data: faqs });
   } catch (error) {
@@ -530,7 +629,8 @@ export async function removeFAQ(req, res) {
 
 export async function getPolicies(req, res) {
   try {
-    const policies = await settingsService.getPolicies();
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const policies = await settingsService.getPolicies(selector);
     res.status(200).json({
       success: true,
       data: policies,
@@ -547,7 +647,8 @@ export async function getPolicies(req, res) {
 export async function updatePolicies(req, res) {
   try {
     const policies = req.body;
-    const updated = await settingsService.updatePolicies(policies);
+    const selector = req.user?.restaurantId ? { restaurantId: req.user.restaurantId } : {};
+    const updated = await settingsService.updatePolicies(policies, selector);
     res.status(200).json({
       success: true,
       message: "Policies updated successfully",

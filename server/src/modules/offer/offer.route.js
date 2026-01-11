@@ -14,7 +14,7 @@ const router = express.Router();
 
 // Public routes
 router.get("/offers", getActiveOffers);
-router.get("/offers/:id", getOfferById);
+router.get("/offers/:id", getOfferById); 
 
 // Admin routes
 router.post(

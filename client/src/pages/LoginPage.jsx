@@ -194,29 +194,55 @@ export default function LoginPage() {
         prompt: "select_account",
       });
 
-      console.log("Initiating Google Sign-In popup...");
+      console.log("Step 1: Initiating Google Sign-In popup...");
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
-      console.log("Firebase user authenticated:", {
+      console.log("Step 2: Firebase user authenticated:", {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
-        displayName: firebaseUser.displayName
+        displayName: firebaseUser.displayName,
+        metadata: firebaseUser.metadata
+      });
+
+      // Check the credential from Google result
+      console.log("Step 3: Checking credential from result:", {
+        hasCredential: !!result.credential,
+        credentialType: result.credential?.constructor?.name
       });
 
       // Wait a moment for the token to be fully issued
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      console.log("Step 4: Getting ID token from user object...");
       const idToken = await firebaseUser.getIdToken(true); // Force token refresh
-      console.log("Firebase ID token obtained", {
+
+      // Decode the token to inspect it
+      const tokenParts = idToken.split('.');
+      let decodedHeader = {}, decodedPayload = {};
+      try {
+        if (tokenParts.length === 3) {
+          decodedHeader = JSON.parse(Buffer.from(tokenParts[0], 'base64').toString());
+          decodedPayload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        }
+      } catch (e) {
+        console.log("Could not decode token parts");
+      }
+
+      console.log("Step 5: Firebase ID token obtained", {
         length: idToken.length,
-        prefix: idToken.substring(0, 30)
+        prefix: idToken.substring(0, 30),
+        partsCount: tokenParts.length,
+        header: decodedHeader,
+        payload: decodedPayload,
+        hasKid: !!decodedHeader.kid
       });
 
+      console.log("Step 6: Sending token to backend...");
       const resultAction = await dispatch(firebaseLogin(idToken));
 
       if (firebaseLogin.fulfilled.match(resultAction)) {
         const user = resultAction.payload?.user || resultAction.payload;
-        console.log("Firebase login successful, user:", user.email);
+        console.log("Step 7: Firebase login successful, user:", user.email);
 
         if (!user.name) {
           setShowNameInput(true);
@@ -225,11 +251,11 @@ export default function LoginPage() {
 
         redirectUser(user);
       } else {
-        console.error("Firebase login rejected:", resultAction.payload);
+        console.error("Step 7: Firebase login rejected:", resultAction.payload);
         setErrors({ google: resultAction.payload || "Login failed. Please try again." });
       }
     } catch (err) {
-      console.error("Google login error:", err.message, err.code);
+      console.error("Google login error at step:", err.message, err.code);
       setErrors({ google: err.message || "Google sign-in failed. Please try again." });
     } finally {
       setIsLoading(false);
@@ -295,12 +321,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors flex items-center justify-center p-4 lg:p-8">
-      <div className="w-full  max-w-7xl flex flex-col items-center lg:flex-row gap-12 lg:gap-16 ">
+      <div className="w-full max-w-7xl flex flex-col items-center lg:flex-row gap-12 lg:gap-16 ">
         {/* Hidden reCAPTCHA container */}
         <div id="recaptcha-container" className="block"></div>
 
         {/* Mobile & Desktop: Login Form */}
-        <div className="max-w-5xl order-1 w-100">
+        <div className=" w-full order-1 max-w-120">
           <div className="mb-6">
             <button
               onClick={() => navigate("/")}
@@ -332,7 +358,7 @@ export default function LoginPage() {
               {error && (
                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <p className="text-red-600 dark:text-red-400 text-sm text-center font-medium">
-                    {t("auth.login.error_prefix")} 
+                    {t("auth.login.error_prefix")}
                   </p>
                 </div>
               )}
@@ -360,14 +386,14 @@ export default function LoginPage() {
                         placeholder="01012345678"
                       />
                     </div>
-                   
+
                     {errors.phoneNumber && touched.phoneNumber && (
                       <p className="mt-1 text-xs text-red-500 dark:text-red-400">
                         {t("auth.validation.phoneNumber_invalid") || errors.phoneNumber}
                       </p>
                     )}
                   </div>
-                    
+
                   <button
                     type="submit"
                     disabled={isLoading}
@@ -377,19 +403,19 @@ export default function LoginPage() {
                   </button>
                   <div className="relative my-10"><div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200 dark:border-gray-700">
-                      </div></div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">{t("auth.login.continue_with")}</span>
-                        </div>
-                        </div>
-                   <button
-                      type="button"
-                      onClick={handleGoogleLogin}
-                      disabled={isLoading}
-                      className="w-full text-white bg-green-600  py-2.5 rounded-lg flex items-center justify-center gap-3 hover:bg-green-700 transition"
-                    >
-                      {t("auth.login.continue_with_google")}
-                    </button>
+                    </div></div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">{t("auth.login.continue_with")}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                    className="w-full bg-green-600  py-2.5 rounded-lg flex items-center justify-center gap-3 hover:bg-green-700 transition"
+                  >
+                    {t("auth.login.continue_with_google")}
+                  </button>
                 </form>
               )}
               {showOtpInput && (
@@ -455,8 +481,8 @@ export default function LoginPage() {
                         onBlur={handleNameBlur}
                         onKeyPress={handleKeyPress}
                         className={`w-full ${isRtl ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 text-sm bg-gray-50 dark:bg-gray-700/50 border ${errors.name && touched.name
-                            ? "border-red-500"
-                            : "border-gray-200 dark:border-gray-600"
+                          ? "border-red-500"
+                          : "border-gray-200 dark:border-gray-600"
                           } rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500`}
                         placeholder="Enter your name"
                       />

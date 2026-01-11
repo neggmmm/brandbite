@@ -45,12 +45,7 @@ export default function SettingsLayout({
   }, [location.pathname, propActiveSection]);
 
   const sections = [
-    {
-      id: 'system',
-      label: i18n.language === 'ar' ? 'الإعدادات العامة' : 'System Settings',
-      icon: Cog,
-      color: 'bg-blue-500',
-    },
+   ,
     {
       id: 'services',
       label: i18n.language === 'ar' ? 'إعدادات الخدمات' : 'Services',

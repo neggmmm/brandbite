@@ -5,9 +5,12 @@ import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import Button from "../../components/ui/button/Button";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import OrdersTab from "./components/OrdersTab";
 import DirectOrderTab from "./components/DirectOrderTab";
 import api from "../../api/axios";
+import { useSettings } from '../../context/SettingContext';
 import { useRole } from "../../hooks/useRole";
 import StaffNavbar from "../../components/StaffNavbar";
 import { useTranslation } from "react-i18next";
@@ -23,13 +26,29 @@ export default function CashierDashboard() {
     activeOrders: 0,
     pendingPayments: 0,
   });
+  const [todayBookingsCount, setTodayBookingsCount] = useState(0);
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch statistics
   useEffect(() => {
     fetchStats();
+    fetchTodayBookingsCount();
   }, []);
+
+  const fetchTodayBookingsCount = async () => {
+    try {
+      const rid = settings?.restaurantId || settings?._id || null;
+      const q = rid ? `?restaurantId=${rid}` : '';
+      const res = await api.get(`/api/bookings/today${q}`);
+      const list = res.data?.data ?? res.data ?? [];
+      setTodayBookingsCount(Array.isArray(list) ? list.length : 0);
+    } catch (err) {
+      console.warn('Failed to fetch today bookings count', err?.response?.data || err.message || err);
+      setTodayBookingsCount(0);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -108,23 +127,38 @@ export default function CashierDashboard() {
             </div>
           </ComponentCard>
 
-          <ComponentCard className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/10 dark:to-green-900/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-600 dark:text-green-400">{t("admin.total_revenue")}</p>
-                <p className="text-2xl font-bold text-green-800 dark:text-green-300">
-                  ${stats.totalRevenue.toFixed(2)}
-                </p>
+          <div className="col-span-1">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/10 dark:to-green-900/20 rounded-2xl p-6 shadow-lg">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-green-600 dark:text-green-400">Tables</p>
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-white">Floor Plan & Table Management</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Open the full table management panel to manage reservations and floor status.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { window.location.href = '/tables'; }}
+                    className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow hover:opacity-90"
+                  >
+                    Manage
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <DollarSign className="h-8 w-8 text-green-500 dark:text-green-400 opacity-50" />
             </div>
-          </ComponentCard>
+          </div>
 
           <ComponentCard className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/10 dark:to-orange-900/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-orange-600 dark:text-orange-400">{t("active_orders")}</p>
-                <p className="text-2xl font-bold text-orange-800 dark:text-orange-300">{stats.activeOrders}</p>
+                <p className="text-sm text-orange-600 dark:text-orange-400">Today's Bookings</p>
+                <button
+                  onClick={() => window.location.href = '/cashier/bookings'}
+                  className="text-2xl font-bold text-orange-800 dark:text-orange-300"
+                  aria-label={`Today's bookings: ${todayBookingsCount}`}
+                >
+                  {todayBookingsCount}
+                </button>
               </div>
               <Clock className="h-8 w-8 text-orange-500 dark:text-orange-400 opacity-50" />
             </div>
