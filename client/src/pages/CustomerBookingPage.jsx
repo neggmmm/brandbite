@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Check, AlertCircle, Users, MapPin } from "lucide-react";
+import { Check, AlertCircle, Users, MapPin, Clock, LogIn } from "lucide-react";
 import { BookingModal, BookingCard, Alert, BookingStatusBadge } from "../components/tableBooking/BookingComponents";
 import { AvailableTablesList } from "../components/tableBooking/TableComponents";
 import { useBookingAPI, useTableAPI } from "../hooks/useBookingAndTableAPI";
+import { useNavigate } from "react-router-dom";
+import socketService from "../services/socketService";
+import { updateBookingFromSocket, addBookingFromSocket } from "../redux/slices/bookingSlice";
 
 /**
  * Enhanced Customer Booking Page
@@ -18,6 +21,7 @@ import { useBookingAPI, useTableAPI } from "../hooks/useBookingAndTableAPI";
  */
 export const CustomerBookingPage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -44,18 +48,52 @@ export const CustomerBookingPage = () => {
   // Get customer bookings from Redux
   const { customerBookings = [] } = useSelector(state => state.booking);
   const user = useSelector(state => state.auth?.user);
+  const isAuthenticated = useSelector(state => state.auth?.isAuthenticated);
   const restaurantId = user?.restaurantId || user?._id;
+  // Try multiple email field names: email, userEmail, emailAddress, firebaseUid, or use phone
+  const customerEmail = user?.email || user?.userEmail || user?.emailAddress || user?.firebaseUid || user?.phone || user?.phoneNumber;
 
   // Load customer's bookings and ALL tables on mount
   useEffect(() => {
-    fetchCustomerBookings();
-    if (restaurantId) {
+    // Debug: log user object to see what fields are available
+    if (user) {
+      console.log('👤 User object:', user);
+      console.log('📧 Email field:', customerEmail);
+    }
+    
+    if (isAuthenticated && customerEmail && restaurantId) {
+      // Fetch bookings for the logged-in user
+      fetchCustomerBookings(restaurantId, customerEmail);
       // Fetch all tables for display grid
       fetchAllTables(restaurantId).catch(err => 
         console.warn('Failed to fetch tables:', err)
       );
+
+      // Setup WebSocket listeners for real-time updates
+      const handleBookingUpdated = (updatedBooking) => {
+        // Only update if it's for the logged-in customer
+        if (updatedBooking.customerEmail === customerEmail) {
+          dispatch(updateBookingFromSocket(updatedBooking));
+        }
+      };
+
+      const handleBookingNew = (newBooking) => {
+        // Only add if it's for the logged-in customer
+        if (newBooking.customerEmail === customerEmail) {
+          dispatch(addBookingFromSocket(newBooking));
+        }
+      };
+
+      socketService.on('booking:updated', handleBookingUpdated);
+      socketService.on('booking:new', handleBookingNew);
+
+      // Cleanup listeners on unmount
+      return () => {
+        socketService.off('booking:updated', handleBookingUpdated);
+        socketService.off('booking:new', handleBookingNew);
+      };
     }
-  }, [restaurantId]);
+  }, [customerEmail, restaurantId]);
 
   // Check availability when date/time/guests change
   useEffect(() => {
@@ -97,20 +135,33 @@ export const CustomerBookingPage = () => {
         return;
       }
 
+      // Use form email as primary, fall back to logged-in user email if available
+      const emailToUse = formData.customerEmail || customerEmail;
+      
+      if (!emailToUse) {
+        setShowAlert({
+          type: "error",
+          title: "Error",
+          message: "Email is required for booking",
+        });
+        return;
+      }
+
       const bookingData = {
         restaurantId: restaurantId,
         date: selectedDate,
         startTime: selectedTime, // Backend expects startTime, not time
         guests: selectedGuests,
         customerName: formData.customerName,
-        customerEmail: formData.customerEmail,
+        customerEmail: emailToUse, // Use form email or logged-in user email
         customerPhone: formData.customerPhone || "", // Include even if empty
         notes: formData.notes || "",
         tableId: selectedTableId || undefined, // Don't include if not selected
         source: "online",
       };
 
-      await createBooking(bookingData);
+      const newBooking = await createBooking(bookingData);
+      
       setShowAlert({
         type: "success",
         title: "Success",
@@ -123,8 +174,10 @@ export const CustomerBookingPage = () => {
       setSelectedTableId(null);
       setAvailableTables([]);
       
-      // Refresh bookings
-      fetchCustomerBookings();
+      // Refresh bookings for current user
+      if (emailToUse && restaurantId) {
+        await fetchCustomerBookings(restaurantId, emailToUse);
+      }
     } catch (error) {
       setShowAlert({
         type: "error",
@@ -137,13 +190,30 @@ export const CustomerBookingPage = () => {
   const handleCancelBooking = async (bookingId) => {
     if (window.confirm("Are you sure you want to cancel this booking?")) {
       try {
-        await cancelBooking(bookingId);
+        // Find the booking to get its email
+        const booking = customerBookings.find(b => b._id === bookingId);
+        const emailToUse = booking?.customerEmail || customerEmail;
+        
+        if (!emailToUse) {
+          setShowAlert({
+            type: "error",
+            title: "Error",
+            message: "Could not determine booking email",
+          });
+          return;
+        }
+        
+        await cancelBooking({ bookingId, customerEmail: emailToUse });
         setShowAlert({
           type: "success",
           title: "Success",
           message: "Booking cancelled successfully",
         });
-        fetchCustomerBookings();
+        
+        // Refresh bookings for current user
+        if (emailToUse && restaurantId) {
+          await fetchCustomerBookings(restaurantId, emailToUse);
+        }
       } catch (error) {
         setShowAlert({
           type: "error",
@@ -386,7 +456,20 @@ export const CustomerBookingPage = () => {
                 My Bookings ({customerBookings.length})
               </h3>
 
-              {customerBookings.length === 0 ? (
+              {!isAuthenticated ? (
+                <div className="text-center py-12">
+                  <LogIn className="w-12 h-12 text-blue-500 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    Please log in to view your bookings
+                  </p>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+                  >
+                    Go to Login
+                  </button>
+                </div>
+              ) : customerBookings.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-500 dark:text-gray-400 mb-4">
                     You don't have any bookings yet
@@ -403,25 +486,43 @@ export const CustomerBookingPage = () => {
                   {customerBookings.map(booking => (
                     <div
                       key={booking._id}
-                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
-                            {booking.date} at {booking.time}
-                          </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {booking.guests} {booking.guests === 1 ? "guest" : "guests"}
-                            {booking.tableName && ` • Table: ${booking.tableName}`}
-                          </p>
-                          <div className="mt-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          {/* Booking Date & Time */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <Clock className="w-4 h-4 text-gray-500" />
+                            <h4 className="font-semibold text-gray-900 dark:text-white">
+                              {booking.date} at {booking.startTime || booking.time}
+                            </h4>
+                          </div>
+
+                          {/* Guests & Table Info */}
+                          <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              {booking.guests} {booking.guests === 1 ? "guest" : "guests"}
+                            </span>
+                            {booking.tableName && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-4 h-4" />
+                                Table: {booking.tableName}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Status Badge */}
+                          <div>
                             <BookingStatusBadge status={booking.status} />
                           </div>
                         </div>
+
+                        {/* Cancel Button */}
                         {["pending", "confirmed"].includes(booking.status) && (
                           <button
                             onClick={() => handleCancelBooking(booking._id)}
-                            className="px-3 py-1 text-sm text-red-600 hover:text-red-700 font-medium"
+                            className="px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded transition-colors whitespace-nowrap"
                           >
                             Cancel
                           </button>

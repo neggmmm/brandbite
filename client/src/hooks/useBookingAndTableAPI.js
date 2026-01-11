@@ -78,6 +78,9 @@ export const useBookingAPI = () => {
 
   // Fetch customer's own bookings
   const fetchCustomer = useCallback(async (restaurantId, customerEmail) => {
+    if (!restaurantId || !customerEmail) {
+      throw new Error('Restaurant ID and customer email are required');
+    }
     const result = await dispatch(fetchCustomerBookingsThunk({ restaurantId, customerEmail }));
     if (result.type === fetchCustomerBookingsThunk.fulfilled.type) {
       return result.payload;

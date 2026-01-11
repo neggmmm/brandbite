@@ -193,3 +193,24 @@ export const setupRestaurantListeners = (restaurantId, dispatch) => {
 export const isSocketConnected = () => {
   return socket && socket.connected;
 };
+
+/**
+ * Default export: Socket service wrapper
+ */
+const socketService = {
+  initialize: initializeSocket,
+  get: getSocket,
+  disconnect: disconnectSocket,
+  emit: emitSocketEvent,
+  join: joinRoom,
+  leave: leaveRoom,
+  setupRoleListeners,
+  setupRestaurantListeners,
+  isConnected: isSocketConnected,
+  // Direct socket access for advanced usage
+  getSocket: getSocket,
+  on: (event, callback) => socket?.on(event, callback),
+  off: (event, callback) => socket?.off(event, callback),
+};
+
+export default socketService;

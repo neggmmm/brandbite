@@ -218,11 +218,13 @@ const bookingSlice = createSlice({
     // Add new booking from WebSocket
     addBookingFromSocket: (state, action) => {
       const newBooking = action.payload;
+      // Add to customerBookings if not already there
+      if (!state.customerBookings.find(b => b._id === newBooking._id)) {
+        state.customerBookings.unshift(newBooking);
+      }
+      // Also add to general bookings list
       if (!state.bookings.find(b => b._id === newBooking._id)) {
         state.bookings.unshift(newBooking);
-      }
-      if (!state.todayBookings.find(b => b._id === newBooking._id) && newBooking.status === "pending") {
-        state.todayBookings.unshift(newBooking);
       }
     },
     
