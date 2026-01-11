@@ -81,10 +81,15 @@ export const useBookingAPI = () => {
     if (!restaurantId || !customerEmail) {
       throw new Error('Restaurant ID and customer email are required');
     }
+    console.log('🎣 [useBookingAPI.fetchCustomer] Calling thunk with:', { restaurantId, customerEmail });
     const result = await dispatch(fetchCustomerBookingsThunk({ restaurantId, customerEmail }));
+    console.log('🎣 [useBookingAPI.fetchCustomer] Thunk returned action type:', result.type);
+    console.log('🎣 [useBookingAPI.fetchCustomer] Payload:', result.payload);
     if (result.type === fetchCustomerBookingsThunk.fulfilled.type) {
+      console.log('✅ [useBookingAPI.fetchCustomer] Success, returning:', result.payload);
       return result.payload;
     } else {
+      console.error('❌ [useBookingAPI.fetchCustomer] Failed with payload:', result.payload);
       throw new Error(result.payload || 'Failed to fetch customer bookings');
     }
   }, [dispatch]);

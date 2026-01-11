@@ -30,6 +30,7 @@ export const CustomerBookingPage = () => {
   const [availableTables, setAvailableTables] = useState([]);
   const [allTables, setAllTables] = useState([]); // All tables for grid display
   const [showAlert, setShowAlert] = useState(null);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
 
   const {
     create: createBooking,
@@ -46,7 +47,7 @@ export const CustomerBookingPage = () => {
   } = useTableAPI();
 
   // Get customer bookings from Redux
-  const { customerBookings = [] } = useSelector(state => state.booking);
+  const { customerBookings = [], loading: reduxLoading } = useSelector(state => state.booking);
   const user = useSelector(state => state.auth?.user);
   const isAuthenticated = useSelector(state => state.auth?.isAuthenticated);
   const restaurantId = user?.restaurantId || user?._id;
@@ -62,15 +63,37 @@ export const CustomerBookingPage = () => {
     }
     
     if (isAuthenticated && customerEmail && restaurantId) {
+      console.log('🔄 Fetching bookings for:', { customerEmail, restaurantId });
+      console.log('📌 [fetchCustomerBookings] Dispatching thunk with params:', { restaurantId, customerEmail });
       // Fetch bookings for the logged-in user
-      fetchCustomerBookings(restaurantId, customerEmail);
-      // Fetch all tables for display grid
+      fetchCustomerBookings(restaurantId, customerEmail).then(
+        (result) => {
+          console.log('✅ [fetchCustomerBookings] Success - received data:', result);
+        },
+        (error) => {
+          console.error('❌ [fetchCustomerBookings] Error:', error);
+        }
+      );
+    }
+  }, [isAuthenticated, customerEmail, restaurantId]);
+
+  // Fetch all tables on mount
+  useEffect(() => {
+    if (restaurantId) {
       fetchAllTables(restaurantId).catch(err => 
         console.warn('Failed to fetch tables:', err)
       );
+    }
+  }, [restaurantId]);
+
+  // Setup WebSocket listeners (separate effect to avoid re-running listeners)
+  useEffect(() => {
+    if (isAuthenticated && customerEmail) {
+      console.log('🔌 Setting up WebSocket listeners for:', customerEmail);
 
       // Setup WebSocket listeners for real-time updates
       const handleBookingUpdated = (updatedBooking) => {
+        console.log('📝 Booking updated event received:', updatedBooking);
         // Only update if it's for the logged-in customer
         if (updatedBooking.customerEmail === customerEmail) {
           dispatch(updateBookingFromSocket(updatedBooking));
@@ -78,6 +101,7 @@ export const CustomerBookingPage = () => {
       };
 
       const handleBookingNew = (newBooking) => {
+        console.log('📌 New booking event received:', newBooking);
         // Only add if it's for the logged-in customer
         if (newBooking.customerEmail === customerEmail) {
           dispatch(addBookingFromSocket(newBooking));
@@ -93,7 +117,21 @@ export const CustomerBookingPage = () => {
         socketService.off('booking:new', handleBookingNew);
       };
     }
-  }, [customerEmail, restaurantId]);
+  }, [isAuthenticated, customerEmail, dispatch]);
+
+  // Refetch bookings when page becomes visible (tab focus)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isAuthenticated && customerEmail && restaurantId) {
+        console.log('👁️ Page visible, refetching bookings...');
+        console.log('📌 [visibility refetch] Dispatching fetchCustomerBookings with params:', { restaurantId, customerEmail });
+        fetchCustomerBookings(restaurantId, customerEmail);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isAuthenticated, customerEmail, restaurantId]);
 
   // Check availability when date/time/guests change
   useEffect(() => {
@@ -176,6 +214,7 @@ export const CustomerBookingPage = () => {
       
       // Refresh bookings for current user
       if (emailToUse && restaurantId) {
+        console.log('📌 [post-create] Dispatching fetchCustomerBookings with params:', { restaurantId, customerEmail: emailToUse });
         await fetchCustomerBookings(restaurantId, emailToUse);
       }
     } catch (error) {
@@ -212,6 +251,7 @@ export const CustomerBookingPage = () => {
         
         // Refresh bookings for current user
         if (emailToUse && restaurantId) {
+          console.log('📌 [post-cancel] Dispatching fetchCustomerBookings with params:', { restaurantId, customerEmail: emailToUse });
           await fetchCustomerBookings(restaurantId, emailToUse);
         }
       } catch (error) {
@@ -469,6 +509,13 @@ export const CustomerBookingPage = () => {
                     Go to Login
                   </button>
                 </div>
+              ) : reduxLoading ? (
+                <div className="text-center py-12">
+                  <div className="inline-block">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 mt-4">Loading your bookings...</p>
+                </div>
               ) : customerBookings.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-500 dark:text-gray-400 mb-4">
@@ -542,6 +589,9 @@ export const CustomerBookingPage = () => {
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleBookingSubmit}
           loading={bookingLoading}
+          initialData={{
+            customerEmail: customerEmail || "",
+          }}
         />
       </div>
     </div>

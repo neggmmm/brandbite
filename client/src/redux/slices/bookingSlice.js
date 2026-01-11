@@ -1,6 +1,28 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/axios";
 
+// Local storage helpers for customer bookings persistence
+const CUSTOMER_BOOKINGS_KEY = "customerBookings";
+function loadCustomerBookings() {
+  try {
+    const raw = localStorage.getItem(CUSTOMER_BOOKINGS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.warn("Failed to load customer bookings from localStorage", e);
+    return [];
+  }
+}
+
+function saveCustomerBookings(bookings) {
+  try {
+    localStorage.setItem(CUSTOMER_BOOKINGS_KEY, JSON.stringify(bookings || []));
+  } catch (e) {
+    console.warn("Failed to save customer bookings to localStorage", e);
+  }
+}
+
 // Async thunks for booking API calls
 
 export const createBooking = createAsyncThunk(
@@ -57,11 +79,18 @@ export const fetchCustomerBookings = createAsyncThunk(
   "booking/fetchCustomerBookings",
   async ({ restaurantId, customerEmail }, { rejectWithValue }) => {
     try {
+      console.log('🔗 [fetchCustomerBookings thunk] Calling API with:', { restaurantId, customerEmail });
       const response = await api.get(
         `/api/bookings/customer?restaurantId=${restaurantId}&customerEmail=${customerEmail}`
       );
-      return response.data?.data || response.data || [];
+      console.log('🔗 [fetchCustomerBookings thunk] API response status:', response.status);
+      console.log('🔗 [fetchCustomerBookings thunk] Full response:', response);
+      const data = response.data?.data || response.data || [];
+      console.log('🔗 [fetchCustomerBookings thunk] Extracted data:', data, '| Length:', Array.isArray(data) ? data.length : 'not array');
+      return data;
     } catch (error) {
+      console.error('🔗 [fetchCustomerBookings thunk] Error occurred:', error);
+      console.error('🔗 [fetchCustomerBookings thunk] Error message:', error.message);
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
@@ -173,7 +202,7 @@ const initialState = {
   bookings: [],
   todayBookings: [],
   upcomingBookings: [],
-  customerBookings: [],
+  customerBookings: loadCustomerBookings(),
   
   // Detail
   selectedBooking: null,
@@ -213,6 +242,12 @@ const bookingSlice = createSlice({
       if (state.selectedBooking?._id === updatedBooking._id) {
         state.selectedBooking = updatedBooking;
       }
+      // persist customer bookings after updates
+      try {
+        saveCustomerBookings(state.customerBookings);
+      } catch (e) {
+        // no-op (save helper already logs)
+      }
     },
     
     // Add new booking from WebSocket
@@ -225,6 +260,12 @@ const bookingSlice = createSlice({
       // Also add to general bookings list
       if (!state.bookings.find(b => b._id === newBooking._id)) {
         state.bookings.unshift(newBooking);
+      }
+      // persist customer bookings
+      try {
+        saveCustomerBookings(state.customerBookings);
+      } catch (e) {
+        // no-op
       }
     },
     
@@ -253,6 +294,8 @@ const bookingSlice = createSlice({
         state.success = true;
         state.bookings.unshift(action.payload);
         state.customerBookings.unshift(action.payload);
+        // persist customer bookings
+        saveCustomerBookings(state.customerBookings);
       })
       .addCase(createBooking.rejected, (state, action) => {
         state.loading = false;
@@ -308,7 +351,19 @@ const bookingSlice = createSlice({
       })
       .addCase(fetchCustomerBookings.fulfilled, (state, action) => {
         state.loading = false;
-        state.customerBookings = action.payload;
+        const fetched = Array.isArray(action.payload) ? action.payload : [];
+        // If server returned empty but we already have persisted bookings, avoid overwriting
+        if (fetched.length === 0 && state.customerBookings && state.customerBookings.length > 0) {
+          // keep existing persisted bookings
+        } else {
+          state.customerBookings = fetched;
+          // persist fetched customer bookings
+          try {
+            saveCustomerBookings(state.customerBookings);
+          } catch (e) {
+            // no-op
+          }
+        }
       })
       .addCase(fetchCustomerBookings.rejected, (state, action) => {
         state.loading = false;
@@ -444,6 +499,8 @@ const bookingSlice = createSlice({
         if (state.selectedBooking?._id === updated._id) {
           state.selectedBooking = updated;
         }
+        // persist customer bookings after cancel
+        saveCustomerBookings(state.customerBookings);
       })
       .addCase(cancelBooking.rejected, (state, action) => {
         state.loading = false;

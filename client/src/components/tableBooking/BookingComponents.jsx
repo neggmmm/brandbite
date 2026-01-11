@@ -4,16 +4,31 @@ import { X, AlertCircle, CheckCircle, Clock, Users, MapPin } from "lucide-react"
 /**
  * Booking Modal - Used by customers to create bookings
  */
-export const BookingModal = ({ isOpen, onClose, onSubmit, loading = false }) => {
-  const [form, setForm] = useState({
-    date: "",
-    startTime: "",
-    guests: 1,
-    customerName: "",
-    customerEmail: "",
-    customerPhone: "",
-    notes: "",
+export const BookingModal = ({ isOpen, onClose, onSubmit, loading = false, initialData = {} }) => {
+  const [form, setForm] = React.useState({
+    date: initialData.date || "",
+    startTime: initialData.startTime || "",
+    guests: initialData.guests || 1,
+    customerName: initialData.customerName || "",
+    customerEmail: initialData.customerEmail || "",
+    customerPhone: initialData.customerPhone || "",
+    notes: initialData.notes || "",
   });
+
+  // Update form when initialData changes and modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setForm({
+        date: initialData.date || "",
+        startTime: initialData.startTime || "",
+        guests: initialData.guests || 1,
+        customerName: initialData.customerName || "",
+        customerEmail: initialData.customerEmail || "",
+        customerPhone: initialData.customerPhone || "",
+        notes: initialData.notes || "",
+      });
+    }
+  }, [isOpen, initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
