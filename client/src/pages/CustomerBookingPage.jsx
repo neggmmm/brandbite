@@ -63,15 +63,15 @@ export const CustomerBookingPage = () => {
     }
     
     if (isAuthenticated && customerEmail && restaurantId) {
-      console.log('🔄 Fetching bookings for:', { customerEmail, restaurantId });
-      console.log('📌 [fetchCustomerBookings] Dispatching thunk with params:', { restaurantId, customerEmail });
+      console.log(' Fetching bookings for:', { customerEmail, restaurantId });
+      console.log(' [fetchCustomerBookings] Dispatching thunk with params:', { restaurantId, customerEmail });
       // Fetch bookings for the logged-in user
       fetchCustomerBookings(restaurantId, customerEmail).then(
         (result) => {
-          console.log('✅ [fetchCustomerBookings] Success - received data:', result);
+          console.log(' [fetchCustomerBookings] Success - received data:', result);
         },
         (error) => {
-          console.error('❌ [fetchCustomerBookings] Error:', error);
+          console.error(' [fetchCustomerBookings] Error:', error);
         }
       );
     }

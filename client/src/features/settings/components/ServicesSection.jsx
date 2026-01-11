@@ -164,23 +164,7 @@ export default function ServicesSection({
         </div>
       </div>
 
-      {/* Table Booking Service Info */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4 sm:p-6">
-        <div className="flex gap-4">
-          <div className="flex-shrink-0 text-2xl">📅</div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-400 mb-2">Table Booking Service</h3>
-            <p className="text-sm text-blue-800 dark:text-blue-300 mb-3">
-              Table booking is automatically enabled as a core service. Configure booking options in the Table Booking tab.
-            </p>
-            <div className="text-xs text-blue-700 dark:text-blue-400 bg-white dark:bg-blue-900/30 p-2 rounded">
-              ✓ Customers can see booking availability<br/>
-              ✓ Real-time reservation system<br/>
-              ✓ SMS/Email confirmations
-            </div>
-          </div>
-        </div>
-      </div>
+     
     </section>
   );
 }

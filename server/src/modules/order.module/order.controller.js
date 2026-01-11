@@ -391,10 +391,14 @@ export const getDailyStats = async (req, res) => {
 };
 export const reorderController = async (req, res) => {
   try {
-    const userId = req.user.id; // from auth middleware
+    const userId = req.user?.id || req.user?._id; // from auth middleware
     const { orderId } = req.params;
 
-    const newOrder = await OrderService.reorderPreviousOrder(orderId, userId);
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const newOrder = await orderService.reorderPreviousOrder(orderId, userId);
 
     res.status(201).json({
       message: "Order placed successfully",

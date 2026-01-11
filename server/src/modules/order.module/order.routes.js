@@ -40,7 +40,7 @@ router.get("/stats/top-items", optionalAuthMiddleware, orderController.getTopIte
 router.get("/stats/peak-hours", optionalAuthMiddleware, orderController.getPeakHours);
 router.get("/stats/revenue-by-day", optionalAuthMiddleware, orderController.getRevenueByDayOfWeek);
 router.get("/stats/monthly", optionalAuthMiddleware, orderController.getMonthlyRevenue);
-// router.post("/reorder/:orderId", authMiddleware, orderController.reorderOrderController);
+router.post("/reorder/:orderId", optionalAuthMiddleware, orderController.reorderController);
 
 
 
