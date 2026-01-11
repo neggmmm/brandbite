@@ -106,11 +106,7 @@ export default function ServiceSettings() {
           label: isRTL ? 'رسوم التوصيل' : 'Delivery Fee',
           type: 'number',
         },
-        {
-          key: 'deliveryRadius',
-          label: isRTL ? 'نطاق التوصيل (كم)' : 'Delivery Radius (km)',
-          type: 'number',
-        },
+       
       ],
     },
     {
@@ -123,11 +119,7 @@ export default function ServiceSettings() {
           label: isRTL ? 'الوقت المتوقع (دقيقة)' : 'Estimated Time (minutes)',
           type: 'number',
         },
-        {
-          key: 'tableCapacity',
-          label: isRTL ? 'سعة الطاولات' : 'Total Table Capacity',
-          type: 'number',
-        },
+      ,
       ],
     },
     {
@@ -158,21 +150,14 @@ export default function ServiceSettings() {
     <div className="space-y-6">
       <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
         <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-blue-800 dark:text-blue-300">
+        <p className="text-m text-black-800 dark:text-white-300">
           {isRTL
             ? 'تفعيل أو تعطيل الخدمات وتعديل إعداداتها حسب احتياجاتك'
             : 'Enable or disable services and configure their settings'}
         </p>
       </div>
 
-      <div className="flex items-start gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-        <Info className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-green-800 dark:text-green-300">
-          {isRTL
-            ? 'سيتم عكس التغييرات تلقائياً على صفحة الدفع للعملاء. الخدمات المعطلة لن تظهر كخيارات للاختيار.'
-            : 'Changes are reflected immediately on the customer checkout page. Disabled services will not appear as options.'}
-        </p>
-      </div>
+    
 
       <div className="space-y-4">
         {serviceConfigs.map((service) => {

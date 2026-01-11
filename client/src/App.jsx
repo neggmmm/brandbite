@@ -46,7 +46,7 @@ import InviteAccept from "./pages/invite/InviteAccept";
 
 // Settings Components
 import SettingsLayout from "./features/settings/components/SettingsLayout";
-import SystemSettings from "./features/settings/pages/SystemSettings";
+// import SystemSettings from "./features/settings/pages/SystemSettings";
 import ServiceSettings from "./features/settings/pages/ServiceSettings";
 import PaymentMethodsSettings from "./features/settings/pages/PaymentMethodsSettings";
 import WebsiteDesignSettings from "./features/settings/pages/WebsiteDesignSettings";
@@ -213,8 +213,6 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<SystemSettings />} />
-                <Route path="system" element={<SystemSettings />} />
                 <Route path="services" element={<ServiceSettings />} />
                 <Route path="payments" element={<PaymentMethodsSettings />} />
                 <Route path="website" element={<WebsiteDesignSettings />} />

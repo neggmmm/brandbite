@@ -79,7 +79,7 @@ export default function IntegrationsSettings() {
       description: isRTL
         ? 'تتبع حركة العملاء والتحويلات'
         : 'Track customer behavior and conversions',
-      icon: '👍',
+      icon: '',
       fields: [
         {
           key: 'pixelId',
@@ -95,7 +95,7 @@ export default function IntegrationsSettings() {
       description: isRTL
         ? 'تحليل الزوار والمبيعات'
         : 'Analyze visitor behavior and sales',
-      icon: '📊',
+      icon: '',
       fields: [
         {
           key: 'trackingId',
@@ -111,7 +111,7 @@ export default function IntegrationsSettings() {
       description: isRTL
         ? 'إدارة العلامات والتحليلات'
         : 'Manage tags and analytics',
-      icon: '🏷️',
+      icon: '',
       fields: [
         {
           key: 'containerId',
@@ -127,7 +127,7 @@ export default function IntegrationsSettings() {
       description: isRTL
         ? 'إدارة قوائم البريد الإلكتروني'
         : 'Manage email marketing lists',
-      icon: '📧',
+      icon: '',
       fields: [
         {
           key: 'apiKey',
@@ -149,7 +149,7 @@ export default function IntegrationsSettings() {
       description: isRTL
         ? 'معالجة الدفع عبر البطاقات'
         : 'Credit card payment processing',
-      icon: '💳',
+      icon: '',
       fields: [
         {
           key: 'publishableKey',
@@ -171,7 +171,7 @@ export default function IntegrationsSettings() {
       description: isRTL
         ? 'إرسال رسائل SMS والإشعارات'
         : 'Send SMS and notifications',
-      icon: '📱',
+      icon: '',
       fields: [
         {
           key: 'accountSid',
@@ -199,7 +199,7 @@ export default function IntegrationsSettings() {
       description: isRTL
         ? 'خدمة البريد الإلكتروني'
         : 'Email delivery service',
-      icon: '✉️',
+      icon: '',
       fields: [
         {
           key: 'apiKey',
@@ -221,7 +221,7 @@ export default function IntegrationsSettings() {
       description: isRTL
         ? 'إشعارات الأوامر والتنبيهات'
         : 'Order notifications and alerts',
-      icon: '💬',
+      icon: '',
       fields: [
         {
           key: 'webhookUrl',
@@ -243,10 +243,10 @@ export default function IntegrationsSettings() {
     <div className="space-y-6">
       <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
         <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-blue-800 dark:text-blue-300">
+        <p className="text-m text-black-800 dark:text-white-300">
           {isRTL
             ? 'ربط التطبيقات والخدمات الخارجية. تفعيل التكاملات لتحسين تجربة متجرك.'
-            : 'Connect external services and applications to enhance your restaurant'}
+            : 'Coming Soon Featres : WE Will Connect external services and applications to enhance your restaurant'}
         </p>
       </div>
 

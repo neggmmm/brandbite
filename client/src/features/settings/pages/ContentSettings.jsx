@@ -173,8 +173,8 @@ export default function ContentSettings() {
       {/* Tab Navigation */}
       <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
         {[
-          { id: 'faqs', label: isRTL ? 'الأسئلة الشائعة' : 'FAQs', icon: '❓' },
-          { id: 'policies', label: isRTL ? 'السياسات' : 'Policies', icon: '📋' },
+          { id: 'faqs', label: isRTL ? 'الأسئلة الشائعة' : 'FAQs',  },
+          { id: 'policies', label: isRTL ? 'السياسات' : 'Policies', },
         ].map((tab) => (
           <button
             key={tab.id}
