@@ -111,12 +111,30 @@ export default function ServicesSection({
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">Upload Image:</label>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                  <div className="flex-1">
-                    <input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, `landing.services.items[${idx}].image`); }} className="text-sm w-full" />
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">Image URL or Upload:</label>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Image URL (e.g., https://...)"
+                    value={service.image || ''}
+                    onChange={(e) => handleServiceChange(service.id, 'image', e.target.value)}
+                    className="w-full p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
+                  />
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <label className="flex-1 text-xs text-gray-600 dark:text-gray-400">
+                      Or upload image:
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={async (e) => { 
+                          const f = e.target.files && e.target.files[0]; 
+                          if (f) await handleUploadToTarget(f, `landing.services.items[${landing.services.items.findIndex(s => s.id === service.id)}].image`); 
+                        }} 
+                        className="text-sm w-full mt-1" 
+                      />
+                    </label>
+                    {service.image && <img src={service.image} alt="service" className="h-10 object-contain rounded" />}
                   </div>
-                  {service.image && <img src={service.image} alt="service" className="h-10 object-contain rounded" />}
                 </div>
               </div>
 
