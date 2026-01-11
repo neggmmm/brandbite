@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsAPI } from '../hooks/useSettingsAPI';
-import { Save, AlertCircle, Clock, Info } from 'lucide-react';
+import { Save, AlertCircle, Clock, Info, CheckCircle } from 'lucide-react';
 
 export default function ServiceSettings() {
   const { i18n } = useTranslation();
@@ -119,7 +119,11 @@ export default function ServiceSettings() {
           label: isRTL ? 'الوقت المتوقع (دقيقة)' : 'Estimated Time (minutes)',
           type: 'number',
         },
-      ,
+        {
+          key: 'tableCapacity',
+          label: isRTL ? 'سعة الطاولات' : 'Total Table Capacity',
+          type: 'number',
+        },
       ],
     },
     {
@@ -143,7 +147,9 @@ export default function ServiceSettings() {
           type: 'number',
         },
       ],
+      
     },
+    
   ];
 
   return (
@@ -232,6 +238,25 @@ export default function ServiceSettings() {
             </div>
           );
         })}
+
+        {/* Link to Tables Admin - Show after tableBookings section */}
+        {serviceConfigs.find(s => s.id === 'tableBookings') && services.tableBookings?.enabled && (
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Manage Tables</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Configure tables, hours, and booking settings</p>
+              </div>
+            </div>
+            <a 
+              href="/admin/tables"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
+            >
+              Go to Tables Admin →
+            </a>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

@@ -179,22 +179,7 @@ export default function TableBookingSection({
         </div>
       </div>
 
-      {/* Link to Tables Admin */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <div>
-            <p className="font-semibold text-gray-900 dark:text-white">Manage Tables</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Configure tables, hours, and booking settings</p>
-          </div>
-        </div>
-        <a 
-          href="/admin/tables"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-        >
-          Go to Tables Admin →
-        </a>
-      </div>
+     
     </section>
   );
 }
