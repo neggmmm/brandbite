@@ -41,7 +41,7 @@ export const CashierManagementPage = () => {
   } = useBookingAPI();
 
   const {
-    suggestTables: suggestTablesAPI,
+    suggest: suggestTablesAPI,
     loading: tableLoading,
   } = useTableAPI();
 
@@ -66,14 +66,26 @@ export const CashierManagementPage = () => {
       const booking = currentBookings.find(b => b._id === bookingId);
       if (!booking) return;
 
+      if (!restaurantId) {
+        setShowAlert({
+          type: "error",
+          title: "Error",
+          message: "Restaurant ID not found",
+        });
+        return;
+      }
+
+      // API expects `time` query param (not `startTime`) — send booking.startTime as `time`
       const suggestions = await suggestTablesAPI({
+        restaurantId,
         date: booking.date,
-        startTime: booking.startTime,
+        time: booking.startTime,
         guests: booking.guests,
         durationMinutes: 120,
       });
-      
-      setSuggestedTables(suggestions);
+      // suggestions may be an object containing metadata: { tables: [...], totalCapacity, message }
+      const normalized = Array.isArray(suggestions) ? suggestions : (suggestions?.tables ?? []);
+      setSuggestedTables(normalized);
       setSelectedBookingId(bookingId);
       setShowTableSelection(true);
     } catch (error) {

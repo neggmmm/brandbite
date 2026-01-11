@@ -121,7 +121,14 @@ export const FloorPlan = ({
     );
   }
 
-  if (!tables || tables.length === 0) {
+  const safeTables = Array.isArray(tables) ? tables : [];
+  if (!Array.isArray(tables)) {
+    // defensive: log unexpected type to help debugging runtime crashes
+    // eslint-disable-next-line no-console
+    console.warn("FloorPlan expected 'tables' to be an array but got:", tables);
+  }
+
+  if (safeTables.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">No tables available</p>
@@ -131,7 +138,7 @@ export const FloorPlan = ({
 
   return (
     <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
-      {tables.map((table) => (
+      {safeTables.map((table) => (
         <TableCard
           key={table._id}
           table={table}
@@ -216,7 +223,13 @@ export const AvailableTablesList = ({
     );
   }
 
-  if (!tables || tables.length === 0) {
+  const safeTables = Array.isArray(tables) ? tables : [];
+  if (!Array.isArray(tables)) {
+    // eslint-disable-next-line no-console
+    console.warn("AvailableTablesList expected 'tables' to be an array but got:", tables);
+  }
+
+  if (safeTables.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-500 dark:text-gray-400">No tables available for this time</p>
@@ -226,7 +239,7 @@ export const AvailableTablesList = ({
 
   return (
     <div className="space-y-2">
-      {tables.map((table) => (
+      {safeTables.map((table) => (
         <button
           key={table._id}
           onClick={() => onTableSelect(table._id)}

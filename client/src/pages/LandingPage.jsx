@@ -496,7 +496,7 @@ function LandingPageContent() {
             (services.items && services.items.some(s => (s.id === 'tableBookings' || s.id === 'tableBooking' || s.navigate === '/table-booking') && s.enabled !== false)), (
             <div className={`relative overflow-hidden rounded-3xl mb-12 transition-all duration-700 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
               <button
-                onClick={() => navigate('/table-booking')}
+                onClick={() => navigate('/bookings')}
                 onFocus={() => {
                   try {
                     const primary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary') || '#2563eb';

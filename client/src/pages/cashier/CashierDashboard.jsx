@@ -152,7 +152,13 @@ export default function CashierDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-orange-600 dark:text-orange-400">Today's Bookings</p>
-                <a href="/cashier/bookings" className="text-2xl font-bold text-orange-800 dark:text-orange-300">{todayBookingsCount}</a>
+                <button
+                  onClick={() => window.location.href = '/cashier/bookings'}
+                  className="text-2xl font-bold text-orange-800 dark:text-orange-300"
+                  aria-label={`Today's bookings: ${todayBookingsCount}`}
+                >
+                  {todayBookingsCount}
+                </button>
               </div>
               <Clock className="h-8 w-8 text-orange-500 dark:text-orange-400 opacity-50" />
             </div>

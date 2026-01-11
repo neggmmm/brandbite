@@ -101,12 +101,15 @@ class TableService {
   // CASHIER FEATURE: Check table availability for a specific date/time
   // Returns list of tables that are available (no overlapping bookings)
   async checkAvailability({ restaurantId, date, time, guests, durationMinutes = 120, bufferMinutes = 15 }) {
+    console.log('🔍 checkAvailability called with:', { restaurantId, date, time, guests, durationMinutes, bufferMinutes });
+    
     // Get all active tables for this restaurant
     const candidates = await tableRepository.find({
       restaurantId,
       capacity: { $gte: Number(guests) },
       isActive: true
     });
+    console.log(`📊 Found ${candidates.length} candidate tables (capacity >= ${guests}, isActive=true)`);
 
     // Get all confirmed bookings for this date (excluding cancelled)
     const bookings = await bookingRepository.find({
@@ -114,6 +117,7 @@ class TableService {
       date,
       status: { $in: ["confirmed", "seated", "reserved"] }
     });
+    console.log(`📅 Found ${bookings.length} bookings on ${date}`);
 
     // Filter tables that don't have overlaps
     const available = candidates.filter((table) => {
@@ -140,6 +144,8 @@ class TableService {
   // CASHIER FEATURE: Smart table assignment for a booking
   // Suggests the best available table(s) for a given number of guests
   async suggestTables(restaurantId, { date, time, guests, durationMinutes = 120, numTablesPreferred = 1 }) {
+    console.log('💡 suggestTables called with:', { restaurantId, date, time, guests, durationMinutes, numTablesPreferred });
+    
     // Get available tables
     const available = await this.checkAvailability({
       restaurantId,
@@ -148,6 +154,7 @@ class TableService {
       guests,
       durationMinutes
     });
+    console.log(`✅ checkAvailability returned ${available.length} available tables`);
 
     if (available.length === 0) {
       return { tables: [], totalCapacity: 0, message: "No tables available for this time" };
