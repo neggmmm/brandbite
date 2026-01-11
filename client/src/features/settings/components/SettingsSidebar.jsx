@@ -2,15 +2,15 @@ import React from 'react';
 import { Menu, X, ChevronRight } from 'lucide-react';
 
 const SECTIONS = [
-  { id: 'hero', label: '🏠 Hero Section', },
-  { id: 'services', label: '🍽️ Services',},
-  { id: 'about', label: 'ℹ️ About Section', },
-  { id: 'tables', label: '🪑 Table Booking',  },
-  { id: 'contact', label: '📍 Contact & Hours',  },
-  { id: 'callus', label: '☎️ Call Us Hotline',  },
-  { id: 'testimonials', label: '⭐ Reviews', },
-  { id: 'instagram', label: '📸 Instagram', },
-  { id: 'footer', label: '📄 Footer & SEO', },
+  { id: 'hero', label: 'Hero Section', },
+  { id: 'services', label: 'Services',},
+  { id: 'about', label: 'About Section', },
+  { id: 'tables', label: ' Table Booking',  },
+  { id: 'contact', label: ' Contact & Hours',  },
+  { id: 'callus', label: 'Call Us Hotline',  },
+  { id: 'testimonials', label: ' Reviews', },
+  { id: 'instagram', label: 'Instagram', },
+  { id: 'footer', label: ' Footer & SEO', },
 ];
 
 export default function SettingsSidebar({ activeSection, onSectionChange, unsavedSections = [], isMobileOpen = false, onMobileClose }) {
