@@ -8,6 +8,7 @@ import ReviewsGrid from "../components/reviews/ReviewsGrid";
 import api from "../api/axios";
 import { useToast } from "../hooks/useToast";
 import { Star, Sparkles, Users,ChevronRight , ChefHat, Award, MessageSquare,LogIn , Calendar, TrendingUp, ThumbsUp, ExternalLink, Gift } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 import Snowfall from 'react-snowfall';
 
 export default function ReviewsPage() {
@@ -16,20 +17,23 @@ export default function ReviewsPage() {
   const { isOpen, openModal, closeModal } = useModal();
   const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
   const { error, warning, success } = useToast();
 
   useEffect(() => {
     dispatch(fetchReviews());
   }, [dispatch]);
   const handleRewardLogin = () => {
-    if (user?.id) {
+    const userId = user?.id || user?._id;
+    if (userId) {
       navigate('/reward');
     } else {
       navigate('/login');
     }
   };
   const handleOpenReviewModal = async () => {
-    if (!user?.id) {
+    const userId = user?.id || user?._id;
+    if (!userId) {
       return warning(t("review_login_warning"));
     }
 

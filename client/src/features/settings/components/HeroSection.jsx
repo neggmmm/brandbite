@@ -114,8 +114,17 @@ export default function HeroSection({ landing, setLanding, handleUploadToTarget,
             Hero Background Image
           </label>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="flex-1">
-              <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, 'landing.hero.image'); }} className="text-sm w-full" />
+            <div className="flex-1 space-y-2">
+              <input
+                type="text"
+                placeholder="Image URL (https://...)"
+                value={landing.hero.image || ''}
+                onChange={(e) => setLanding(l => ({ ...l, hero: { ...l.hero, image: e.target.value } }))}
+                className="w-full p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
+              />
+              <div>
+                <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, 'landing.hero.image'); }} className="text-sm w-full" />
+              </div>
             </div>
             {landing.hero.image && <img src={landing.hero.image} alt="hero" className="h-16 object-contain rounded border border-gray-300 dark:border-gray-600" />}
           </div>

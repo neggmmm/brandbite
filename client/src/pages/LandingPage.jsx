@@ -550,9 +550,9 @@ function LandingPageContent() {
           {renderSection(aboutEnabled, (
             <div className={`mb-12 transition-all duration-700 ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
               <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="w-full h-56 md:h-80 bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden flex items-center justify-center">
+                <div className="w-full h-48 sm:h-56 md:h-72 lg:h-80 bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden flex items-center justify-center">
                   {about.image ? (
-                    <img src={about.image} alt={about.title || settings.restaurantName} className="w-full h-full object-cover" />
+                    <img src={about.image} alt={about.title || settings.restaurantName} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
                   ) : (
                     <div className="p-6 text-center">
                       <ChefHat className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -568,8 +568,8 @@ function LandingPageContent() {
                     {isRTL ? (about.contentAr || about.content || t('about_description')) : (about.content || t('about_description'))}
                   </p>
                   <div className="flex gap-3">
-                    <button onClick={() => navigate('/support')} className="px-5 py-3 bg-primary text-white rounded-lg">{t('Learn more') || 'Learn more'}</button>
-                    <button onClick={() => navigate('/menu')} className="px-5 py-3 bg-secondary text-white rounded-lg">{t('View Menu') || 'View Menu'}</button>
+                    <button onClick={() => navigate('/support')} className="px-5 py-3 bg-primary text-white rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg">{t('Learn more') || 'Learn more'}</button>
+                    <button onClick={() => navigate('/menu')} className="px-5 py-3 bg-secondary text-white rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg">{t('View Menu') || 'View Menu'}</button>
                   </div>
                 </div>
               </div>

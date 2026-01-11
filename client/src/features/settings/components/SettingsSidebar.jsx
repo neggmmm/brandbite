@@ -77,11 +77,7 @@ export default function SettingsSidebar({ activeSection, onSectionChange, unsave
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            💡 Orange dot = unsaved changes
-          </p>
-        </div>
+      
       </div>
 
       {/* Mobile Menu Button */}

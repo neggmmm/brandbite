@@ -74,10 +74,7 @@ export default function FooterSEOSection({ landing, setLanding, isRTL }) {
           </label>
         </div>
         <div className="space-y-4">
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded text-sm text-blue-700 dark:text-blue-300">
-            <p className="font-medium mb-1">💡 SEO Tip:</p>
-            <p>These settings help search engines understand your landing page and improve visibility in search results.</p>
-          </div>
+          
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -118,15 +115,7 @@ export default function FooterSEOSection({ landing, setLanding, isRTL }) {
             </p>
           </div>
 
-          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded text-sm text-amber-700 dark:text-amber-300">
-            <p className="font-medium">📌 Best Practices:</p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Include main keywords (restaurant name, cuisine type, location)</li>
-              <li>Keep title and description unique and descriptive</li>
-              <li>Avoid keyword stuffing or misleading content</li>
-              <li>Make it compelling to encourage clicks from search results</li>
-            </ul>
-          </div>
+         
         </div>
       </section>
     </div>
