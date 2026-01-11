@@ -69,11 +69,14 @@ export function useSettingsAPI() {
       setLoading(true);
       setError(null);
       const response = await api.get('/api/restaurant/services');
+      console.log('=== GET SERVICES RESPONSE ===');
+      console.log('Response data:', JSON.stringify(response.data, null, 2));
       return response.data.data;
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to load services';
       setError(message);
       showToast(message, 'error');
+      console.error('GET SERVICES ERROR:', err);
       return null;
     } finally {
       setLoading(false);
@@ -84,13 +87,18 @@ export function useSettingsAPI() {
     try {
       setLoading(true);
       setError(null);
+      console.log('=== SENDING UPDATE SERVICES REQUEST ===');
+      console.log('Payload:', JSON.stringify(services, null, 2));
       const response = await api.put('/api/restaurant/services', services);
+      console.log('=== UPDATE SERVICES RESPONSE ===');
+      console.log('Response data:', JSON.stringify(response.data, null, 2));
       showToast('Services updated successfully', 'success');
       return response.data.data;
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to update services';
       setError(message);
       showToast(message, 'error');
+      console.error('UPDATE SERVICES ERROR:', err);
       return null;
     } finally {
       setLoading(false);

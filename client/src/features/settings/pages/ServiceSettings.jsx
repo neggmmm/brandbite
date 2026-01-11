@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsAPI } from '../hooks/useSettingsAPI';
-import { Save, AlertCircle, Clock } from 'lucide-react';
+import { Save, AlertCircle, Clock, Info } from 'lucide-react';
 
 export default function ServiceSettings() {
   const { i18n } = useTranslation();
@@ -20,8 +20,13 @@ export default function ServiceSettings() {
   const loadServices = async () => {
     setLoading(true);
     const data = await getServices();
+    console.log('=== LOAD SERVICES IN COMPONENT ===');
+    console.log('Received data:', JSON.stringify(data, null, 2));
     if (data) {
       setServices(data);
+      console.log('✅ Services loaded:', JSON.stringify(data, null, 2));
+    } else {
+      console.log('⚠️ getServices returned null or undefined');
     }
     setLoading(false);
   };
@@ -53,9 +58,14 @@ export default function ServiceSettings() {
 
   const handleSave = async () => {
     setSaving(true);
+    console.log('=== SERVICE SETTINGS SAVE ===');
+    console.log('Services to save:', JSON.stringify(services, null, 2));
     const success = await updateServices(services);
     if (success) {
+      console.log('✅ Services saved successfully');
       setHasChanges(false);
+    } else {
+      console.log('❌ Failed to save services');
     }
     setSaving(false);
   };
@@ -152,6 +162,15 @@ export default function ServiceSettings() {
           {isRTL
             ? 'تفعيل أو تعطيل الخدمات وتعديل إعداداتها حسب احتياجاتك'
             : 'Enable or disable services and configure their settings'}
+        </p>
+      </div>
+
+      <div className="flex items-start gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+        <Info className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-green-800 dark:text-green-300">
+          {isRTL
+            ? 'سيتم عكس التغييرات تلقائياً على صفحة الدفع للعملاء. الخدمات المعطلة لن تظهر كخيارات للاختيار.'
+            : 'Changes are reflected immediately on the customer checkout page. Disabled services will not appear as options.'}
         </p>
       </div>
 

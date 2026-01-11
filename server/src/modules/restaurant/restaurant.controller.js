@@ -200,13 +200,62 @@ export async function resetLandingPage(req, res) {
   }
 }
 
+// Helper: Transform frontend format to backend format
+function transformFrontendToBackend(frontendServices) {
+  const backendServices = {};
+  
+  // Map frontend keys to backend keys
+  if (frontendServices.pickup !== undefined) {
+    backendServices.pickups = frontendServices.pickup;
+  }
+  if (frontendServices.delivery !== undefined) {
+    backendServices.deliveries = frontendServices.delivery;
+  }
+  if (frontendServices.dineIn !== undefined) {
+    backendServices.dineIns = frontendServices.dineIn;
+  }
+  if (frontendServices.tableBookings !== undefined) {
+    backendServices.tableBookings = frontendServices.tableBookings;
+  }
+  
+  return backendServices;
+}
+
+// Helper: Transform backend format to frontend format
+function transformBackendToFrontend(backendServices) {
+  const frontendServices = {};
+  
+  // Map backend keys to frontend keys
+  if (backendServices.pickups !== undefined) {
+    frontendServices.pickup = backendServices.pickups;
+  }
+  if (backendServices.deliveries !== undefined) {
+    frontendServices.delivery = backendServices.deliveries;
+  }
+  if (backendServices.dineIns !== undefined) {
+    frontendServices.dineIn = backendServices.dineIns;
+  }
+  if (backendServices.tableBookings !== undefined) {
+    frontendServices.tableBookings = backendServices.tableBookings;
+  }
+  
+  return frontendServices;
+}
+
 // Service White-label Controllers
 export async function getServices(req, res) {
   try {
     const services = await settingsService.getServiceSettings();
+    console.log('=== GET SERVICES DEBUG ===');
+    console.log('Backend services format:', JSON.stringify(services, null, 2));
+    
+    // Transform backend format to frontend format
+    const frontendServices = transformBackendToFrontend(services);
+    console.log('Transformed to frontend format:', JSON.stringify(frontendServices, null, 2));
+    
     res.status(200).json({
       success: true,
-      data: services,
+      data: frontendServices,
     });
   } catch (error) {
     console.error("Error fetching services:", error);
@@ -219,12 +268,24 @@ export async function getServices(req, res) {
 
 export async function updateServices(req, res) {
   try {
-    const services = req.body; // This should be the entire services object
-    const updated = await settingsService.updateServices(services);
+    const frontendServices = req.body; // Frontend format
+    console.log('=== UPDATE SERVICES DEBUG ===');
+    console.log('Received frontend services:', JSON.stringify(frontendServices, null, 2));
+    
+    // Transform frontend format to backend format
+    const backendServices = transformFrontendToBackend(frontendServices);
+    console.log('Transformed to backend format:', JSON.stringify(backendServices, null, 2));
+    
+    const updated = await settingsService.updateServices(backendServices);
+    console.log('Updated restaurant services:', JSON.stringify(updated.services, null, 2));
+    
+    // Transform response back to frontend format
+    const responseData = transformBackendToFrontend(updated.services);
+    
     res.status(200).json({
       success: true,
       message: "Services updated successfully",
-      data: updated.services,
+      data: responseData,
     });
   } catch (error) {
     console.error("Error updating services:", error);

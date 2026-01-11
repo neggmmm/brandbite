@@ -8,7 +8,6 @@ import WebsiteDesignSettings from '../../features/settings/pages/WebsiteDesignSe
 import IntegrationsSettings from '../../features/settings/pages/IntegrationsSettings';
 import BrandingSettings from '../../features/settings/pages/BrandingSettings';
 import ContentSettings from '../../features/settings/pages/ContentSettings';
-import LandingSettings from '../../features/settings/pages/LandingSettings';
 
 export default function Settings() {
   const [activeSection, setActiveSection] = useState('system');
