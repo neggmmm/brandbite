@@ -71,8 +71,15 @@ export function SettingsProvider({ children }) {
     // Apply CSS variables whenever branding changes
     useEffect(() => {
         if (settings.branding) {
-            document.documentElement.style.setProperty("--color-primary", settings.branding.primaryColor || "#FF5733");
-            document.documentElement.style.setProperty("--color-secondary", settings.branding.secondaryColor || "#33C3FF");
+            const primary = settings.branding.primaryColor || "#FF5733";
+            const secondary = settings.branding.secondaryColor || "#33C3FF";
+            document.documentElement.style.setProperty("--color-primary", primary);
+            document.documentElement.style.setProperty("--color-secondary", secondary);
+            try {
+                localStorage.setItem('branding', JSON.stringify({ primaryColor: primary, secondaryColor: secondary }));
+            } catch (e) {
+                // ignore storage errors
+            }
         }
     }, [settings.branding]);
 

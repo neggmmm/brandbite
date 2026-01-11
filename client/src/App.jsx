@@ -94,7 +94,7 @@ function App() {
   }, []);
 
   if (!checked || loadingGetMe) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner overlay />;
   }
 
   return (
