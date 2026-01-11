@@ -6,7 +6,7 @@ import Layout from "./components/Layout";
 import RewardPage from "./pages/RewardPage";
 import Admin from "./pages/admin/Admin";
 import Coupons from "./pages/admin/Coupons";
-import TablesAdmin from "./pages/admin/TablesAdmin";
+
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import { useDispatch, useSelector } from "react-redux";
@@ -53,8 +53,9 @@ import WebsiteDesignSettings from "./features/settings/pages/WebsiteDesignSettin
 import IntegrationsSettings from "./features/settings/pages/IntegrationsSettings";
 import BrandingSettings from "./features/settings/pages/BrandingSettings";
 import ContentSettings from "./features/settings/pages/ContentSettings";
-import LandingSettings from "./features/settings/pages/LandingSettings";
+import LandingSettingsRefactored from "./features/settings/pages/LandingSettingsRefactored";
 import ErrorBoundary from "./components/ErrorBoundary";
+import TablesAdmin from './features/settings/pages/TablesAdmin';
 
 function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
@@ -219,7 +220,7 @@ function App() {
                 <Route path="website" element={<WebsiteDesignSettings />} />
                 <Route path="integrations" element={<IntegrationsSettings />} />
                 <Route path="branding" element={<BrandingSettings />} />
-                <Route path="landing" element={<LandingSettings />} />
+                <Route path="landing" element={<ErrorBoundary><LandingSettingsRefactored /></ErrorBoundary>} />
                 <Route path="content" element={<ContentSettings />} />
               </Route>
             </Route>

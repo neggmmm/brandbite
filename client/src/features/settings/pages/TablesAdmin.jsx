@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import api from "../../api/axios";
+import api from "../../../api/axios";
 import { useNavigate } from "react-router-dom";
-import { useSettings } from "../../context/SettingContext";
-import FloorPlanEditor from "../../components/tables/FloorPlanEditor";
+import { useSettings } from "../../../context/SettingContext";
+import FloorPlanEditor from "../../../components/tables/FloorPlanEditor";
 import { Trash2, Layout } from "lucide-react";
 
 export default function TablesAdmin() {

@@ -16,7 +16,7 @@ export default function LandingSettings() {
   const [landing, setLanding] = useState({
     hero: { title: '', titleAr: '', subtitle: '', subtitleAr: '', image: '', enabled: true },
     about: { title: '', titleAr: '', content: '', contentAr: '', image: '', enabled: true },
-    testimonials: { items: [], featuredIds: [], mode: 'all', title: 'What People Say', titleAr: 'ما يقوله الناس', enabled: true },
+    testimonials: { items: [], featuredIds: [], mode: 'all', enabled: true },
     contact: { email: '', phone: '', enabled: true },
     callUs: { number: '', numberAr: '', label: 'Call Us', labelAr: 'اتصل بنا', enabled: true },
     location: { address: '', addressAr: '', latitude: '', longitude: '', enabled: true },
@@ -1421,7 +1421,7 @@ const copyDayToAll = (dayToCopy) => {
       setLanding({
         hero: { title: '', titleAr: '', subtitle: '', subtitleAr: '', image: '', enabled: true },
         about: { title: '', titleAr: '', content: '', contentAr: '', image: '', enabled: true },
-        testimonials: { items: [], featuredIds: [], mode: 'all', title: 'What People Say', titleAr: 'ما يقوله الناس', enabled: true },
+        testimonials: { items: [], featuredIds: [], mode: 'all', enabled: true },
         contact: { email: '', phone: '', enabled: true },
         callUs: { number: '', numberAr: '', label: 'Call Us', labelAr: 'اتصل بنا', enabled: true },
         location: { address: '', addressAr: '', latitude: '', longitude: '', enabled: true },
