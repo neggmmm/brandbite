@@ -84,7 +84,17 @@ export default function LandingSettingsRefactored() {
         return output;
       };
       
-      setLanding(prev => deepMerge(prev, existing));
+      setLanding(prev => {
+        const merged = deepMerge(prev, existing);
+        // Ensure each service item has a stable unique id to avoid shared updates
+        if (merged.services && Array.isArray(merged.services.items)) {
+          merged.services.items = merged.services.items.map(item => ({
+            ...item,
+            id: item.id || generateUniqueId(),
+          }));
+        }
+        return merged;
+      });
     }
   }, [existing]);
 
