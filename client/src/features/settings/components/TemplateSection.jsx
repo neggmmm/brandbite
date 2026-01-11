@@ -1,17 +1,3 @@
-/**
- * TEMPLATE: Section Component
- * 
- * This is a template for creating new landing settings sections.
- * Copy this file and customize for your section.
- * 
- * Usage:
- * 1. Copy this file: cp TemplateSection.jsx YourSection.jsx
- * 2. Replace "Template" with your section name
- * 3. Customize the UI and fields
- * 4. Import in LandingSettingsRefactored.jsx
- * 5. Add case in renderSectionContent()
- */
-
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -159,50 +145,4 @@ export default function TemplateSection({
   );
 }
 
-/**
- * STYLING NOTES:
- * 
- * Common Classes Used:
- * - Container: bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700
- * - Input: p-3 border rounded-lg bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600
- * - Label: text-sm font-medium text-gray-700 dark:text-gray-300
- * - Button: px-4 py-2 rounded-lg font-medium transition-colors
- * - Mobile responsive: grid-cols-1 sm:grid-cols-2 gap-3
- * 
- * Remember:
- * - Always include 'dark:' variants for dark mode
- * - Use 'sm:' breakpoint for responsive design
- * - Focus states: focus:ring-2 focus:ring-blue-500 focus:border-transparent
- * - Add descriptions in gray color for better UX
- */
 
-/**
- * STATE STRUCTURE NOTES:
- * 
- * Add to initial state in LandingSettingsRefactored:
- * template: { 
- *   title: '', 
- *   titleAr: '', 
- *   content: '', 
- *   contentAr: '', 
- *   image: '', 
- *   enabled: true 
- * }
- * 
- * Also add to reset button and deepMerge function!
- */
-
-/**
- * INTEGRATION CHECKLIST:
- * 
- * [] Create component file from this template
- * [] Update initial state in LandingSettingsRefactored
- * [] Import component in LandingSettingsRefactored
- * [] Add case to renderSectionContent() switch
- * [] Add section to SECTIONS array in SettingsSidebar
- * [] Test section inputs
- * [] Test image upload
- * [] Test dark mode
- * [] Test RTL (Arabic)
- * [] Test save functionality
- */

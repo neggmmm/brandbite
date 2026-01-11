@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const BookingSchema = new mongoose.Schema(
   {
-    restaurantId: { type: String, index: true, required: true },
+    restaurantId: { type: String, index: true, required: false },
     bookingId: { type: String, index: true, unique: false },
-    tableId: { type: mongoose.Schema.Types.ObjectId, ref: "Table", required: true, index: true },
+    tableId: { type: mongoose.Schema.Types.ObjectId, ref: "Table", required: false, index: true }, // Can be null until cashier confirms
     date: { type: String, required: true }, // YYYY-MM-DD
     startTime: { type: String, required: true }, // HH:mm
     endTime: { type: String, required: true }, // HH:mm

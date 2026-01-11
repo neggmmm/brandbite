@@ -1,0 +1,450 @@
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Check, AlertCircle, Users, MapPin } from "lucide-react";
+import { BookingModal, BookingCard, Alert, BookingStatusBadge } from "../components/tableBooking/BookingComponents";
+import { AvailableTablesList } from "../components/tableBooking/TableComponents";
+import { useBookingAPI, useTableAPI } from "../hooks/useBookingAndTableAPI";
+
+/**
+ * Enhanced Customer Booking Page
+ * Allows customers to:
+ * - View ALL available tables in a grid layout
+ * - See table details (capacity, location, availability)
+ * - Select a specific table
+ * - Create new bookings with selected table
+ * - View their own bookings
+ * - Cancel bookings
+ * - See real-time booking updates
+ */
+export const CustomerBookingPage = () => {
+  const dispatch = useDispatch();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedGuests, setSelectedGuests] = useState(2);
+  const [selectedTableId, setSelectedTableId] = useState(null);
+  const [availableTables, setAvailableTables] = useState([]);
+  const [allTables, setAllTables] = useState([]); // All tables for grid display
+  const [showAlert, setShowAlert] = useState(null);
+
+  const {
+    create: createBooking,
+    fetchCustomer: fetchCustomerBookings,
+    cancel: cancelBooking,
+    loading: bookingLoading,
+    error: bookingError,
+  } = useBookingAPI();
+
+  const {
+    checkAvailability,
+    fetchAll: fetchAllTables,
+    loading: tableLoading,
+  } = useTableAPI();
+
+  // Get customer bookings from Redux
+  const { customerBookings = [] } = useSelector(state => state.booking);
+  const user = useSelector(state => state.auth?.user);
+  const restaurantId = user?.restaurantId || user?._id;
+
+  // Load customer's bookings and ALL tables on mount
+  useEffect(() => {
+    fetchCustomerBookings();
+    if (restaurantId) {
+      // Fetch all tables for display grid
+      fetchAllTables(restaurantId).catch(err => 
+        console.warn('Failed to fetch tables:', err)
+      );
+    }
+  }, [restaurantId]);
+
+  // Check availability when date/time/guests change
+  useEffect(() => {
+    if (selectedDate && selectedTime && selectedGuests && restaurantId) {
+      handleCheckAvailability();
+    }
+  }, [selectedDate, selectedTime, selectedGuests, restaurantId]);
+
+  // Handle table fetching from API
+  const handleCheckAvailability = async () => {
+    try {
+      const tables = await checkAvailability({
+        restaurantId: restaurantId,
+        date: selectedDate,
+        time: selectedTime,
+        guests: selectedGuests,
+        durationMinutes: 120,
+      });
+      setAvailableTables(Array.isArray(tables) ? tables : []);
+      setSelectedTableId(null);
+    } catch (error) {
+      setShowAlert({
+        type: "error",
+        title: "Error",
+        message: error.message || "Failed to check availability",
+      });
+      setAvailableTables([]);
+    }
+  };
+
+  const handleBookingSubmit = async (formData) => {
+    try {
+      if (!selectedTableId) {
+        setShowAlert({
+          type: "error",
+          title: "Error",
+          message: "Please select a table",
+        });
+        return;
+      }
+
+      const bookingData = {
+        restaurantId: restaurantId,
+        date: selectedDate,
+        startTime: selectedTime, // Backend expects startTime, not time
+        guests: selectedGuests,
+        customerName: formData.customerName,
+        customerEmail: formData.customerEmail,
+        customerPhone: formData.customerPhone || "", // Include even if empty
+        notes: formData.notes || "",
+        tableId: selectedTableId || undefined, // Don't include if not selected
+        source: "online",
+      };
+
+      await createBooking(bookingData);
+      setShowAlert({
+        type: "success",
+        title: "Success",
+        message: "Booking created successfully! Your booking is pending confirmation.",
+      });
+      setIsModalOpen(false);
+      setSelectedDate("");
+      setSelectedTime("");
+      setSelectedGuests(2);
+      setSelectedTableId(null);
+      setAvailableTables([]);
+      
+      // Refresh bookings
+      fetchCustomerBookings();
+    } catch (error) {
+      setShowAlert({
+        type: "error",
+        title: "Error",
+        message: error.message || "Failed to create booking",
+      });
+    }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (window.confirm("Are you sure you want to cancel this booking?")) {
+      try {
+        await cancelBooking(bookingId);
+        setShowAlert({
+          type: "success",
+          title: "Success",
+          message: "Booking cancelled successfully",
+        });
+        fetchCustomerBookings();
+      } catch (error) {
+        setShowAlert({
+          type: "error",
+          title: "Error",
+          message: error.message || "Failed to cancel booking",
+        });
+      }
+    }
+  };
+
+  // Check if a table is available based on selected date/time/guests
+  const isTableAvailable = (tableId) => {
+    if (!selectedDate || !selectedTime) return false;
+    return availableTables.some(t => t._id === tableId);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Book a Table
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Reserve your perfect table for a great dining experience
+          </p>
+        </div>
+
+        {/* Alerts */}
+        {showAlert && (
+          <div className="mb-6">
+            <Alert
+              type={showAlert.type}
+              title={showAlert.title}
+              message={showAlert.message}
+              onClose={() => setShowAlert(null)}
+            />
+          </div>
+        )}
+
+        {bookingError && (
+          <div className="mb-6">
+            <Alert
+              type="error"
+              title="Error"
+              message={bookingError}
+              onClose={() => {}}
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Filters Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 sticky top-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Find Your Table
+              </h3>
+
+              <div className="space-y-4">
+                {/* Date */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Time *
+                  </label>
+                  <input
+                    type="time"
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Guests */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Number of Guests *
+                  </label>
+                  <select
+                    value={selectedGuests}
+                    onChange={(e) => setSelectedGuests(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map(num => (
+                      <option key={num} value={num}>{num} {num === 1 ? "guest" : "guests"}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Legend */}
+                {selectedDate && selectedTime && (
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      Status Legend
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-green-500 rounded"></div>
+                        <span className="text-gray-600 dark:text-gray-400">Available</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                        <span className="text-gray-600 dark:text-gray-400">Not Available</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-blue-500 rounded"></div>
+                        <span className="text-gray-600 dark:text-gray-400">Selected</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Book Button */}
+                <button
+                  onClick={() => {
+                    if (!selectedDate || !selectedTime || !selectedTableId) {
+                      setShowAlert({
+                        type: "error",
+                        title: "Error",
+                        message: "Please select date, time, and a table",
+                      });
+                      return;
+                    }
+                    setIsModalOpen(true);
+                  }}
+                  disabled={!selectedDate || !selectedTime || !selectedTableId || bookingLoading}
+                  className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-6"
+                >
+                  {bookingLoading ? "Booking..." : "Proceed to Book"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Available Tables Grid */}
+            {selectedDate && selectedTime && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Available Tables for {selectedGuests} {selectedGuests === 1 ? "guest" : "guests"}
+                </h3>
+
+                {tableLoading ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 dark:text-gray-400">Loading tables...</p>
+                  </div>
+                ) : availableTables.length === 0 ? (
+                  <div className="text-center py-12">
+                    <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No tables available for this date and time
+                    </p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                      Try selecting a different date or time
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {availableTables.map(table => (
+                      <div
+                        key={table._id}
+                        onClick={() => setSelectedTableId(table._id)}
+                        className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                          selectedTableId === table._id
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : isTableAvailable(table._id)
+                            ? "border-green-500 bg-green-50 dark:bg-green-900/20 hover:border-green-600"
+                            : "border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed"
+                        }`}
+                      >
+                        {/* Selection Indicator */}
+                        {selectedTableId === table._id && (
+                          <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        )}
+
+                        {/* Table Header */}
+                        <div className="mb-3">
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
+                            {table.name || `Table ${table._id?.slice(-3)}`}
+                          </h4>
+                          {isTableAvailable(table._id) && (
+                            <div className="inline-block mt-1 px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 text-xs rounded">
+                              Available
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Table Details */}
+                        <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span>Capacity: {table.capacity} {table.capacity === 1 ? "person" : "people"}</span>
+                          </div>
+                          {table.location && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              <span>{table.location}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                          <span className={`text-xs font-medium ${
+                            isTableAvailable(table._id)
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-gray-500 dark:text-gray-400"
+                          }`}>
+                            {table.status || "available"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* My Bookings Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                My Bookings ({customerBookings.length})
+              </h3>
+
+              {customerBookings.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    You don't have any bookings yet
+                  </p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+                    Select a date, time, and table above to create your first booking
+                  </p>
+                  <div className="inline-block px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-lg text-sm">
+                    👉 Use the filters on the left to get started
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {customerBookings.map(booking => (
+                    <div
+                      key={booking._id}
+                      className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                            {booking.date} at {booking.time}
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {booking.guests} {booking.guests === 1 ? "guest" : "guests"}
+                            {booking.tableName && ` • Table: ${booking.tableName}`}
+                          </p>
+                          <div className="mt-2">
+                            <BookingStatusBadge status={booking.status} />
+                          </div>
+                        </div>
+                        {["pending", "confirmed"].includes(booking.status) && (
+                          <button
+                            onClick={() => handleCancelBooking(booking._id)}
+                            className="px-3 py-1 text-sm text-red-600 hover:text-red-700 font-medium"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Booking Modal */}
+        <BookingModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleBookingSubmit}
+          loading={bookingLoading}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default CustomerBookingPage;

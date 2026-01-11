@@ -56,11 +56,22 @@ import ContentSettings from "./features/settings/pages/ContentSettings";
 import LandingSettingsRefactored from "./features/settings/pages/LandingSettingsRefactored";
 import ErrorBoundary from "./components/ErrorBoundary";
 import TablesAdmin from './features/settings/pages/TablesAdmin';
+import { CustomerBookingPage } from "./pages/CustomerBookingPage";
+import { AdminTableManagementPage } from "./pages/AdminTableManagementPage";
+import { CashierManagementPage } from "./pages/CashierManagementPage";
+import useWebSocketIntegration from "./hooks/useWebSocketIntegration";
 
 function App() {
   const { loadingGetMe, isAuthenticated } = useSelector((state) => state.auth);
   const [checked, setChecked] = useState(false);
   const dispatch = useDispatch();
+  
+  // Get user info for WebSocket integration
+  const userRole = useSelector((state) => state.auth?.role);
+  const restaurantId = useSelector((state) => state.auth?.restaurantId);
+  
+  // Initialize WebSocket for real-time updates
+  useWebSocketIntegration(userRole, restaurantId);
 
   useEffect(() => {
     const init = async () => {
@@ -100,10 +111,12 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/table-booking" element={<TableBookingPage />} />
             <Route path="/book" element={<TableBookingPage />} />
+            <Route path="/booking" element={<CustomerBookingPage />} />
+            <Route path="/bookings" element={<CustomerBookingPage />} />
+            <Route path="/bookings/customer" element={<CustomerBookingPage />} />
             <Route path="/book-table/:restaurantSlug" element={<TableBookingPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/menu" element={<MenuPage />} />
-            <Route path="/table-booking" element={<TableBookingPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route
               path="/reward-order/:id"
@@ -140,7 +153,15 @@ function App() {
               path="/cashier/bookings"
               element={
                 <ProtectedRoute roles={["cashier", "admin"]}>
-                  <BookingsManager />
+                  <CashierManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cashier/dashboard"
+              element={
+                <ProtectedRoute roles={["cashier", "admin"]}>
+                  <CashierManagementPage />
                 </ProtectedRoute>
               }
             />
@@ -191,7 +212,15 @@ function App() {
                 path="/admin/tables"
                 element={
                   <ProtectedRoute roles={["admin", "restaurant_owner"]}>
-                    <TablesAdmin />
+                    <AdminTableManagementPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/table-management"
+                element={
+                  <ProtectedRoute roles={["admin", "restaurant_owner"]}>
+                    <AdminTableManagementPage />
                   </ProtectedRoute>
                 }
               />
