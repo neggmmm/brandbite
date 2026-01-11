@@ -101,7 +101,7 @@ export const CustomerBookingPage = () => {
       };
 
       const handleBookingNew = (newBooking) => {
-        console.log('📌 New booking event received:', newBooking);
+        console.log(' New booking event received:', newBooking);
         // Only add if it's for the logged-in customer
         if (newBooking.customerEmail === customerEmail) {
           dispatch(addBookingFromSocket(newBooking));

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const TableSchema = new mongoose.Schema(
   {
-    restaurantId: { type: String, index: true, required: true },
+    restaurantId: { type: String, index: true, required: false },
     name: { type: String, required: true },
     capacity: { type: Number, default: 1 },
     location: { type: String, default: "" },

@@ -114,8 +114,17 @@ export default function AboutSection({ landing, setLanding, handleUploadToTarget
             About Image
           </label>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="flex-1">
-              <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, 'landing.about.image'); }} className="text-sm w-full" />
+            <div className="flex-1 space-y-2">
+              <input
+                type="text"
+                placeholder="Image URL (https://...)"
+                value={landing.about.image || ''}
+                onChange={(e) => setLanding(l => ({ ...l, about: { ...l.about, image: e.target.value } }))}
+                className="w-full p-2 border rounded text-sm bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600"
+              />
+              <div>
+                <input type="file" accept="image/*" onChange={async (e)=>{ const f = e.target.files && e.target.files[0]; if (f) await handleUploadToTarget(f, 'landing.about.image'); }} className="text-sm w-full" />
+              </div>
             </div>
             {landing.about.image && <img src={landing.about.image} alt="about" className="h-16 object-contain rounded border border-gray-300 dark:border-gray-600" />}
           </div>

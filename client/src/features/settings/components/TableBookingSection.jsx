@@ -171,15 +171,24 @@ export default function TableBookingSection({
       </div>
 
       {/* Info Card */}
-      <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex gap-3">
-        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-amber-700 dark:text-amber-300">
-          <p className="font-semibold mb-1">Table Booking Settings</p>
-          <p>These settings control the table booking section on your landing page. Make sure Table Booking Admin is properly configured in <strong>/admin/tables</strong></p>
-        </div>
-      </div>
+   
 
-     
+      {/* Link to Tables Admin */}
+      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div>
+            <p className="font-semibold text-gray-900 dark:text-white">Manage Tables</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Configure tables, hours, and booking settings</p>
+          </div>
+        </div>
+        <a 
+          href="/admin/tables"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+        >
+          Go to Tables Admin →
+        </a>
+      </div>
     </section>
   );
 }
