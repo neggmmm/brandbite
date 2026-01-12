@@ -188,14 +188,24 @@ export const useBookingAPI = () => {
   }, []);
 
   // Cancel booking (customer)
-  const cancel = useCallback(async (bookingId, customerEmail) => {
+  // Accept either (bookingId, customerEmail) or a single object { bookingId, customerEmail }
+  const cancel = useCallback(async (a, b) => {
+    let bookingId = a;
+    let customerEmail = b;
+    if (a && typeof a === 'object') {
+      bookingId = a.bookingId || a.id || a._id;
+      customerEmail = a.customerEmail || a.email || a.customer;
+    }
+
+    if (!bookingId) throw new Error('bookingId is required to cancel');
+
     const result = await dispatch(cancelBookingThunk({ bookingId, customerEmail }));
     if (result.type === cancelBookingThunk.fulfilled.type) {
       return result.payload;
     } else {
       throw new Error(result.payload || 'Failed to cancel booking');
     }
-  }, []);
+  }, [dispatch]);
 
   // Get analytics (admin)
   const getAnalytics = useCallback(async (restaurantId, startDate, endDate) => {

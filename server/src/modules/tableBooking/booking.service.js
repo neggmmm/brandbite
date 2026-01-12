@@ -349,8 +349,16 @@ class BookingService {
     const booking = await bookingRepository.findById(id);
     if (!booking) throw new Error("Booking not found");
 
-    // If customerEmail provided, verify ownership
-    if (customerEmail && String(booking.customerEmail) !== String(customerEmail)) {
+    // Only pending bookings may be cancelled by customers
+    if (booking.status !== "pending") {
+      throw new Error("Only pending bookings can be cancelled by customers");
+    }
+
+    // Verify ownership when customerEmail provided
+    if (!customerEmail) {
+      throw new Error("Customer email is required to cancel booking");
+    }
+    if (String(booking.customerEmail) !== String(customerEmail)) {
       throw new Error("You can only cancel your own bookings");
     }
 
