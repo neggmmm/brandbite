@@ -47,6 +47,9 @@ class BookingController {
       const { id } = req.params;
       // Optional: verify customer ownership via req.user.email
       const customerEmail = req.query.customerEmail;
+      if (!customerEmail) {
+        return res.status(400).json({ success: false, message: 'customerEmail query parameter is required to cancel booking' });
+      }
       const cancelled = await bookingService.cancelBooking(id, customerEmail);
       res.json(cancelled);
     } catch (err) {

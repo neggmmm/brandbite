@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ReviewsPage from "./pages/ReviewsPage";
 import TableBookingPage from "./pages/TableBookingPage";
-import LandingPage from "./pages/LandingPage";
+import { lazy, Suspense } from "react";
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 import Layout from "./components/Layout";
 import RewardPage from "./pages/RewardPage";
 import Admin from "./pages/admin/Admin";
 import Coupons from "./pages/admin/Coupons";
-
 import AppLayout from "./layout/admin-layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import { useDispatch, useSelector } from "react-redux";
@@ -94,7 +94,7 @@ function App() {
   }, []);
 
   if (!checked || loadingGetMe) {
-    return <LoadingSpinner overlay />;
+    return <LoadingSpinner overlay fullScreen />;
   }
 
   return (
@@ -105,7 +105,16 @@ function App() {
         <Layout>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<ErrorBoundary><LandingPage /></ErrorBoundary>} />
+            <Route
+              path="/"
+              element={
+                <ErrorBoundary>
+                
+                    <LandingPage />
+                
+                </ErrorBoundary>
+              }
+            />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/rewards" element={<RewardPage />} />
             <Route path="/login" element={<LoginPage />} />
