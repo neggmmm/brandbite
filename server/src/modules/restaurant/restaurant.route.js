@@ -90,6 +90,7 @@ const app = express.Router();
 // ===========================================
 app.get("/", getRestaurant); // Get restaurant (public view if no auth)
 app.get("/config/:subdomain", getRestaurant); // Get by subdomain
+app.get("/services", getServices);
 
 // ===========================================
 // PROTECTED ROUTES (Admin only)
@@ -122,7 +123,7 @@ app.post('/landing-settings/import-instagram', importInstagramPosts);
 // ======================
 // 4. SERVICE WHITE-LABEL
 // ======================
-app.get("/services", getServices); // Get all service settings
+// app.get("/services", getServices); // Get all service settings
 app.put("/services", updateServices); // Update all services
 app.put("/services/:service/toggle", toggleService); // Toggle specific service
 
