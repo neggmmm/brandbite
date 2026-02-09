@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const SupportSchema = new mongoose.Schema(
   {
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      required: true,
+    },
     name: { type: String, required: true },
     email: { type: String, required: true },
     subject: { type: String, required: true },

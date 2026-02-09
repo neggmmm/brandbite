@@ -4,6 +4,7 @@ const RewardOrderSchema = new mongoose.Schema(
   {
     rewardId: { type: mongoose.Schema.Types.ObjectId, ref: "Reward", required: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant", required: true },
     pointsUsed: { type: Number, required: true },
     status: {
       type: String,

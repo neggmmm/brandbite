@@ -8,6 +8,11 @@ const rewardSchema = new mongoose.Schema(
             ref: "Product",
             required: false,
         },
+        restaurantId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Restaurant",
+            required: true,
+        },
         // Friendly name for reward (if not tied to product)
         name: {
             type: String,

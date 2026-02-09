@@ -8,6 +8,11 @@ const notificationSchema = new mongoose.Schema(
       ref: "User",
       required: false, // optional for general announcements
     },
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      required: false, // optional for system-wide notifications
+    },
     title: { type: String, required: true },
     message: { type: String, required: true },
     type: {

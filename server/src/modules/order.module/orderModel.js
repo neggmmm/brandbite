@@ -53,7 +53,11 @@ const OrderSchema = new mongoose.Schema(
         return `ORD-${timestamp}-${random}`;
       }
     },
-
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      required: true,
+    },
     // ============= CUSTOMER IDENTIFICATION =============
     customerId: {
       type: String,
