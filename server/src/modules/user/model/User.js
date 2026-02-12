@@ -19,24 +19,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    role: {
-      type: String,
-      enum: [
-        "super_admin",
-        "restaurant_owner",
-        "restaurant_staff",
-        "customer",
-        "cashier",
-        "kitchen",
-        "admin",
-      ],
-      default: "restaurant_staff",
-    },
-    restaurantId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Restaurant",
-      default: null,
-    },
+ 
     address: {
       country: { type: String, default: "" },
       cityState: { type: String, default: "" },
@@ -51,17 +34,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       select: false
     },
-    points: {
-      type: Number,
-      default: 0,
-      validate: {
-        validator: function (val) {
-          // value must be non-negative; allow 0 for customers; admins, etc. can have points but business logic will restrict them as needed
-          return typeof val === "number" && val >= 0;
-        },
-        message: "Points must be a non-negative number",
-      }
-    },
+   
     orderHistory: [{
       orderId: {
         type: mongoose.Schema.Types.ObjectId,
