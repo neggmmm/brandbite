@@ -19,7 +19,20 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
- 
+    role: {
+      type: String,
+      enum: ["customer", "admin", "staff", "owner", "super_admin"],
+      default: "customer",
+    },
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      index: true,
+    },
+    permissions: {
+      type: [String],
+      default: [],
+    },
     address: {
       country: { type: String, default: "" },
       cityState: { type: String, default: "" },
@@ -34,7 +47,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       select: false
     },
-   
+
     orderHistory: [{
       orderId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -81,7 +94,8 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ phoneNumber: 1 });
-
+userSchema.index({ restaurantId: 1 });
+userSchema.index({ restaurantId: 1, role: 1 });
 // Validation: Super admins must not be associated with a restaurant
 userSchema.pre("validate", function (next) {
   if (this.role === "super_admin" && this.restaurantId) {
