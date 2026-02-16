@@ -7,6 +7,7 @@ export const createAccessToken = (user) => {
     name: user.name,
     role: user.role,
     email: user.email,
+    restaurantId: user.restaurantId,
   };
   return jwt.sign(payload, env.jwtKey, { expiresIn: env.expiry });
 };

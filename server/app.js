@@ -42,6 +42,7 @@ import invitationRoutes from "./src/routes/invitation.routes.js";
 import offerRoutes from "./src/modules/offer/offer.route.js";
 // Import PaymentController if needed
 import PaymentController from "./src/modules/payment/paymentController.js";
+import { contextMiddleware } from "./src/middlewares/context.middleware.js";
 
 dotenv.config();
 const app = express();
@@ -111,6 +112,7 @@ if (process.env.NODE_ENV !== 'test') {
   console.log('Skipping DB connect in test environment');
 }
 
+app.use(contextMiddleware); // Apply context middleware globally, after DB connection
 // --- API Routes ---
 app.use("/api", couponRoutes);
 app.use("/api/chatBot", chatRoutes); // for AI
