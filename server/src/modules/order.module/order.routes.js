@@ -2,6 +2,7 @@ import express from "express";
 import * as orderController from "./order.controller.js";
 import authMiddleware from "../../middlewares/auth.middleware.js";
 import optionalAuthMiddleware from "../../middlewares/optionalAuthMiddleware.js";
+import requireRestaurantUser from "../../middlewares/requireRestaurantUser.js";
 import roleMiddleware from "../../middlewares/role.middleware.js";
 import requestIdMiddleware from "../../middlewares/requestId.middleware.js";
 import Order from "./orderModel.js";
@@ -31,8 +32,8 @@ router.use(requestIdMiddleware);
 // ---- GET ----
 router.get("/recent", optionalAuthMiddleware, orderController.getRecentOrdersList);
 
-router.get("/", authMiddleware, roleMiddleware("cashier", "admin"), orderController.getAllOrders);
-router.get("/all-orders-rewards", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.getAllOrdersAndRewardOrders);
+router.get("/", authMiddleware, requireRestaurantUser, roleMiddleware("cashier", "admin"), orderController.getAllOrders);
+router.get("/all-orders-rewards", authMiddleware, requireRestaurantUser, roleMiddleware("cashier", "admin", "kitchen"), orderController.getAllOrdersAndRewardOrders);
 // ---- STATS ----
 router.get("/stats/overview", optionalAuthMiddleware, orderController.getOverviewStats);
 router.get("/stats/daily", optionalAuthMiddleware, orderController.getDailyStats);
@@ -46,14 +47,14 @@ router.post("/reorder/:orderId", optionalAuthMiddleware, orderController.reorder
 
 
 // ============= CASHIER ROUTES =============
-router.get("/kitchen/active", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.getActiveOrders);
+router.get("/kitchen/active", authMiddleware, requireRestaurantUser, roleMiddleware("cashier", "admin", "kitchen"), orderController.getActiveOrders);
 
 router.patch("/:id/cancel", optionalAuthMiddleware, orderController.cancelOrder);
 router.patch("/:id/update", authMiddleware, orderController.updateOwnOrder);
 
 // ---- ADMIN/CASHIER ----
-router.patch("/:id/status", authMiddleware, roleMiddleware("cashier", "admin", "kitchen"), orderController.updateOrderStatus);
-router.patch("/:id/payment", authMiddleware, roleMiddleware("cashier", "admin"), orderController.updatePaymentStatus);
+router.patch("/:id/status", authMiddleware, requireRestaurantUser, roleMiddleware("cashier", "admin", "kitchen"), orderController.updateOrderStatus);
+router.patch("/:id/payment", authMiddleware, requireRestaurantUser, roleMiddleware("cashier", "admin"), orderController.updatePaymentStatus);
 
 // Update payment method (customer selects payment during checkout)
 router.patch("/:id/payment-method", optionalAuthMiddleware, async (req, res) => {
@@ -96,12 +97,12 @@ router.patch("/:id/payment-method", optionalAuthMiddleware, async (req, res) => 
 });
 
 // ============= ADMIN ROUTES =============
-router.get("/user/:userId", authMiddleware, orderController.getUserOrders);
+router.get("/user/:userId", authMiddleware, requireRestaurantUser, orderController.getUserOrders);
 
 router.get("/session/:sessionId", optionalAuthMiddleware, orderController.getOrderByStripeSession);
 // ---- CUSTOMER ---- 
 
 router.get("/:id", optionalAuthMiddleware, orderController.getOrder);
-router.delete("/:id", authMiddleware, roleMiddleware("admin", "cashier"), orderController.deleteOrder);
+router.delete("/:id", authMiddleware, requireRestaurantUser, roleMiddleware("admin", "cashier"), orderController.deleteOrder);
 
 export default router;

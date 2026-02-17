@@ -24,6 +24,7 @@ export const createOffer = async (req, res) => {
       endDate: endDate ? new Date(endDate) : null,
       isActive: true,
       createdBy: req.user?._id,
+      restaurantId: req.restaurantId || req.body.restaurantId,
     });
 
     res.status(201).json({
@@ -43,11 +44,13 @@ export const createOffer = async (req, res) => {
 export const getActiveOffers = async (req, res) => {
   try {
     const now = new Date();
-    const offers = await Offer.find({
+    const filter = {
       isActive: true,
       startDate: { $lte: now },
       $or: [{ endDate: null }, { endDate: { $gte: now } }],
-    }).sort({ createdAt: -1 });
+    };
+    if (req.restaurantId) filter.restaurantId = req.restaurantId;
+    const offers = await Offer.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -64,7 +67,9 @@ export const getActiveOffers = async (req, res) => {
 // Get all offers (admin only)
 export const getAllOffers = async (req, res) => {
   try {
-    const offers = await Offer.find().sort({ createdAt: -1 });
+    const filter = {};
+    if (req.restaurantId) filter.restaurantId = req.restaurantId;
+    const offers = await Offer.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -83,6 +88,9 @@ export const getOfferById = async (req, res) => {
   try {
     const { id } = req.params;
     const offer = await Offer.findById(id);
+    if (req.restaurantId && offer && offer.restaurantId && offer.restaurantId.toString() !== req.restaurantId.toString()) {
+      return res.status(404).json({ success: false, message: 'Offer not found' });
+    }
 
     if (!offer) {
       return res.status(404).json({
@@ -109,6 +117,10 @@ export const updateOffer = async (req, res) => {
     const { id } = req.params;
     const { title, description, image, badge, discount, ctaLink, ctaText, startDate, endDate, isActive } = req.body;
 
+    const existing = await Offer.findById(id);
+    if (req.restaurantId && existing && existing.restaurantId && existing.restaurantId.toString() !== req.restaurantId.toString()) {
+      return res.status(404).json({ success: false, message: 'Offer not found' });
+    }
     const offer = await Offer.findByIdAndUpdate(
       id,
       {
@@ -150,6 +162,10 @@ export const updateOffer = async (req, res) => {
 export const deleteOffer = async (req, res) => {
   try {
     const { id } = req.params;
+    const existing = await Offer.findById(id);
+    if (req.restaurantId && existing && existing.restaurantId && existing.restaurantId.toString() !== req.restaurantId.toString()) {
+      return res.status(404).json({ success: false, message: 'Offer not found' });
+    }
     const offer = await Offer.findByIdAndDelete(id);
 
     if (!offer) {

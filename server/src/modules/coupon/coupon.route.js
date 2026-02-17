@@ -1,31 +1,36 @@
 import express from 'express';
 import * as couponController from './coupon.controller.js';
 import authMiddleware from '../../middlewares/auth.middleware.js';
+import requireRestaurantUser from '../../middlewares/requireRestaurantUser.js';
 import roleMiddleware from '../../middlewares/role.middleware.js';
 
 const router = express.Router();
 
 // ========== ADMIN ROUTES ==========
 router.post('/admin/coupons', 
-  authMiddleware, 
+  authMiddleware,
+  requireRestaurantUser,
   roleMiddleware('admin'), 
   couponController.createCoupon
 );
 
 router.get('/admin/coupons', 
-  authMiddleware, 
+  authMiddleware,
+  requireRestaurantUser,
   roleMiddleware('admin'), 
   couponController.getAllCoupons
 );
 
 router.put('/admin/coupons/:couponId', 
-  authMiddleware, 
+  authMiddleware,
+  requireRestaurantUser,
   roleMiddleware('admin'), 
   couponController.updateCoupon
 );
 
 router.delete('/admin/coupons/:couponId', 
-  authMiddleware, 
+  authMiddleware,
+  requireRestaurantUser,
   roleMiddleware('admin'), 
   couponController.deleteCoupon
 );
