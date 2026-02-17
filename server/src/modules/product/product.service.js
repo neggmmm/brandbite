@@ -8,12 +8,12 @@ import {
   getProductForList,
 } from "./product.repository.js";
 
-export const getAllProductsService = async () => {
-  return await getAll();
+export const getAllProductsService = async (restaurantId = null) => {
+  return await getAll(restaurantId);
 };
 
-export const getProductByIdService = async (id) => {
-  return await getProductById(id);
+export const getProductByIdService = async (id, restaurantId = null) => {
+  return await getProductById(id, restaurantId);
 };
 
 export const createProductService = async (productData) => {
@@ -28,8 +28,8 @@ export const deleteProductService = async (id) => {
   return await deleteProduct(id);
 };
 
-export const getNewProductsService = async () => {
-  return await getNewProducts();
+export const getNewProductsService = async (restaurantId = null) => {
+  return await getNewProducts(restaurantId);
 };
 
 export const getProductForListService = async (
