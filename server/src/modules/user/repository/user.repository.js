@@ -1,8 +1,10 @@
 import mongoose from "mongoose";
 import User from "../model/User.js";
 
-export const findAllUsers = async () => {
-  return await User.find().select("-password");
+export const findAllUsers = async (restaurantId = null) => {
+  const filter = {};
+  if (restaurantId) filter.restaurantId = restaurantId;
+  return await User.find(filter).select("-password");
 };
 
 export const findUserById = async (id) => {
