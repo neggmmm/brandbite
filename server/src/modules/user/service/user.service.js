@@ -9,13 +9,23 @@ import {
 
 const VALID_ROLES = ["customer", "admin", "kitchen", "cashier"];
 
-export const getAllUsersService = async () => {
-  const users = await findAllUsers();
+export const getAllUsersService = async (restaurantId = null) => {
+  const users = await findAllUsers(restaurantId);
   return users;
 };
 
-export const getUserByIdService = async (id) => {
+export const getUserByIdService = async (id, restaurantId = null, requestingUser = null) => {
   const user = await findUserById(id);
+  if (!user) return null;
+
+  // If requesting user is super admin allow cross-restaurant fetch
+  if (requestingUser && requestingUser.role === 'super_admin') return user;
+
+  // Otherwise ensure the user belongs to the same restaurant (or has no restaurant)
+  if (restaurantId && user.restaurantId && user.restaurantId.toString() !== restaurantId.toString()) {
+    return null;
+  }
+
   return user;
 };
 
