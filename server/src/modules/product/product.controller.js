@@ -12,7 +12,7 @@ import {
 //getAllProducts
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await getAllProductsService();
+    const products = await getAllProductsService(req.restaurantId);
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -23,7 +23,7 @@ export const getAllProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await getProductByIdService(id);
+    const product = await getProductByIdService(id, req.restaurantId);
     if (!product) {
       return res.status(404).json({ message: "product not found" });
     }
@@ -85,6 +85,7 @@ export const createProduct = async (req, res, next) => {
 
     const product = await createProductService({
       ...req.body,
+      restaurantId: req.restaurantId || req.body.restaurantId,
       embedding: embeddingProduct,
     }); // storing embeddings for product for AI search
     return res.status(201).json(product);
@@ -136,7 +137,7 @@ export const deleteProduct = async (req, res) => {
 //getNewProducts
 export const getNewProducts = async (req, res) => {
   try {
-    const products = await getNewProductsService();
+    const products = await getNewProductsService(req.restaurantId);
     res.status(200).json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -176,7 +177,8 @@ export const getProductForList = async (req, res) => {
       sortBy,
       sortOrder,
       page,
-      pageSize
+      pageSize,
+      req.restaurantId
     );
 
     res.status(200).json(products);
