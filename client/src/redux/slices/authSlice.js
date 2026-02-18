@@ -9,12 +9,7 @@ export const firebaseLogin = createAsyncThunk(
     try {
       const res = await api.post(
         "/api/auth/firebase-login",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${firebaseToken}`,
-          },
-        }
+        { token: firebaseToken },  // ← Send in body instead of header
       );
       // Store tokens from server (fallback for dev where cookies may not be sent)
       if (typeof window !== "undefined") {
