@@ -28,7 +28,9 @@ const cookieOptions = {
 ============================ */
 export const firebaseLoginController = async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    // Get Firebase ID token from request body (not from Authorization header)
+    // This avoids contextMiddleware trying to verify it as a JWT
+    const token = req.body.token || req.headers.authorization?.split(" ")[1];
 
     logger.info("Firebase login attempt", {
       hasToken: !!token,
