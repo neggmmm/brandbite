@@ -165,8 +165,6 @@ async function aiRerankWithRAG(cartItems, candidates, context, limitParam = 6) {
       candidates: candidatesDescription,
       limit: Math.max(3, Math.min(12, Number(limitParam) || 6)),
     });
-
-    console.log("[RAG] AI returned", result.recommendations?.length || 0, "recommendations");
     return result.recommendations || [];
   } catch (error) {
     console.error("[RAG] AI Rerank Failed:", error.message);
@@ -189,14 +187,11 @@ async function aiRerankWithRAG(cartItems, candidates, context, limitParam = 6) {
  * 5. Fallback → Math-based scoring if needed
  */
 export async function recommendForCart(userId, limit = 3) {
-  console.log(`[RAG] Starting cart recommendations for user: ${userId}`);
   
   // 1. Fetch User Cart
   const cart = await getCartForUserService(userId);
-  console.log(`[RAG] Cart lookup result:`, cart ? `Found cart with ${cart.products?.length || 0} products` : 'No cart found');
   
   if (!cart || !cart.products || !cart.products.length) {
-    console.log("[RAG] Empty cart, returning no recommendations");
     return [];
   }
 
@@ -208,18 +203,18 @@ export async function recommendForCart(userId, limit = 3) {
   const cartProductIds = cartProducts.map((p) => p._id.toString());
 
   // 2. Get Co-Purchase Data FIRST (Frequently Bought Together)
-  console.log("[RAG] Fetching co-purchase data...");
+
   const coPurchaseMap = await getCoPurchaseCountsForProducts(cartProductIds);
-  console.log(`[RAG] Found ${coPurchaseMap.size} co-purchase relationships`);
+
 
   // 3. RAG Retrieval (Semantic)
-  console.log("[RAG] Performing semantic retrieval...");
+
   const { candidates, context } = await ragRetrieveForCart(cart.products, {
     limit: ragConfig.vectorSearchLimit,
     excludeIds: cartProductIds,
   });
 
-  console.log(`[RAG] Retrieved ${candidates.length} candidates`);
+
 
   // 4. Boost candidates by co-purchase frequency
   const boostedCandidates = candidates.map(c => {
@@ -259,7 +254,7 @@ export async function recommendForCart(userId, limit = 3) {
   }
 
   // 7. FALLBACK: Use boosted candidates directly if AI fails
-  console.log("[RAG] Using fallback scoring...");
+
   return filteredCandidates.slice(0, limit).map(c => ({
     productId: c._id.toString(),
     reason: c.coCount > 0 ? "Frequently ordered together" : "Popular item",
@@ -339,7 +334,7 @@ function processAIResults(aiResults, candidates, cartProductIds, limit, cartInfo
  * Fallback: Math-based recommendations when RAG fails
  */
 async function fallbackRecommendForCart(cart, cartProductIds, limit) {
-  console.log("[Fallback] Using math-based scoring...");
+
 
   const cartProducts = cart.products
     .map((p) => p.productId)
@@ -410,7 +405,7 @@ async function fallbackRecommendForCart(cart, cartProductIds, limit) {
  * For product detail page - shows products SIMILAR to what customer is viewing
  */
 export async function recommendSimilarToProduct(productId, limit = 5) {
-  console.log(`[RAG] Finding similar products for: ${productId}`);
+
 
   const baseProduct = await getProductByIdService(productId);
   if (!baseProduct) throw new Error("Product not found");
@@ -442,7 +437,6 @@ export async function recommendSimilarToProduct(productId, limit = 5) {
   }
 
   // Fallback to original algorithm
-  console.log("[Fallback] Using legacy similar products algorithm...");
   return await fallbackSimilarProducts(baseProduct, productId, limit);
 }
 
