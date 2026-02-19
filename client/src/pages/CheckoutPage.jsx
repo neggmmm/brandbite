@@ -152,9 +152,9 @@ export default function CheckoutPage() {
   };
 
 
-  const handleQuantityChange = (cartItemId, newQuantity) => {
+  const handleQuantityChange = (productId, newQuantity) => {
     console.log("=== FRONTEND handleQuantityChange ===");
-    console.log("cartItemId:", cartItemId);
+    console.log("productId:", productId);
     console.log("newQuantity:", newQuantity);
     console.log("Type of newQuantity:", typeof newQuantity);
     console.log("Is NaN?", isNaN(newQuantity));
@@ -165,7 +165,7 @@ export default function CheckoutPage() {
     }
 
     dispatch(updateCartQuantity({
-      productId: cartItemId,
+      productId: productId,
       newQuantity
     }));
   };
@@ -182,10 +182,10 @@ export default function CheckoutPage() {
         [optionName]: choiceLabel
       };
 
-      await dispatch(deleteProductFromCart(item.productId._id));
+      await dispatch(deleteProductFromCart(item.productId));
 
       await dispatch(addToCart({
-        productId: item.productId._id,
+        productId: item.productId,
         quantity: item.quantity,
         selectedOptions: newSelectedOptions
       }));
@@ -236,7 +236,7 @@ export default function CheckoutPage() {
 
   // Calculate total points from cart items
   const totalPoints = products.reduce((acc, item) => {
-    const productPoints = item.productId?.productPoints || 0;
+    const productPoints = item.product?.productPoints || 0;
     return acc + (productPoints * item.quantity);
   }, 0);
 
@@ -435,15 +435,15 @@ export default function CheckoutPage() {
               >
                 <div className="flex gap-4">
                   <img
-                    src={item.productId.imgURL}
-                    alt={item.productId.name}
+                    src={item.product?.imgURL || item.productId?.imgURL}
+                    alt={item.product?.name || item.productId?.name}
                     className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded-xl flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900 dark:text-white text-base lg:text-lg leading-tight">
-                          {item.productId.name}
+                          {item.product?.name || item.productId?.name}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           EGP {item.price.toFixed(2)}
@@ -452,7 +452,7 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-3 ml-4">
                         <div className="flex items-center bg-primary/10 dark:bg-primary/10 rounded-full px-1">
                           <button
-                            onClick={() => handleQuantityChange(item._id, item.quantity - 1) }
+                            onClick={() => handleQuantityChange(item.productId, item.quantity - 1) }
                             disabled={item.quantity <= 1}
                             className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
@@ -463,7 +463,7 @@ export default function CheckoutPage() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-primary dark:text-primary/90 hover:bg-primary/20 dark:hover:bg-primary/20 rounded-full transition-colors"
                           >
                             <Plus className="w-4 h-4" />
@@ -474,7 +474,7 @@ export default function CheckoutPage() {
                     {/* Action Buttons */}
                     <div className="flex gap-4 mt-4 text-sm">
                       <button
-                        onClick={() => handleDeleteItem(item.productId._id)}
+                        onClick={() => handleDeleteItem(item.productId)}
                         className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center transition-colors"
                       >
                         <Trash2 className="w-4 h-4 mr-1.5" />
